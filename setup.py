@@ -42,7 +42,7 @@ setup(
     description='minimal Cython wrapper of tng',
     author='Max Linke, Richard J Gowers',
     author_email='max_linke@gmx.de',
-    packages=['tng'],
+    packages=['pytng'],
     cmdclass={'clean': CleanCommand},
     ext_modules=extensions(),
     zip_safe=False)

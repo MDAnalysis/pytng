@@ -1,11 +1,12 @@
-#import pytng
+import pytng
 
 import numpy as np
 import pytest
 
 
-def test_len(TNG_REF_DATA):
-    assert TNG_REF_DATA.length == 10
+def test_len(TNG_REF_DATA, TNG_REF_FILEPATH):
+    with pytng.TNGFile(TNG_REF_FILEPATH) as tng:
+        assert TNG_REF_DATA.length == tng.n_frames
 
 
 def test_natoms(TNG_REF_DATA):
