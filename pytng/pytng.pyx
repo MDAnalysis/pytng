@@ -145,3 +145,9 @@ cdef class TNGFile:
 
         self.pos += 1
         return xyz
+
+    def seek(self, pos):
+        if self.is_open:
+            self.pos = pos
+        else:
+            raise IOError("seek not allowed in write mode")
