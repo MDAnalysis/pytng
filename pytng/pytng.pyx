@@ -3,8 +3,9 @@ from libc.stdlib cimport malloc, free
 
 from collections import namedtuple
 import os
-
+import numbers
 import numpy as np
+
 cimport numpy as np
 np.import_array()
 
@@ -244,3 +245,34 @@ cdef class TNGFile:
             self.step = step
         else:
             raise IOError("seek not allowed in write mode")
+
+    def __getitem__(self, frame):
+        cdef int64_t start, stop, step, i
+
+        if isinstance(frame, numbers.Integral):
+            self.seek(frame)
+            return self.read()
+        elif isinstance(frame, (list, np.ndarray)):
+            if isinstance(frame[0], (bool, np.bool_)):
+                # Avoid having list of bools
+                frame = np.asarray(frame, dtype=np.bool)
+                # Convert bool array to int array
+                frame = np.arange(len(self))[frame]
+
+            def listiter(frames):
+                for f in frames:
+                    if not isinstance(f, numbers.Integral):
+                        raise TypeError("Frames indices must be integers")
+                    self.seek(f)
+                    yield self.read()
+            return listiter(frame)
+        elif isinstance(frame, slice):
+            start = frame.start if frame.start is not None else 0
+            stop = frame.stop if frame.stop is not None else self.n_frames
+            step = frame.step if frame.step is not None else 1
+            for i in range(start, stop, step):
+                self.seek(i)
+                yield self.read()
+        else:
+            raise TypeError("Trajectories must be an indexed using an integer,"
+                            " slice or list of indices")
