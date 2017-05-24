@@ -4,13 +4,20 @@ import os
 import pytest
 
 
+HERE = os.path.dirname(__file__)
+
 
 
 @pytest.fixture()
 def TNG_REF_FILEPATH():
-    HERE = os.path.dirname(__file__)
-
+    # reference file from Gromacs/tng library
     return os.path.join(HERE, 'reference_files', 'tng_example.tng')
+
+
+@pytest.fixture()
+def TNG_BAD_FILEPATH():
+    # actually just an ascii file
+    return os.path.join(HERE, 'reference_files', 'badtngfile.tng')
 
 
 @pytest.fixture
