@@ -1,5 +1,8 @@
+from __future__ import print_function
+
 import os
 import sys
+from glob import glob
 
 from setuptools import setup, Command, Extension
 
@@ -14,10 +17,13 @@ class CleanCommand(Command):
     """Custom clean command to tidy up the project root."""
     # https://stackoverflow.com/questions/3779915/why-does-python-setup-py-sdist-create-unwanted-project-egg-info-in-project-r
     user_options = []
+
     def initialize_options(self):
         pass
+
     def finalize_options(self):
         pass
+
     def run(self):
         os.system('rm -vrf ./*.so')
         os.system('rm -vrf build')
@@ -28,14 +34,21 @@ class CleanCommand(Command):
 
 
 def extensions():
+    """ setup extensions for this module
+    """
     exts = []
     exts.append(
         Extension(
-            'pytng.pytng', ['pytng/pytng.pyx'],
-            libraries=['tng_io'],
-            include_dirs=[]))
+            'pytng.pytng',
+            sources=glob('pytng/src/compression/*.c') + glob(
+                'pytng/src/lib/*.c') + ['pytng/pytng.pyx', ],
+            include_dirs=["pytng/include/", "{}/include".format(sys.prefix)],
+            library_dirs=["{}/lib".format(sys.prefix)],
+            libraries=['z'],
+            ))
 
     return cythonize(exts)
+
 
 setup(
     name="pytng",
