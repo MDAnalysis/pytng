@@ -9,6 +9,11 @@ def test_load_bad_file(TNG_BAD_FILEPATH):
         with pytng.TNGFile(TNG_BAD_FILEPATH) as tng:
             tng.read()
 
+def test_load_missing_file(TNG_MISSING_FILEPATH):
+    with pytest.raises(IOError):
+        with pytng.TNGFile(TNG_MISSING_FILEPATH) as tng:
+            tng.read()
+
 def test_len(TNG_REF_DATA, TNG_REF_FILEPATH):
     with pytng.TNGFile(TNG_REF_FILEPATH) as tng:
         assert TNG_REF_DATA.length == tng.n_frames

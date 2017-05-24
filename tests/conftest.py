@@ -20,6 +20,11 @@ def TNG_BAD_FILEPATH():
     return os.path.join(HERE, 'reference_files', 'badtngfile.tng')
 
 
+@pytest.fixture()
+def TNG_MISSING_FILEPATH():
+    # return a file that doesn't exist
+    return 'nonexistant.tng'
+
 @pytest.fixture
 def TNG_REF_DATA():
     TNG = namedtuple('TNGData',

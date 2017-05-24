@@ -2,6 +2,7 @@ from libc.stdint cimport int64_t
 from libc.stdlib cimport malloc, free
 
 from collections import namedtuple
+import os
 
 import numpy as np
 cimport numpy as np
@@ -95,6 +96,11 @@ cdef class TNGFile:
                           'supplied {}'.format(mode))
 
         cdef int64_t exponent, ok
+
+        # handle file not existing at python level,
+        # C level is nasty and causes crash
+        if self.mode == 'r' and not os.path.exists(fname):
+            raise IOError("File '{}' does not exist".format(fname))
 
         ok = tng_util_trajectory_open(fname, _mode, & self._traj)
         if ok != TNG_SUCCESS:
