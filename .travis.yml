@@ -25,6 +25,7 @@ env:
 install:
     - git clone git://github.com/astropy/ci-helpers.git
     - source ci-helpers/travis/setup_conda.sh
+    - eval $BUILD_CMD
 
 script:
   - eval $SETUP_CMD
