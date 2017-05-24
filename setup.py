@@ -13,6 +13,7 @@ except ImportError:
 class CleanCommand(Command):
     """Custom clean command to tidy up the project root."""
     # https://stackoverflow.com/questions/3779915/why-does-python-setup-py-sdist-create-unwanted-project-egg-info-in-project-r
+    user_options = []
     def initialize_options(self):
         pass
     def finalize_options(self):
@@ -22,8 +23,8 @@ class CleanCommand(Command):
         os.system('rm -vrf build')
         os.system('rm -vrf dist')
         os.system('rm -vrf pytng.egg-info')
-        os.system("find tng -name '*.pyc' -delete -print")
-        os.system("find tng -name '*.so' -delete -print")
+        os.system("find pytng -name '*.pyc' -delete -print")
+        os.system("find pytng -name '*.so' -delete -print")
 
 
 def extensions():
