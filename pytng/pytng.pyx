@@ -183,7 +183,7 @@ cdef class TNGFile:
                           'in mode "r"'.format('self.mode'))
         if self.step >= self.n_frames:
             self.reached_eof = True
-            raise StopIteration
+            raise StopIteration("Reached EOF in read")
 
         cdef np.ndarray[ndim=2, dtype=np.float32_t, mode='c'] xyz = np.empty((self.n_atoms, 3), dtype=np.float32)
         cdef float* positions = NULL
@@ -270,9 +270,11 @@ cdef class TNGFile:
             start = frame.start if frame.start is not None else 0
             stop = frame.stop if frame.stop is not None else self.n_frames
             step = frame.step if frame.step is not None else 1
-            for i in range(start, stop, step):
-                self.seek(i)
-                yield self.read()
+            def sliceiter(start, stop, step):
+                for i in range(start, stop, step):
+                    self.seek(i)
+                    yield self.read()
+            return sliceiter(start, stop, step)
         else:
             raise TypeError("Trajectories must be an indexed using an integer,"
                             " slice or list of indices")
