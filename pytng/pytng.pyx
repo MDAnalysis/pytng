@@ -68,6 +68,7 @@ cdef class TNGFile:
     cdef readonly fname
     cdef str mode
     cdef int is_open
+    cdef int reached_eof
     cdef int64_t _n_frames
     cdef int64_t _n_atoms
     cdef int64_t step
@@ -115,6 +116,7 @@ cdef class TNGFile:
 
         self.is_open = True
         self.step = 0
+        self.reached_eof = False
 
     def close(self):
         if self.is_open:
@@ -132,6 +134,17 @@ cdef class TNGFile:
         # always propagate exceptions forward
         return False
 
+    def __iter__(self):
+        self.close()
+        self.open(self.fname, self.mode)
+        return self
+
+    def __next__(self):
+        """Return next frame"""
+        if self.reached_eof:
+            raise StopIteration
+        return self.read()
+
     @property
     def n_frames(self):
         if not self.is_open:
@@ -147,9 +160,21 @@ cdef class TNGFile:
     def __len__(self):
         return self.n_frames
 
+    def tell(self):
+        """Get current frame"""
+        return self.step
+
     def read(self):
-        if self.step >= self._n_frames:
-            raise EOFError
+        if self.reached_eof:
+            raise IOError('Reached last frame in TRR, seek to 0')
+        if not self.is_open:
+            raise IOError('No file opened')
+        if self.mode != 'r':
+            raise IOError('File opened in mode: {}. Reading only allow '
+                          'in mode "r"'.format('self.mode'))
+        if self.step >= self.n_frames:
+            self.reached_eof = True
+            raise StopIteration
 
         cdef np.ndarray[ndim=2, dtype=np.float32_t, mode='c'] xyz = np.empty((self.n_atoms, 3), dtype=np.float32)
         cdef float* positions = NULL
@@ -204,7 +229,7 @@ cdef class TNGFile:
                 free(box_shape)
 
         self.step += 1
-        return TNGFrame(xyz, time, self.step, box)
+        return TNGFrame(xyz, time, self.step - 1, box)
 
     def seek(self, step):
         if self.is_open:
