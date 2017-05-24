@@ -52,9 +52,8 @@ def test_last_positions(TNG_REF_DATA, TNG_REF_FILEPATH):
 
 def test_time(TNG_REF_DATA, TNG_REF_FILEPATH):
     with pytng.TNGFile(TNG_REF_FILEPATH) as tng:
-        tng.seek(tng.n_frames - 1)
-        time = tng.read().time
-        assert np.array_equal(TNG_REF_DATA.last_frame_time, time)
+        for ref_time, ts in zip(TNG_REF_DATA.time, tng):
+            assert ref_time == ts.time
 
 
 def test_box(TNG_REF_DATA, TNG_REF_FILEPATH):

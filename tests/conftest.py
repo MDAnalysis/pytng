@@ -23,11 +23,13 @@ def TNG_BAD_FILEPATH():
 @pytest.fixture
 def TNG_REF_DATA():
     TNG = namedtuple('TNGData',
-                     ['length', 'natoms', 'first_frame', 'last_frame', 'last_frame_time', 'box'])
+                     ['length', 'natoms', 'first_frame', 'last_frame', 'time', 'box'])
 
     # reference data determined via `gmx dump`
     # 5 water molecules, chain W resname WAT
     # names O, HO1, HO2
+
+    time = [None] * 10
 
     first_frame = np.array([
         [ 1.00000e+00,  1.00000e+00,  1.00000e+00],
@@ -70,6 +72,6 @@ def TNG_REF_DATA():
         natoms=15,
         first_frame=first_frame,
         last_frame=last_frame,
-        last_frame_time=None,
+        time=time,
         box=np.eye(3) * 50,
     )
