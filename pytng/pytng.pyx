@@ -254,6 +254,9 @@ cdef class TNGFile:
             return self.read()
         elif isinstance(frame, (list, np.ndarray)):
             if isinstance(frame[0], (bool, np.bool_)):
+                if not (len(frame) == len(self)):
+                    raise TypeError("Boolean index must match length of trajectory")
+
                 # Avoid having list of bools
                 frame = np.asarray(frame, dtype=np.bool)
                 # Convert bool array to int array

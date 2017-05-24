@@ -62,6 +62,31 @@ def test_getitem_int(idx, GMX_REF_DATA, GMX_REF_FILEPATH):
         ts = tng[idx]
         assert idx == ts.step
 
+T, F = True, False
+@pytest.mark.parametrize('arr', (
+    [T] * 10,
+    [F] * 10,
+))
+@pytest.mark.parametrize('cls', [list, np.array])
+def test_getitem_bool(arr, cls, GMX_REF_DATA, GMX_REF_FILEPATH):
+    slx = cls(arr)
+    ref = np.arange(GMX_REF_DATA.length)[slx]
+
+    with pytng.TNGFile(GMX_REF_FILEPATH) as tng:
+        for ref_ts, ts in zip(ref, tng[slx]):
+            assert ref_ts == ts.step
+
+
+@pytest.mark.parametrize('cls', [list, np.array])
+def test_getitem_bool_TypeError(cls, GMX_REF_FILEPATH):
+    slx = cls([True, False, True])
+
+    with pytng.TNGFile(GMX_REF_FILEPATH) as tng:
+        with pytest.raises(TypeError):
+            for ts in tng[slx]:
+                ts.step
+
+
 def test_natoms(GMX_REF_DATA, GMX_REF_FILEPATH):
     with pytng.TNGFile(GMX_REF_FILEPATH) as tng:
         assert GMX_REF_DATA.natoms == tng.n_atoms
