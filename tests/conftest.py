@@ -16,7 +16,7 @@ def TNG_REF_FILEPATH():
 @pytest.fixture
 def TNG_REF_DATA():
     TNG = namedtuple('TNGData',
-                     ['length', 'natoms', 'first_frame', 'last_frame'])
+                     ['length', 'natoms', 'first_frame', 'last_frame', 'last_frame_time', 'box'])
 
     # reference data determined via `gmx dump`
     # 5 water molecules, chain W resname WAT
@@ -63,4 +63,6 @@ def TNG_REF_DATA():
         natoms=15,
         first_frame=first_frame,
         last_frame=last_frame,
+        last_frame_time=None,
+        box=np.eye(3) * 50,
     )

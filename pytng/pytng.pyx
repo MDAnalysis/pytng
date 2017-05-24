@@ -1,11 +1,17 @@
 from libc.stdint cimport int64_t
 from libc.stdlib cimport malloc, free
 
+from collections import namedtuple
+
 import numpy as np
 cimport numpy as np
 np.import_array()
 
 ctypedef enum tng_function_status: TNG_SUCCESS, TNG_FAILURE, TNG_CRITICAL
+ctypedef enum tng_data_type: TNG_CHAR_DATA, TNG_INT_DATA, TNG_FLOAT_DATA, TNG_DOUBLE_DATA
+ctypedef enum tng_hash_mode: TNG_SKIP_HASH, TNG_USE_HASH
+
+cdef long long TNG_TRAJ_BOX_SHAPE = 0x0000000010000000LL
 
 status_error_message = ['OK', 'Failure', 'Critical']
 
@@ -39,6 +45,23 @@ cdef extern from "tng/tng_io.h":
         float **positions,
         int64_t *stride_length)
 
+    tng_function_status tng_util_time_of_frame_get(
+        const tng_trajectory_t tng_data,
+        const int64_t frame_nr,
+        double *time)
+
+    tng_function_status tng_data_vector_interval_get(
+        const tng_trajectory_t tng_data,
+        const int64_t block_id,
+        const int64_t start_frame_nr,
+        const int64_t end_frame_nr,
+        const char hash_mode,
+        void **values,
+        int64_t *stride_length,
+        int64_t *n_values_per_frame,
+        char *type)
+
+TNGFrame = namedtuple("TNGFrame", "xyz time step box")
 
 cdef class TNGFile:
     cdef tng_trajectory_t _traj
@@ -47,7 +70,7 @@ cdef class TNGFile:
     cdef int is_open
     cdef int64_t _n_frames
     cdef int64_t _n_atoms
-    cdef int64_t pos
+    cdef int64_t step
     cdef float distance_scale
 
     def __cinit__(self, fname, mode='r'):
@@ -91,7 +114,7 @@ cdef class TNGFile:
             self.distance_scale = 10.0**(exponent+9)
 
         self.is_open = True
-        self.pos = 0
+        self.step = 0
 
     def close(self):
         if self.is_open:
@@ -125,29 +148,66 @@ cdef class TNGFile:
         return self.n_frames
 
     def read(self):
-        if self.pos >= self._n_frames:
+        if self.step >= self._n_frames:
             raise EOFError
 
         cdef np.ndarray[ndim=2, dtype=np.float32_t, mode='c'] xyz = np.empty((self.n_atoms, 3), dtype=np.float32)
         cdef float* positions = NULL
-        cdef int64_t stride_length, ok, i
+        cdef int64_t stride_length, ok, i, n_values_per_frame
 
-        ok = tng_util_pos_read_range(self._traj, self.pos, self.pos, &positions, &stride_length)
-        if ok != TNG_SUCCESS:
+        try:
+            ok = tng_util_pos_read_range(self._traj, self.step, self.step, &positions, &stride_length)
+            if ok != TNG_SUCCESS:
+                raise IOError("error reading frame")
+
+            for i in range(self._n_atoms):
+                for j in range(3):
+                    xyz[i, j] = positions[i*3 + j]
+            xyz *= self.distance_scale
+        finally:
             if positions != NULL:
                 free(positions)
-            raise IOError("error reading frame")
 
-        for i in range(self._n_atoms):
-            for j in range(3):
-                xyz[i, j] = positions[i*3 + j]
-        xyz *= self.distance_scale
+        cdef double frame_time
+        ok = tng_util_time_of_frame_get(self._traj, self.step, &frame_time)
+        if ok != TNG_SUCCESS:
+            # No time available
+            time = None
+        else:
+            time = frame_time * 1e12
 
-        self.pos += 1
-        return xyz
+        cdef np.ndarray[ndim=2, dtype=np.float32_t, mode='c'] box = np.empty((3, 3), dtype=np.float32)
+        cdef char data_type
+        cdef void* box_shape = NULL
+        cdef float* float_box
+        cdef double* double_box
 
-    def seek(self, pos):
+        try:
+            ok = tng_data_vector_interval_get(self._traj, TNG_TRAJ_BOX_SHAPE, self.step, self.step, TNG_USE_HASH,
+                                              &box_shape, &stride_length, &n_values_per_frame, &data_type)
+            if ok != TNG_SUCCESS:
+                raise IOError("error reading box shape")
+
+            if data_type == TNG_DOUBLE_DATA:
+                double_box = <double*>box_shape
+                for j in range(3):
+                    for k in range(3):
+                        box[j, k] = double_box[j*3 + k]
+            else:
+                float_box = <float*>box_shape
+                for j in range(3):
+                    for k in range(3):
+                        box[j, k] = float_box[j*3 + k]
+            box *= self.distance_scale
+        finally:
+            if box_shape != NULL:
+                free(box_shape)
+
+        self.step += 1
+        return TNGFrame(xyz, time, self.step, box)
+
+    def seek(self, step):
         if self.is_open:
-            self.pos = pos
+            self.step = step
         else:
             raise IOError("seek not allowed in write mode")
