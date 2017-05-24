@@ -69,6 +69,7 @@ cdef extern from "tng/tng_io.h":
 TNGFrame = namedtuple("TNGFrame", "xyz time step box")
 
 cdef class TNGFile:
+    """File handle object for TNG files"""
     cdef tng_trajectory_t _traj
     cdef readonly fname
     cdef str mode
@@ -88,6 +89,15 @@ cdef class TNGFile:
         self.close()
 
     def open(self, fname, mode):
+        """Open a file handle
+
+        Parameters
+        ----------
+        fname : str
+           path to the file
+        mode : str
+           mode to open the file in, 'r' for read, 'w' for write
+        """
         self.mode = mode
         if not os.path.isfile(fname):
             raise IOError("file does not exists: {}".format(fname))
@@ -132,17 +142,17 @@ cdef class TNGFile:
         self.reached_eof = False
 
     def close(self):
+        """Make sure the file handle is closed"""
         if self.is_open:
             tng_util_trajectory_close(&self._traj)
             self.is_open = False
             self._n_frames = -1
 
     def __enter__(self):
-        """Support context manager"""
+        # Support context manager
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        """Support context manager"""
         self.close()
         # always propagate exceptions forward
         return False
@@ -160,12 +170,14 @@ cdef class TNGFile:
 
     @property
     def n_frames(self):
+        """Number of frames in the trajectory"""
         if not self.is_open:
             raise IOError('No file currently opened')
         return self._n_frames
 
     @property
     def n_atoms(self):
+        """Number of atoms in each frame"""
         if not self.is_open:
             raise IOError('No file currently opened')
         return self._n_atoms
@@ -178,6 +190,7 @@ cdef class TNGFile:
         return self.step
 
     def read(self):
+        """Read the next frame"""
         if self.reached_eof:
             raise IOError('Reached last frame in TNG, seek to 0')
         if not self.is_open:
@@ -245,6 +258,13 @@ cdef class TNGFile:
         return TNGFrame(xyz, time, self.step - 1, box)
 
     def seek(self, step):
+        """Move the file handle to a particular frame number
+
+        Parameters
+        ----------
+        step : int
+           desired frame number
+        """
         if self.is_open:
             self.step = step
         else:
