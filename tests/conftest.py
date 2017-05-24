@@ -80,3 +80,10 @@ def GMX_REF_DATA():
         time=time,
         box=np.eye(3) * 50,
     )
+
+
+@pytest.fixture()
+def MDA_REF_FILEPATH():
+    # reference file from MDAnalysis/adk_oplsaa system
+    return os.path.join(HERE, 'reference_files', 'adk_oplsaa.tng')
+
