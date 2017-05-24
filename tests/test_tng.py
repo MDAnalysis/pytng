@@ -68,6 +68,7 @@ def test_getitem_int(idx, GMX_REF_DATA, GMX_REF_FILEPATH):
 @pytest.mark.parametrize('arr', (
     [T] * 10,
     [F] * 10,
+    [T, F, T, F, T, F, T, F, T, F]
 ))
 @pytest.mark.parametrize('cls', [list, np.array])
 def test_getitem_bool(arr, cls, GMX_REF_DATA, GMX_REF_FILEPATH):

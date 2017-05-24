@@ -108,7 +108,8 @@ cdef class TNGFile:
         if self.mode == 'r' and not os.path.exists(fname):
             raise IOError("File '{}' does not exist".format(fname))
 
-        ok = tng_util_trajectory_open(fname, _mode, & self._traj)
+        fname_bytes = fname.encode('UTF-8')
+        ok = tng_util_trajectory_open(fname_bytes, _mode, & self._traj)
         if ok != TNG_SUCCESS:
             raise IOError("An error ocurred opening the file. {}".format(status_error_message[ok]))
 
