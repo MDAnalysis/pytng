@@ -3,6 +3,8 @@ import pytng
 import numpy as np
 import pytest
 
+T, F = True, False
+
 
 def test_load_bad_file(CORRUPT_FILEPATH):
     with pytest.raises(IOError):
@@ -62,7 +64,7 @@ def test_getitem_int(idx, GMX_REF_DATA, GMX_REF_FILEPATH):
         ts = tng[idx]
         assert idx == ts.step
 
-T, F = True, False
+
 @pytest.mark.parametrize('arr', (
     [T] * 10,
     [F] * 10,
