@@ -62,7 +62,7 @@ def test_box(TNG_REF_DATA, TNG_REF_FILEPATH):
         frame = tng.read()
         assert np.array_equal(TNG_REF_DATA.box, frame.box)
 
-def test_box(TNG_REF_FILEPATH):
+def test_double_iteration(TNG_REF_FILEPATH):
     with pytng.TNGFile(TNG_REF_FILEPATH) as tng:
         for i, frame in enumerate(tng):
             assert i == frame.step
