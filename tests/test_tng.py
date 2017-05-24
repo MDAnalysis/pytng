@@ -38,10 +38,22 @@ def test_sliced_iteration(slice_idx, TNG_REF_DATA, TNG_REF_FILEPATH):
         for ref_ts, ts in zip(ref_steps, tng[start:stop:step]):
             assert ref_ts == ts.step
 
+@pytest.mark.parametrize('indices', (
+    [0, 1, 2],
+    [5, 3, 1],
+    [1, 1, 1]
+))
+@pytest.mark.parametrize('cls', [list, np.array])
+def test_getitem_multipl_ints(indices, cls, TNG_REF_DATA, TNG_REF_FILEPATH):
+    indices = cls(indices)
+    with pytng.TNGFile(TNG_REF_FILEPATH) as tng:
+        for ref_step, ts in zip(indices, tng[indices]):
+            assert ref_step == ts.step
+
 @pytest.mark.parametrize('idx', [0, 4, 9])
 def test_getitem_int(idx, TNG_REF_DATA, TNG_REF_FILEPATH):
     with pytng.TNGFile(TNG_REF_FILEPATH) as tng:
-        ts = tng.read()
+        ts = tng[idx]
         assert idx == ts.step
 
 def test_natoms(TNG_REF_DATA, TNG_REF_FILEPATH):
