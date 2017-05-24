@@ -7,26 +7,26 @@ import pytest
 HERE = os.path.dirname(__file__)
 
 
-
 @pytest.fixture()
-def TNG_REF_FILEPATH():
-    # reference file from Gromacs/tng library
-    return os.path.join(HERE, 'reference_files', 'tng_example.tng')
-
-
-@pytest.fixture()
-def TNG_BAD_FILEPATH():
+def CORRUPT_FILEPATH():
     # actually just an ascii file
     return os.path.join(HERE, 'reference_files', 'badtngfile.tng')
 
 
 @pytest.fixture()
-def TNG_MISSING_FILEPATH():
+def MISSING_FILEPATH():
     # return a file that doesn't exist
     return 'nonexistant.tng'
 
+@pytest.fixture()
+def GMX_REF_FILEPATH():
+    # reference file from Gromacs/tng library
+    return os.path.join(HERE, 'reference_files', 'tng_example.tng')
+
+
 @pytest.fixture
-def TNG_REF_DATA():
+def GMX_REF_DATA():
+    # reference data for GMX_REF from Gromacs/tng library
     TNG = namedtuple('TNGData',
                      ['length', 'natoms', 'first_frame', 'last_frame', 'time', 'box'])
 
