@@ -13,7 +13,7 @@ env:
     - PYTHON_VERSION=2.7
     - SETUP_CMD="pytest -v tests"
     - BUILD_CMD="python setup.py install"
-    - CONDA_DEPENDENCIES="cython numpy"
+    - CONDA_DEPENDENCIES="cython numpy codecov"
     - CONDA_CHANNELS='conda-forge'
     - NUMPY_VERSION=stable
   matrix:
@@ -29,3 +29,6 @@ install:
 
 script:
   - eval $SETUP_CMD
+
+after_success:
+  - codecov

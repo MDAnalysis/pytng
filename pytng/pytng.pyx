@@ -1,3 +1,6 @@
+# cython: linetrace=True
+# distutils: define_macros=CYTHON_TRACE=1
+
 from libc.stdint cimport int64_t
 from libc.stdlib cimport malloc, free
 
