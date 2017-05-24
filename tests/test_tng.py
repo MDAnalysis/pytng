@@ -38,6 +38,12 @@ def test_sliced_iteration(slice_idx, TNG_REF_DATA, TNG_REF_FILEPATH):
         for ref_ts, ts in zip(ref_steps, tng[start:stop:step]):
             assert ref_ts == ts.step
 
+@pytest.mark.parametrize('idx', [0, 4, 9])
+def test_getitem_int(idx, TNG_REF_DATA, TNG_REF_FILEPATH):
+    with pytng.TNGFile(TNG_REF_FILEPATH) as tng:
+        ts = tng.read()
+        assert idx == ts.step
+
 def test_natoms(TNG_REF_DATA, TNG_REF_FILEPATH):
     with pytng.TNGFile(TNG_REF_FILEPATH) as tng:
         assert TNG_REF_DATA.natoms == tng.n_atoms
