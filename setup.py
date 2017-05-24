@@ -7,6 +7,12 @@ from glob import glob
 from setuptools import setup, Command, Extension
 
 try:
+    import numpy as np
+except ImportError:
+    print("Need numpy for installation")
+    sys.exit(1)
+
+try:
     from Cython.Build import cythonize
 except ImportError:
     print("Need cython for installation")
@@ -42,7 +48,7 @@ def extensions():
             'pytng.pytng',
             sources=glob('pytng/src/compression/*.c') + glob(
                 'pytng/src/lib/*.c') + ['pytng/pytng.pyx', ],
-            include_dirs=["pytng/include/", "{}/include".format(sys.prefix)],
+            include_dirs=["pytng/include/", "{}/include".format(sys.prefix)] + np.get_include(),
             library_dirs=["{}/lib".format(sys.prefix)],
             libraries=['z'],
             ))
