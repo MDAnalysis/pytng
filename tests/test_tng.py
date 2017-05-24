@@ -19,6 +19,20 @@ def test_iter(TNG_REF_DATA, TNG_REF_FILEPATH):
         for i, ts in enumerate(tng):
             assert i == ts.step
 
+@pytest.mark.parametrize('slice_idx', [
+    (None, None, None),
+    (2, None, None),
+    (None, 2, None),
+    (None, None, 3),
+])
+def test_sliced_iteration(slice_idx, TNG_REF_DATA, TNG_REF_FILEPATH):
+    start, stop, step = slice_idx
+    ref_steps = np.arange(0, TNG_REF_DATA.length)[start:stop:step]
+
+    with pytng.TNGFile(TNG_REF_FILEPATH) as tng:
+        for ref_ts, ts in zip(ref_steps, tng[start:stop:step]):
+            assert ref_ts == ts.step
+
 def test_natoms(TNG_REF_DATA, TNG_REF_FILEPATH):
     with pytng.TNGFile(TNG_REF_FILEPATH) as tng:
         assert TNG_REF_DATA.natoms == tng.n_atoms
