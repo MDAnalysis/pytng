@@ -1,34 +1,23 @@
-language: generic
+language: python
+sudo: false
+
+python:
+  - "2.7"
+  - "3.5"
+  - "3.6"
 
 branches:
   only:
     - master
 
-os:
-  - linux
-
-env:
-  global:
-    # Set default python version to avoid repetition later
-    - PYTHON_VERSION=2.7
-    - SETUP_CMD="pytest -v tests"
-    - BUILD_CMD="python setup.py install"
-    - CONDA_DEPENDENCIES="cython numpy codecov"
-    - CONDA_CHANNELS='conda-forge'
-    - NUMPY_VERSION=stable
-  matrix:
-    - PYTHON_VERSION=2.7
-    - PYTHON_VERSION=3.5
-    - PYTHON_VERSION=3.6
-
-
 install:
-    - git clone git://github.com/astropy/ci-helpers.git
-    - source ci-helpers/travis/setup_conda.sh
-    - eval $BUILD_CMD
+  - pip install --upgrade pytest
+  - pip install codecov pytest-cov pytest-pep8
+  - pip install --upgrade numpy cython
+  - pip install -e .
 
 script:
-  - eval $SETUP_CMD
+  - py.test -v --cov pytng --pep8 pytng tests
 
 after_success:
   - codecov
