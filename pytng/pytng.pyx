@@ -85,6 +85,8 @@ cdef class TNGFile:
 
     def open(self, fname, mode):
         self.mode = mode
+        if not os.path.isfile(fname):
+            raise IOError("file does not exists: {}".format(fname))
 
         cdef char _mode
         if self.mode == 'r':
