@@ -12,7 +12,7 @@ env:
     # Set default python version to avoid repetition later
     - PYTHON_VERSION=2.7
     - SETUP_CMD="pytest -v tests"
-    - BUILD_CMD="python setup.py build_ext --inplace"
+    - BUILD_CMD="python setup.py install"
     - CONDA_DEPENDENCIES="cython numpy"
     - CONDA_CHANNELS='conda-forge'
     - NUMPY_VERSION=stable
