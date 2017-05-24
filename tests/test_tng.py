@@ -14,6 +14,11 @@ def test_len(TNG_REF_DATA, TNG_REF_FILEPATH):
         assert TNG_REF_DATA.length == tng.n_frames
         assert TNG_REF_DATA.length == len(tng)
 
+def test_iter(TNG_REF_DATA, TNG_REF_FILEPATH):
+    with pytng.TNGFile(TNG_REF_FILEPATH) as tng:
+        for i, ts in enumerate(tng):
+            assert i == ts.step
+
 def test_natoms(TNG_REF_DATA, TNG_REF_FILEPATH):
     with pytng.TNGFile(TNG_REF_FILEPATH) as tng:
         assert TNG_REF_DATA.natoms == tng.n_atoms
