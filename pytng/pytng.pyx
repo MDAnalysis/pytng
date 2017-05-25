@@ -240,7 +240,7 @@ cdef class TNGFile:
         cdef char text[128]
         for i in range(self._n_atoms):
             ok = tng_atom_type_of_particle_nr_get(self._traj, i, text, 128)
-            types[i] = str(text)
+            types[i] = bytes(text)
 
         return types
 
@@ -254,7 +254,7 @@ cdef class TNGFile:
         cdef char text[256]
         for i in range(self._n_atoms):
             ok = tng_atom_name_of_particle_nr_get(self._traj, i, text, 256)
-            names[i] = str(text)
+            names[i] = bytes(text)
 
         return names
 
@@ -268,7 +268,7 @@ cdef class TNGFile:
         cdef char text[1024]
         for i in range(self._n_atoms):
             ok = tng_chain_name_of_particle_nr_get(self._traj, i, text, 1024)
-            chains[i] = str(text)
+            chains[i] = bytes(text)
 
         return chains
 
@@ -286,7 +286,7 @@ cdef class TNGFile:
         cdef char text[1024]
         for i in range(self._n_atoms):
             ok = tng_residue_name_of_particle_nr_get(self._traj, i, text, 1024)
-            names[i] = str(text)
+            names[i] = bytes(text)
 
         return names
 
