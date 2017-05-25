@@ -70,6 +70,19 @@ cdef extern from "tng/tng_io.h":
         int64_t *n_values_per_frame,
         char *type)
 
+    tng_function_status tng_atom_name_of_particle_nr_get(
+                const tng_trajectory_t tng_data,
+                const int64_t nr,
+                char *name,
+                const int max_len)
+
+    tng_function_status tng_atom_type_of_particle_nr_get(
+                const tng_trajectory_t tng_data,
+                const int64_t nr,
+                char *type,
+                const int max_len)
+
+
 TNGFrame = namedtuple("TNGFrame", "positions time step box")
 
 cdef class TNGFile:
@@ -197,9 +210,36 @@ cdef class TNGFile:
             raise IOError("Failed to read number of molecules")
         return n_molecules
 
+    @property
+    def atomtypes(self):
+        if not self.is_open:
+            raise IOError('No file currently opened')
+        cdef int64_t i, ok
+        cdef np.ndarray[ndim=1, dtype=object] types = np.empty(self._n_atoms, dtype=object)
+
+        cdef char text[128]
+        for i in range(self._n_atoms):
+            ok = tng_atom_type_of_particle_nr_get(self._traj, i, text, 128)
+            types[i] = str(text)
+
+        return types
+
+    @property
+    def atomnames(self):
+        if not self.is_open:
+            raise IOError('No file currently opened')
+        cdef int64_t i, ok
+        cdef np.ndarray[ndim=1, dtype=object] names = np.empty(self._n_atoms, dtype=object)
+
+        cdef char text[256]
+        for i in range(self._n_atoms):
+            ok = tng_atom_name_of_particle_nr_get(self._traj, i, text, 256)
+            names[i] = str(text)
+
+        return names
+
     def __len__(self):
         return self.n_frames
-
 
     def tell(self):
         """Get current frame"""
