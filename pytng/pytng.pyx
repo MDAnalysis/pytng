@@ -24,6 +24,9 @@ cdef extern from "tng/tng_io.h":
     ctypedef struct tng_trajectory_t:
         pass
 
+    ctypedef struct tng_molecule_t:
+        pass
+
     tng_function_status tng_util_trajectory_open(
         const char *filename,
         const char mode,
@@ -270,6 +273,10 @@ cdef class TNGFile:
         return chains
 
     @property
+    def n_chains(self):
+        return len(np.unique(self.chainnames))
+
+    @property
     def residue_names(self):
         if not self.is_open:
             raise IOError('No file currently opened')
@@ -294,6 +301,10 @@ cdef class TNGFile:
             ok = tng_global_residue_id_of_particle_nr_get(self._traj, i, &ids[i])
 
         return ids
+
+    @property
+    def n_residues(self):
+        return len(np.unique(self.residue_ids))
 
     def __len__(self):
         return self.n_frames

@@ -39,6 +39,16 @@ def test_chainnames(GMX_REF_FILEPATH, GMX_REF_DATA):
             _ = tng.chainnames
 
 
+def test_n_chains(GMX_REF_FILEPATH, GMX_REF_DATA):
+    with pytng.TNGFile(GMX_REF_FILEPATH) as tng:
+        assert 1 == tng.n_chains
+
+
+def test_n_residues(GMX_REF_FILEPATH, GMX_REF_DATA):
+    with pytng.TNGFile(GMX_REF_FILEPATH) as tng:
+        assert 5 == tng.n_residues
+
+
 def test_residue_ids(GMX_REF_FILEPATH, GMX_REF_DATA):
     with pytng.TNGFile(GMX_REF_FILEPATH) as tng:
         ids = tng.residue_ids
@@ -52,8 +62,7 @@ def test_residue_ids(GMX_REF_FILEPATH, GMX_REF_DATA):
 def test_residue_names(GMX_REF_FILEPATH, GMX_REF_DATA):
     with pytng.TNGFile(GMX_REF_FILEPATH) as tng:
         ids = tng.residue_names
-        assert np.array_equal(ids,
-                              ['WAT'] * 15)
+        assert np.array_equal(ids, ['WAT'] * 15)
         tng.close()
         with pytest.raises(IOError):
             _ = tng.residue_names
