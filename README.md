@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/MDAnalysis/pytng.svg?branch=master)](https://travis-ci.org/MDAnalysis/pytng)
+[![codecov](https://codecov.io/gh/MDAnalysis/pytng/branch/master/graph/badge.svg)](https://codecov.io/gh/MDAnalysis/pytng)
 
 # pytng
 
