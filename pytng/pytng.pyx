@@ -84,7 +84,6 @@ cdef class TNGFile:
     cdef int reached_eof
     cdef int64_t _n_frames
     cdef int64_t _n_atoms
-    cdef int64_t _n_molecules
     cdef int64_t step
     cdef float distance_scale
 
@@ -148,13 +147,6 @@ cdef class TNGFile:
         self.step = 0
         self.reached_eof = False
 
-    @property
-    def n_molecules(self):
-        ok = tng_num_molecules_get(self._traj, & self._n_molecules)
-        if ok != TNG_SUCCESS:
-            raise IOError("Failed to read number of molecules")
-        return self._n_molecules
-
     def close(self):
         """Make sure the file handle is closed"""
         if self.is_open:
@@ -195,8 +187,19 @@ cdef class TNGFile:
             raise IOError('No file currently opened')
         return self._n_atoms
 
+    @property
+    def n_molecules(self):
+        if not self.is_open:
+            raise IOError('No file currently opened')
+        cdef int64_t n_molecules
+        ok = tng_num_molecules_get(self._traj, & n_molecules)
+        if ok != TNG_SUCCESS:
+            raise IOError("Failed to read number of molecules")
+        return n_molecules
+
     def __len__(self):
         return self.n_frames
+
 
     def tell(self):
         """Get current frame"""
