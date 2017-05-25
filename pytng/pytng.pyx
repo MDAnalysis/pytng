@@ -2,6 +2,13 @@
 # distutils: define_macros=CYTHON_TRACE=1
 """
 
+The TNG format [#f1]_ [#f2]_ is used by molecular simulation programs such as
+Gromacs [#f3]_ for storing both the topology and results from a molecular
+dynamics simulation.
+
+.. [#f1] http://link.springer.com/article/10.1007%2Fs00894-010-0948-5
+.. [#f2] http://onlinelibrary.wiley.com/doi/10.1002/jcc.23495/abstract
+.. [#f3] http://manual.gromacs.org/online/tng.html
 
 Usage example for TNGFile
 -------------------------
