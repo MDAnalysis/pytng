@@ -28,3 +28,10 @@ def test_chainnames(GMX_REF_FILEPATH, GMX_REF_DATA):
     with pytng.TNGFile(GMX_REF_FILEPATH) as tng:
         names = tng.chainnames
         assert np.array_equal(names, ['W', ] * 15)
+
+
+def test_residue_ids(GMX_REF_FILEPATH, GMX_REF_DATA):
+    with pytng.TNGFile(GMX_REF_FILEPATH) as tng:
+        ids = tng.residue_ids
+        assert np.array_equal(ids,
+                              [1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5])
