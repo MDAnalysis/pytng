@@ -82,6 +82,12 @@ cdef extern from "tng/tng_io.h":
                 char *type,
                 const int max_len)
 
+    tng_function_status tng_chain_name_of_particle_nr_get(
+        const tng_trajectory_t tng_data,
+        const int64_t nr,
+        char *name,
+        const int max_len)
+
 
 TNGFrame = namedtuple("TNGFrame", "positions time step box")
 
@@ -237,6 +243,20 @@ cdef class TNGFile:
             names[i] = str(text)
 
         return names
+
+    @property
+    def chainnames(self):
+        if not self.is_open:
+            raise IOError('No file currently opened')
+        cdef int64_t i, ok
+        cdef np.ndarray[ndim=1, dtype=object] chains = np.empty(self._n_atoms, dtype=object)
+
+        cdef char text[1024]
+        for i in range(self._n_atoms):
+            ok = tng_chain_name_of_particle_nr_get(self._traj, i, text, 1024)
+            chains[i] = str(text)
+
+        return chains
 
     def __len__(self):
         return self.n_frames
