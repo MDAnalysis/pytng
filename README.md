@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/MDAnalysis/pytng.svg?branch=master)](https://travis-ci.org/MDAnalysis/pytng.svg?branch=master)
+[![Build Status](https://travis-ci.org/MDAnalysis/pytng.svg?branch=master)](https://travis-ci.org/MDAnalysis/pytng)
 
 # pytng
 
