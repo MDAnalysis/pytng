@@ -1,12 +1,24 @@
 # cython: linetrace=True
 # distutils: define_macros=CYTHON_TRACE=1
 """
+
+
 Usage example for TNGFile
 -------------------------
 
-TNG files can be read using the TNGFile class as a file handle.
+TNG files can be read using the TNGFile class as a file handle,
+which supports use as a context manager.
 The TNGFile returns one frame at a time, which each frame being returned as a
-namedtuple.
+namedtuple with the following attributes:
+
+========== ======= ======================================
+attribute  type    description
+========== ======= ======================================
+`xyz`      float32 coordinates for each atom in the frame
+`time`     float   current system time
+`step`     int     frame index
+`box`      float32 3x3 matrix of the system volume
+========== ======= ======================================
 
 For example, the coordinate information can be accessed via the `.xyz` attribute
 of the returned frame object.
@@ -19,7 +31,18 @@ of the returned frame object.
       for ts in f:
           ts.xyz
 
+It is also possible to slice and index the file object to select particular
+frames
 
+.. code-block:: python
+
+  import pytng
+
+  with pytng.TNGFile('traj.tng', 'r') as f:
+      first_frame = f[0]
+      last_frame = f[-1]
+
+      every_other_frame = [ts for ts in f[::2]]
 
 
 API for the TNGFile class
