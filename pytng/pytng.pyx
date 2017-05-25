@@ -93,6 +93,12 @@ cdef extern from "tng/tng_io.h":
         const int64_t nr,
         int64_t *id)
 
+    tng_function_status tng_residue_name_of_particle_nr_get(
+        const tng_trajectory_t tng_data,
+        const int64_t nr,
+        char *name,
+        const int max_len)
+
 
 TNGFrame = namedtuple("TNGFrame", "positions time step box")
 
@@ -262,6 +268,20 @@ cdef class TNGFile:
             chains[i] = str(text)
 
         return chains
+
+    @property
+    def residue_names(self):
+        if not self.is_open:
+            raise IOError('No file currently opened')
+        cdef int64_t i, ok
+        cdef np.ndarray[ndim=1, dtype=object] names = np.empty(self._n_atoms, dtype=object)
+
+        cdef char text[1024]
+        for i in range(self._n_atoms):
+            ok = tng_residue_name_of_particle_nr_get(self._traj, i, text, 1024)
+            names[i] = str(text)
+
+        return names
 
     @property
     def residue_ids(self):
