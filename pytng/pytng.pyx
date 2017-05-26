@@ -1,4 +1,5 @@
 # cython: linetrace=True
+# cython: embedsignature=True
 # distutils: define_macros=CYTHON_TRACE=1
 from libc.stdint cimport int64_t
 from libc.stdlib cimport malloc, free
@@ -68,7 +69,10 @@ cdef extern from "tng/tng_io.h":
 TNGFrame = namedtuple("TNGFrame", "positions time step box")
 
 cdef class TNGFile:
-    """File handle object for TNG files"""
+    """File handle object for TNG files
+
+    Supports use as a context manager ("with" blocks).
+    """
     cdef tng_trajectory_t _traj
     cdef readonly fname
     cdef str mode
@@ -162,7 +166,6 @@ cdef class TNGFile:
         return self
 
     def __next__(self):
-        """Return next frame"""
         if self.reached_eof:
             raise StopIteration
         return self.read()
@@ -189,7 +192,13 @@ cdef class TNGFile:
         return self.step
 
     def read(self):
-        """Read the next frame"""
+        """Read the next frame
+
+        Returns
+        -------
+        frame : namedtuple
+          contains all data from this frame
+        """
         if self.reached_eof:
             raise IOError('Reached last frame in TNG, seek to 0')
         if not self.is_open:
