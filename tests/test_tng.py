@@ -45,24 +45,29 @@ def test_sliced_iteration(slice_idx, GMX_REF_DATA, GMX_REF_FILEPATH):
             assert ref_ts == ts.step
 
 
-@pytest.mark.parametrize('indices', (
+@pytest.mark.parametrize('slx', (
     [0, 1, 2],
     [5, 3, 1],
-    [1, 1, 1]
+    [1, 1, 1],
+    [0, -1, 0],
+    [-2, -3, -4],
 ))
 @pytest.mark.parametrize('cls', [list, np.array])
-def test_getitem_multipl_ints(indices, cls, GMX_REF_DATA, GMX_REF_FILEPATH):
-    indices = cls(indices)
+def test_getitem_multipl_ints(slx, cls, GMX_REF_DATA, GMX_REF_FILEPATH):
+    slx = cls(slx)
+    indices = np.arange(GMX_REF_DATA.length)
     with pytng.TNGFile(GMX_REF_FILEPATH) as tng:
-        for ref_step, ts in zip(indices, tng[indices]):
+        for ref_step, ts in zip(indices[slx], tng[slx]):
             assert ref_step == ts.step
 
 
-@pytest.mark.parametrize('idx', [0, 4, 9])
+@pytest.mark.parametrize('idx', [0, 4, 9, -1, -2])
 def test_getitem_int(idx, GMX_REF_DATA, GMX_REF_FILEPATH):
+    indices = np.arange(GMX_REF_DATA.length)
     with pytng.TNGFile(GMX_REF_FILEPATH) as tng:
         ts = tng[idx]
-        assert idx == ts.step
+        assert ts.step == indices[idx]
+
 
 
 @pytest.mark.parametrize('arr', (

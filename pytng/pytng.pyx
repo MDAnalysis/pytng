@@ -265,6 +265,11 @@ cdef class TNGFile:
            desired frame number
         """
         if self.is_open:
+            if step < 0:
+                step += len(self)
+            if (step < 0) or (step >= len(self)):
+                raise IndexError
+
             self.step = step
         else:
             raise IOError("seek not allowed in write mode")
