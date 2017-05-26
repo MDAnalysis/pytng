@@ -23,7 +23,8 @@ script:
 after_success:
   - codecov
   # only need to build docs on 3.6 version
-  - if [[ $TRAVIS_PYTHON_VERSION == "3.6" ]]; then cd docs && make html && cd ../; fi
+  # touch .nojekyll else github-pages messes up theme
+  - if [[ $TRAVIS_PYTHON_VERSION == "3.6" ]]; then cd docs && make html && touch ./_build/html/.nojekyll && cd ../; fi
 
 deploy:
   # stuff related to deploying to gh-pages
