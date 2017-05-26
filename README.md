@@ -5,13 +5,12 @@
 
 Python bindings for TNG file format
 
+
 ```python
 import pytng
 
 with pytng.TNGFile('traj.tng', 'r') as f:
-    for frame in f:
-        coordinates = f.xyz
+    for ts in f:
+        coordinates = ts.positions
 ```
-   ```
-
 
