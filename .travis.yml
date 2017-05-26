@@ -21,3 +21,16 @@ script:
 
 after_success:
   - codecov
+  # only need to build docs on 3.6 version
+  - if [[ $TRAVIS_PYTHON_VERSION == "3.6" ]]; then cd docs && make html; fi
+
+deploy:
+  # stuff related to deploying to gh-pages
+  provider: pages
+  skip_cleanup: true
+  github_token: $GH_PAGES_TOKEN
+  on:
+    branch: master
+    python: "3.6"
+  local_dir: docs/_build/html
+  project_name: pytng
