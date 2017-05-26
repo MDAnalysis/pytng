@@ -69,7 +69,6 @@ def test_getitem_int(idx, GMX_REF_DATA, GMX_REF_FILEPATH):
         assert ts.step == indices[idx]
 
 
-
 @pytest.mark.parametrize('arr', (
     [T] * 10,
     [F] * 10,
