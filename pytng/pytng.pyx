@@ -18,17 +18,17 @@ which supports use as a context manager.
 The TNGFile returns one frame at a time, which each frame being returned as a
 namedtuple with the following attributes:
 
-========== ======= ======================================
-attribute  type    description
-========== ======= ======================================
-`xyz`      float32 coordinates for each atom in the frame
-`time`     float   current system time
-`step`     int     frame index
-`box`      float32 3x3 matrix of the system volume
-========== ======= ======================================
+============ ======== =======================================
+attribute    type     description
+============ ======== =======================================
+`positions`  float32  coordinates for each atom in the frame
+`time`       float    current system time
+`step`       int      frame index
+`box`        float32  3x3 matrix of the system volume
+============ ======== =======================================
 
-For example, the coordinate information can be accessed via the `.xyz` attribute
-of the returned frame object.
+For example, the coordinate information can be accessed via the `.positions` 
+attribute of the returned object.
 
 .. code-block:: python
 
@@ -36,7 +36,7 @@ of the returned frame object.
 
   with pytng.TNGFile('traj.tng', 'r') as f:
       for ts in f:
-          ts.xyz
+          ts.positions
 
 It is also possible to slice and index the file object to select particular
 frames
@@ -126,7 +126,7 @@ cdef extern from "tng/tng_io.h":
         int64_t *n_values_per_frame,
         char *type)
 
-TNGFrame = namedtuple("TNGFrame", "xyz time step box")
+TNGFrame = namedtuple("TNGFrame", "positions time step box")
 
 cdef class TNGFile:
     """File handle object for TNG files"""

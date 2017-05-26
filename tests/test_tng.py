@@ -97,14 +97,14 @@ def test_natoms(GMX_REF_DATA, GMX_REF_FILEPATH):
 
 def test_first_positions(GMX_REF_DATA, GMX_REF_FILEPATH):
     with pytng.TNGFile(GMX_REF_FILEPATH) as tng:
-        first_frame = tng.read().xyz
+        first_frame = tng.read().positions
         assert np.array_equal(GMX_REF_DATA.first_frame, first_frame)
 
 
 def test_last_positions(GMX_REF_DATA, GMX_REF_FILEPATH):
     with pytng.TNGFile(GMX_REF_FILEPATH) as tng:
         tng.seek(tng.n_frames - 1)
-        last_frame = tng.read().xyz
+        last_frame = tng.read().positions
         assert np.array_equal(GMX_REF_DATA.last_frame, last_frame)
 
 
