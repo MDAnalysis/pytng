@@ -113,6 +113,13 @@ def test_last_positions(GMX_REF_DATA, GMX_REF_FILEPATH):
         assert np.array_equal(GMX_REF_DATA.last_frame, last_frame)
 
 
+@pytest.mark.parametrize('idx', [-11, -12, 10, 11])
+def test_seek_IOError(idx, GMX_REF_FILEPATH):
+    with pytng.TNGFile(GMX_REF_FILEPATH, 'r') as tng:
+        with pytest.raises(IndexError):
+            tng[idx]
+
+
 def test_time(GMX_REF_DATA, GMX_REF_FILEPATH):
     with pytng.TNGFile(GMX_REF_FILEPATH) as tng:
         for ref_time, ts in zip(GMX_REF_DATA.time, tng):

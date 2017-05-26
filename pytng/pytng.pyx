@@ -277,7 +277,7 @@ cdef class TNGFile:
             if step < 0:
                 step += len(self)
             if (step < 0) or (step >= len(self)):
-                raise IndexError
+                raise IndexError("Seek index out of bounds")
 
             self.step = step
         else:
