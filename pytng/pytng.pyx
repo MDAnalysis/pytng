@@ -102,14 +102,13 @@ cdef class TNGFile:
            mode to open the file in, 'r' for read, 'w' for write
         """
         self.mode = mode
-        if not os.path.isfile(fname):
-            raise IOError("file does not exists: {}".format(fname))
 
         cdef char _mode
         if self.mode == 'r':
             _mode = 'r'
         elif self.mode == 'w':
             _mode = 'w'
+            raise NotImplementedError('Writing is not implemented yet.')
         else:
             raise IOError('mode must be one of "r" or "w", you '
                           'supplied {}'.format(mode))
@@ -118,7 +117,7 @@ cdef class TNGFile:
 
         # handle file not existing at python level,
         # C level is nasty and causes crash
-        if self.mode == 'r' and not os.path.exists(fname):
+        if self.mode == 'r' and not os.path.isfile(fname):
             raise IOError("File '{}' does not exist".format(fname))
 
         fname_bytes = fname.encode('UTF-8')

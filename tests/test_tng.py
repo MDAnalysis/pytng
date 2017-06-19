@@ -12,10 +12,22 @@ def test_load_bad_file(CORRUPT_FILEPATH):
             tng.read()
 
 
-def test_load_missing_file(MISSING_FILEPATH):
-    with pytest.raises(IOError):
-        with pytng.TNGFile(MISSING_FILEPATH) as tng:
+def test_open_missing_file_mode_r(MISSING_FILEPATH):
+    with pytest.raises(IOError) as excinfo:
+        with pytng.TNGFile(MISSING_FILEPATH, mode='r') as tng:
             tng.read()
+        assert 'does not exist' in str(excinfo.value)
+
+
+def test_open_mode_w(MISSING_FILEPATH):
+    with pytest.raises(NotImplementedError):
+        pytng.TNGFile(MISSING_FILEPATH, mode='w')
+
+
+def test_open_invalide_mode(GMX_REF_FILEPATH):
+    with pytest.raises(IOError) as excinfo:
+        pytng.TNGFile(GMX_REF_FILEPATH, mode='invalid')
+    assert 'mode must be one of "r" or "w"' in str(excinfo.value)
 
 
 def test_len(GMX_REF_DATA, GMX_REF_FILEPATH):
