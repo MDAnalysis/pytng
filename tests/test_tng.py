@@ -131,10 +131,7 @@ def test_seek_IndexError(idx, GMX_REF_FILEPATH):
             tng[idx]
 
 
-# An exception is raised because the file does not exist (see issue #10).
-# Using an existing file instead would fix the issue, but would also empty
-# the file therefore breaking subsequent tests.
-@pytest.mark.skip(reason="An other issue interfere, see issue #10")
+@pytest.mark.skip(reason="Write mode not implemented yet.")
 def test_seek_write(MISSING_FILEPATH):
     with pytng.TNGFile(MISSING_FILEPATH, mode='w') as tng:
         with pytest.raises(IOError) as excinfo:
