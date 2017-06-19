@@ -272,6 +272,8 @@ cdef class TNGFile:
         step : int
            desired frame number
         """
+        if self.mode == 'w':
+            raise IOError("seek not allowed in write mode")
         if self.is_open:
             if step < 0:
                 step += len(self)
@@ -280,7 +282,7 @@ cdef class TNGFile:
 
             self.step = step
         else:
-            raise IOError("seek not allowed in write mode")
+            raise IOError('No file currently opened')
 
     def __getitem__(self, frame):
         cdef int64_t start, stop, step, i
