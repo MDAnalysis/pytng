@@ -113,10 +113,29 @@ def test_last_positions(GMX_REF_DATA, GMX_REF_FILEPATH):
 
 
 @pytest.mark.parametrize('idx', [-11, -12, 10, 11])
-def test_seek_IOError(idx, GMX_REF_FILEPATH):
+def test_seek_IndexError(idx, GMX_REF_FILEPATH):
     with pytng.TNGFile(GMX_REF_FILEPATH, 'r') as tng:
         with pytest.raises(IndexError):
             tng[idx]
+
+
+# An exception is raised because the file does not exist (see issue #10).
+# Using an existing file instead would fix the issue, but would also empty
+# the file therefore breaking subsequent tests.
+@pytest.mark.skip(reason="An other issue interfere, see issue #10")
+def test_seek_write(MISSING_FILEPATH):
+    with pytng.TNGFile(MISSING_FILEPATH, mode='w') as tng:
+        with pytest.raises(IOError) as excinfo:
+            tng.seek(0)
+        assert "seek not allowed in write mode" in str(excinfo.value)
+
+
+def test_seek_not_open(GMX_REF_FILEPATH):
+    with pytng.TNGFile(GMX_REF_FILEPATH) as tng:
+        pass
+    with pytest.raises(IOError) as excinfo:
+        tng.seek(0)
+    assert 'No file currently opened' in str(excinfo.value)
 
 
 def test_time(GMX_REF_DATA, GMX_REF_FILEPATH):
