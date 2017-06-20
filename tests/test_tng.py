@@ -47,6 +47,10 @@ def test_iter(GMX_REF_DATA, GMX_REF_FILEPATH):
     (2, None, None),
     (None, 2, None),
     (None, None, 3),
+    (1, 3, None),
+    (None, None, -1),
+    (0, -1, None),
+    (None, 99, None),  # Out of bound
 ])
 def test_sliced_iteration(slice_idx, GMX_REF_DATA, GMX_REF_FILEPATH):
     start, stop, step = slice_idx
@@ -79,6 +83,21 @@ def test_getitem_int(idx, GMX_REF_DATA, GMX_REF_FILEPATH):
     with pytng.TNGFile(GMX_REF_FILEPATH) as tng:
         ts = tng[idx]
         assert ts.step == indices[idx]
+
+
+@pytest.mark.parametrize('idx', [
+    'a',
+    'invalid',
+    (0, 1),
+    lambda x: x
+])
+def test_getitem_single_invalid(idx, GMX_REF_FILEPATH):
+    with pytng.TNGFile(GMX_REF_FILEPATH) as tng:
+        with pytest.raises(TypeError) as excinfo:
+            tng[idx]
+    message = ("Trajectories must be an indexed using an integer,"
+               " slice or list of indices")
+    assert message in str(excinfo.value)
 
 
 @pytest.mark.parametrize('arr', (
@@ -166,3 +185,34 @@ def test_double_iteration(GMX_REF_FILEPATH):
 
         for i, frame in enumerate(tng):
             assert i == frame.step
+
+
+@pytest.mark.parametrize('prop', ('n_frames', 'n_atoms'))
+def test_property_not_open(prop, GMX_REF_FILEPATH):
+    with pytng.TNGFile(GMX_REF_FILEPATH) as tng:
+        pass
+    with pytest.raises(IOError) as excinfo:
+        getattr(tng, prop)
+    assert 'No file currently opened' in str(excinfo.value)
+
+
+def test_tell(GMX_REF_FILEPATH):
+    with pytng.TNGFile(GMX_REF_FILEPATH) as tng:
+        for step, frame in enumerate(tng, start=1):
+            assert step == tng.tell()
+
+
+def test_read_not_open(GMX_REF_FILEPATH):
+    with pytng.TNGFile(GMX_REF_FILEPATH) as tng:
+        pass
+    with pytest.raises(IOError) as excinfo:
+        tng.read()
+    assert 'No file opened' in str(excinfo.value)
+
+
+@pytest.mark.skip(reason="Write mode not implemented yet.")
+def test_read_not_mode_r(MISSING_FILEPATH):
+    with pytest.raises(IOError) as excinfo:
+        with pytng.TNGFile(MISSING_FILEPATH, mode='w') as tng:
+            tng.read()
+    assert 'Reading only allow in mode "r"' in str(excinfo.value)
