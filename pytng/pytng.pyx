@@ -331,19 +331,6 @@ cdef class TNGFile:
         self.step += 1
         return TNGFrame(xyz, time, self.step - 1, box)
 
-    def _init_first_frame_write(self, int64_t n_atoms,
-                                box_shape_interval=1, pos_interval=1,
-                                time=None):
-        cdef int64_t ok
-
-        ok = tng_implicit_num_particles_set(self._traj, n_atoms)
-        if_not_ok(ok, 'Could not set the number of particles')
-
-        ok = tng_util_pos_write_interval_set(self._traj, 1)
-        if_not_ok(ok, 'Could not set position write interval')
-        ok = tng_util_box_shape_write_interval_set(self._traj, 1)
-        if_not_ok(ok, 'Could not set box shape write interval')
-
     def write(self,
               np.ndarray[np.float32_t, ndim=2, mode='c'] positions,
               np.ndarray[np.float32_t, ndim=2, mode='c'] box,
@@ -359,7 +346,14 @@ cdef class TNGFile:
         cdef np.ndarray[float, ndim=2, mode='c'] box_contiguous
 
         if self._n_frames == 0:
-            self._init_first_frame_write(n_atoms=positions.shape[0])
+            self._n_atoms = positions.shape[0]
+            ok = tng_implicit_num_particles_set(self._traj, self.n_atoms)
+            if_not_ok(ok, 'Could not set the number of particles')
+        elif self.n_atoms != positions.shape[0]:
+            message = ('Only fixed number of particles is supported. '
+                       'Cannot write {} particles instead of {}.'
+                       .format(positions.shape[0], self.n_atoms))
+            raise NotImplementedError(message)
 
         if time is not None:
             try:
