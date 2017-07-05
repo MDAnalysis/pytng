@@ -19,11 +19,6 @@ def test_open_missing_file_mode_r(MISSING_FILEPATH):
         assert 'does not exist' in str(excinfo.value)
 
 
-def test_open_mode_w(MISSING_FILEPATH):
-    with pytest.raises(NotImplementedError):
-        pytng.TNGFile(MISSING_FILEPATH, mode='w')
-
-
 def test_open_invalide_mode(GMX_REF_FILEPATH):
     with pytest.raises(IOError) as excinfo:
         pytng.TNGFile(GMX_REF_FILEPATH, mode='invalid')
@@ -150,7 +145,6 @@ def test_seek_IndexError(idx, GMX_REF_FILEPATH):
             tng[idx]
 
 
-@pytest.mark.skip(reason="Write mode not implemented yet.")
 def test_seek_write(MISSING_FILEPATH):
     with pytng.TNGFile(MISSING_FILEPATH, mode='w') as tng:
         with pytest.raises(IOError) as excinfo:

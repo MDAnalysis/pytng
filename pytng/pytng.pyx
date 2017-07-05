@@ -28,6 +28,7 @@ cdef extern from "tng/tng_io.h":
         const char *filename,
         const char mode,
         tng_trajectory_t *tng_data_p)
+
     tng_function_status tng_util_trajectory_close(
         tng_trajectory_t *tng_data_p)
 
@@ -65,6 +66,70 @@ cdef extern from "tng/tng_io.h":
         int64_t *stride_length,
         int64_t *n_values_per_frame,
         char *type)
+
+    tng_function_status tng_util_box_shape_write_interval_set(
+        const tng_trajectory_t tng_data,
+        const int64_t interval)
+
+    tng_function_status tng_util_pos_write_interval_set(
+        const tng_trajectory_t tng_data,
+        const int64_t interval)
+
+    tng_function_status tng_util_vel_write_interval_set(
+        const tng_trajectory_t tng_data,
+        const int64_t interval)
+
+    tng_function_status tng_util_force_write_interval_set(
+        const tng_trajectory_t tng_data,
+        const int64_t interval)
+
+    tng_function_status tng_util_box_shape_write(
+        const tng_trajectory_t tng_data,
+        const int64_t frame_nr,
+        const float *box_shape)
+
+    tng_function_status tng_util_box_shape_with_time_write(
+        const tng_trajectory_t tng_data,
+        const int64_t frame_nr,
+        const double time,
+        const float *box_shape)
+
+    tng_function_status tng_util_pos_write(
+        const tng_trajectory_t tng_data,
+        const int64_t frame_nr,
+        const float *positions)
+
+    tng_function_status tng_util_pos_with_time_write(
+        const tng_trajectory_t tng_data,
+        const int64_t frame_nr,
+        const double time,
+        const float *positions)
+
+    tng_function_status tng_util_vel_write(
+        const tng_trajectory_t tng_data,
+        const int64_t frame_nr,
+        const float *velocities)
+
+    tng_function_status tng_util_vel_with_time_write(
+        const tng_trajectory_t tng_data,
+        const int64_t frame_nr,
+        const double time,
+        const float *velocities)
+
+    tng_function_status tng_util_force_write(
+        const tng_trajectory_t tng_data,
+        const int64_t frame_nr,
+        const float *forces)
+
+    tng_function_status tng_util_force_with_time_write(
+        const tng_trajectory_t tng_data,
+        const int64_t frame_nr,
+        const double time,
+        const float *forces)
+
+    tng_function_status tng_implicit_num_particles_set(
+        const tng_trajectory_t tng_data,
+        const int64_t n)
 
 TNGFrame = namedtuple("TNGFrame", "positions time step box")
 
@@ -108,7 +173,6 @@ cdef class TNGFile:
             _mode = 'r'
         elif self.mode == 'w':
             _mode = 'w'
-            raise NotImplementedError('Writing is not implemented yet.')
         else:
             raise IOError('mode must be one of "r" or "w", you '
                           'supplied {}'.format(mode))
@@ -138,6 +202,9 @@ cdef class TNGFile:
             if ok != TNG_SUCCESS:
                 raise IOError("An error ocurred reading distance unit exponent. {}".format(status_error_message[ok]))
             self.distance_scale = 10.0**(exponent+9)
+        elif self.mode == 'w':
+            self._n_frames = 0  # No frame were written yet
+            # self._n_atoms ?
 
         self.is_open = True
         self.step = 0
@@ -203,8 +270,8 @@ cdef class TNGFile:
         if not self.is_open:
             raise IOError('No file opened')
         if self.mode != 'r':
-            raise IOError('File opened in mode: {}. Reading only allow '
-                          'in mode "r"'.format('self.mode'))
+            raise IOError('File opened in mode: {}. Reading only allowed '
+                          'in mode "r"'.format(self.mode))
         if self.step >= self.n_frames:
             self.reached_eof = True
             raise StopIteration("Reached EOF in read")
@@ -264,6 +331,64 @@ cdef class TNGFile:
         self.step += 1
         return TNGFrame(xyz, time, self.step - 1, box)
 
+    def _init_first_frame_write(self, int64_t n_atoms,
+                                box_shape_interval=1, pos_interval=1,
+                                time=None):
+        cdef int64_t ok
+
+        ok = tng_implicit_num_particles_set(self._traj, n_atoms)
+        if_not_ok(ok, 'Could not set the number of particles')
+
+        ok = tng_util_pos_write_interval_set(self._traj, 1)
+        if_not_ok(ok, 'Could not set position write interval')
+        ok = tng_util_box_shape_write_interval_set(self._traj, 1)
+        if_not_ok(ok, 'Could not set box shape write interval')
+
+    def write(self,
+              np.ndarray[np.float32_t, ndim=2, mode='c'] positions,
+              np.ndarray[np.float32_t, ndim=2, mode='c'] box,
+              time=None):
+        if self.mode != 'w':
+            raise IOError('File opened in mode: {}. Writing only allowed '
+                          'in mode "w"'.format(self.mode))
+        if not self.is_open:
+            raise IOError('No file currently opened')
+
+        cdef int64_t ok
+        cdef np.ndarray[float, ndim=2, mode='c'] xyz
+        cdef np.ndarray[float, ndim=2, mode='c'] box_contiguous
+
+        if self._n_frames == 0:
+            self._init_first_frame_write(n_atoms=positions.shape[0])
+
+        if time is not None:
+            try:
+                time = float(time)
+            except ValueError:
+                raise ValueError('time must be a real number or None')
+
+        box_contiguous = np.ascontiguousarray(box, dtype=np.float32)
+        if time is None:
+            ok = tng_util_box_shape_write(self._traj, self.step,
+                                          &box_contiguous[0, 0])
+        else:
+            ok = tng_util_box_shape_with_time_write(self._traj,
+                                                    self.step,
+                                                    time,
+                                                    &box_contiguous[0, 0])
+        if_not_ok(ok, 'Could not write box shape')
+
+        xyz = np.ascontiguousarray(positions, dtype=np.float32)
+        if time is None:
+            ok = tng_util_pos_write(self._traj, self.step, &xyz[0, 0])
+        else:
+            ok = tng_util_pos_with_time_write(self._traj, self.step,
+                                              time, &xyz[0, 0])
+        if_not_ok(ok, 'Could not write positions')
+
+        self.step += 1
+        self._n_frames += 1
+
     def seek(self, step):
         """Move the file handle to a particular frame number
 
@@ -319,3 +444,8 @@ cdef class TNGFile:
         else:
             raise TypeError("Trajectories must be an indexed using an integer,"
                             " slice or list of indices")
+
+
+def if_not_ok(ok, message, exception=IOError):
+    if ok != TNG_SUCCESS:
+        raise exception(message)
