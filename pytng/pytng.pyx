@@ -131,6 +131,10 @@ cdef extern from "tng/tng_io.h":
         const tng_trajectory_t tng_data,
         const int64_t n)
 
+    tng_function_status tng_num_frames_per_frame_set_set(
+        const tng_trajectory_t tng_data,
+        const int64_t n)
+
 TNGFrame = namedtuple("TNGFrame", "positions time step box")
 
 cdef class TNGFile:
@@ -346,6 +350,7 @@ cdef class TNGFile:
         cdef np.ndarray[float, ndim=2, mode='c'] box_contiguous
 
         if self._n_frames == 0:
+            ok = tng_num_frames_per_frame_set_set(self._traj, 1)
             self._n_atoms = positions.shape[0]
             ok = tng_implicit_num_particles_set(self._traj, self.n_atoms)
             if_not_ok(ok, 'Could not set the number of particles')
@@ -357,9 +362,20 @@ cdef class TNGFile:
 
         if time is not None:
             try:
-                time = float(time)
+                time = float(time)  # Make sure time is a real
+                # Time is provided to this function in picoseconds,
+                # but functions from tng_io expect seconds.
+                time *= 1e-12
             except ValueError:
                 raise ValueError('time must be a real number or None')
+
+        xyz = np.ascontiguousarray(positions, dtype=np.float32)
+        if time is None:
+            ok = tng_util_pos_write(self._traj, self.step, &xyz[0, 0])
+        else:
+            ok = tng_util_pos_with_time_write(self._traj, self.step,
+                                              time, &xyz[0, 0])
+        if_not_ok(ok, 'Could not write positions')
 
         box_contiguous = np.ascontiguousarray(box, dtype=np.float32)
         if time is None:
@@ -371,14 +387,6 @@ cdef class TNGFile:
                                                     time,
                                                     &box_contiguous[0, 0])
         if_not_ok(ok, 'Could not write box shape')
-
-        xyz = np.ascontiguousarray(positions, dtype=np.float32)
-        if time is None:
-            ok = tng_util_pos_write(self._traj, self.step, &xyz[0, 0])
-        else:
-            ok = tng_util_pos_with_time_write(self._traj, self.step,
-                                              time, &xyz[0, 0])
-        if_not_ok(ok, 'Could not write positions')
 
         self.step += 1
         self._n_frames += 1
