@@ -15,8 +15,12 @@ np.import_array()
 ctypedef enum tng_function_status: TNG_SUCCESS, TNG_FAILURE, TNG_CRITICAL
 ctypedef enum tng_data_type: TNG_CHAR_DATA, TNG_INT_DATA, TNG_FLOAT_DATA, TNG_DOUBLE_DATA
 ctypedef enum tng_hash_mode: TNG_SKIP_HASH, TNG_USE_HASH
+ctypedef enum tng_block_type: TNG_NON_TRAJECTORY_BLOCK, TNG_TRAJECTORY_BLOCK
+ctypedef enum tng_compression: TNG_UNCOMPRESSED, TNG_XTC_COMPRESSION, TNG_TNG_COMPRESSION, TNG_GZIP_COMPRESSION
+ctypedef enum tng_particle_dependency: TNG_NON_PARTICLE_BLOCK_DATA, TNG_PARTICLE_BLOCK_DATA
 
 cdef long long TNG_TRAJ_BOX_SHAPE = 0x0000000010000000LL
+cdef long long TNG_TRAJ_POSITIONS = 0x0000000010000001LL
 
 status_error_message = ['OK', 'Failure', 'Critical']
 
@@ -134,6 +138,42 @@ cdef extern from "tng/tng_io.h":
     tng_function_status tng_num_frames_per_frame_set_set(
         const tng_trajectory_t tng_data,
         const int64_t n)
+
+    tng_function_status tng_util_generic_with_time_write(
+        const tng_trajectory_t tng_data,
+        const int64_t frame_nr,
+        const double time,
+        const float *values,
+        const int64_t n_values_per_frame,
+        const int64_t block_id,
+        const char *block_name,
+        const char particle_dependency,
+        const char compression)
+
+    tng_function_status tng_time_per_frame_set(
+        const tng_trajectory_t tng_data,
+        const double time)
+
+    tng_function_status tng_util_generic_with_time_write(
+        const tng_trajectory_t tng_data,
+        const int64_t frame_nr,
+        const double time,
+        const float *values,
+        const int64_t n_values_per_frame,
+        const int64_t block_id,
+        const char *block_name,
+        const char particle_dependency,
+        const char compression)
+
+    tng_function_status tng_util_generic_write_interval_set(
+        const tng_trajectory_t tng_data,
+        const int64_t i,
+        const int64_t n_values_per_frame,
+        const int64_t block_id,
+        const char *block_name,
+        const char particle_dependency,
+        const char compression)
+
 
 TNGFrame = namedtuple("TNGFrame", "positions time step box")
 
@@ -348,14 +388,37 @@ cdef class TNGFile:
         cdef int64_t ok
         cdef np.ndarray[float, ndim=2, mode='c'] xyz
         cdef np.ndarray[float, ndim=2, mode='c'] box_contiguous
+        cdef double dt
 
         if self._n_frames == 0:
+            # TODO: The number of frames per frame set should be tunable.
             ok = tng_num_frames_per_frame_set_set(self._traj, 1)
+            if_not_ok(ok, 'Could not set the number of frames per frame set')
+            # The number of atoms must be set either with a full description
+            # of the system content (topology), or with just the number of
+            # particles. We should fall back on the latter, but being
+            # able to write the topology would be a nice addition
+            # in the future.
             self._n_atoms = positions.shape[0]
             ok = tng_implicit_num_particles_set(self._traj, self.n_atoms)
             if_not_ok(ok, 'Could not set the number of particles')
+            # Set the writing interval to 1 for all blocks.
+            ok = tng_util_pos_write_interval_set(self._traj, 1)
+            if_not_ok(ok, 'Could not set the writing interval for positions')
+            # When we use the "tn_util_box_shape_*" functions to write the box
+            # shape, gromacs tools fail to uncompress the data block. Instead of
+            # using the default gzip to compress the box, we do not compress it.
+            # ok = tng_util_box_shape_write_interval_set(self._traj, 1)
+            ok = tng_util_generic_write_interval_set(
+                self._traj, 1, 9,
+                TNG_TRAJ_BOX_SHAPE,
+                "BOX SHAPE",
+                TNG_NON_PARTICLE_BLOCK_DATA,
+                TNG_UNCOMPRESSED
+            )
+            if_not_ok(ok, 'Could not set the writing interval for the box shape')
         elif self.n_atoms != positions.shape[0]:
-            message = ('Only fixed number of particles is supported. '
+            message = ('Only fixed number of particles is currently supported. '
                        'Cannot write {} particles instead of {}.'
                        .format(positions.shape[0], self.n_atoms))
             raise NotImplementedError(message)
@@ -368,6 +431,33 @@ cdef class TNGFile:
                 time *= 1e-12
             except ValueError:
                 raise ValueError('time must be a real number or None')
+            # The time per frame has to be set for the time to be written in
+            # the frames.
+            # To be able to set an arbitrary time, we need to set the time per
+            # frame to 0 and to use one frame per frame set. Using the actual
+            # time difference between consecutive frames can cause issues if
+            # the difference is negative, or if the difference is 0 and the
+            # frame is not the first of the frame set.
+            ok = tng_time_per_frame_set(self._traj, 0)
+            if_not_ok(ok, 'Could not set the time per frame')
+
+        box_contiguous = np.ascontiguousarray(box, dtype=np.float32)
+        if time is None:
+            ok = tng_util_box_shape_write(self._traj, self.step,
+                                          &box_contiguous[0, 0])
+        else:
+            #ok = tng_util_box_shape_with_time_write(self._traj,
+            #                                        self.step,
+            #                                        time,
+            #                                        &box_contiguous[0, 0])
+            ok = tng_util_generic_with_time_write(
+                self._traj, self.step, time,
+                &box[0, 0],
+                9, TNG_TRAJ_BOX_SHAPE, "BOX SHAPE",
+                TNG_NON_PARTICLE_BLOCK_DATA,
+                TNG_UNCOMPRESSED
+            )
+        if_not_ok(ok, 'Could not write box shape')
 
         xyz = np.ascontiguousarray(positions, dtype=np.float32)
         if time is None:
@@ -376,17 +466,6 @@ cdef class TNGFile:
             ok = tng_util_pos_with_time_write(self._traj, self.step,
                                               time, &xyz[0, 0])
         if_not_ok(ok, 'Could not write positions')
-
-        box_contiguous = np.ascontiguousarray(box, dtype=np.float32)
-        if time is None:
-            ok = tng_util_box_shape_write(self._traj, self.step,
-                                          &box_contiguous[0, 0])
-        else:
-            ok = tng_util_box_shape_with_time_write(self._traj,
-                                                    self.step,
-                                                    time,
-                                                    &box_contiguous[0, 0])
-        if_not_ok(ok, 'Could not write box shape')
 
         self.step += 1
         self._n_frames += 1
