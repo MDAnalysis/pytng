@@ -224,3 +224,18 @@ def test_seek_reset_eof(GMX_REF_FILEPATH):
             pass
         tng.seek(0)
         next(tng)
+
+
+def test_reached_eof(GMX_REF_FILEPATH):
+    with pytng.TNGFile(GMX_REF_FILEPATH) as tng:
+        # test with iter protocol
+        for ts in tng:
+            pass
+        with pytest.raises(StopIteration):
+            next(tng)
+        # test __getitem__
+        tng.seek(0)
+        for ts in tng[:]:
+            pass
+        with pytest.raises(StopIteration):
+            next(tng)
