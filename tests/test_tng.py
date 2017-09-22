@@ -19,11 +19,6 @@ def test_open_missing_file_mode_r(MISSING_FILEPATH):
         assert 'does not exist' in str(excinfo.value)
 
 
-def test_open_mode_w(MISSING_FILEPATH):
-    with pytest.raises(NotImplementedError):
-        pytng.TNGFile(MISSING_FILEPATH, mode='w')
-
-
 def test_open_invalide_mode(GMX_REF_FILEPATH):
     with pytest.raises(IOError) as excinfo:
         pytng.TNGFile(GMX_REF_FILEPATH, mode='invalid')
@@ -150,7 +145,6 @@ def test_seek_IndexError(idx, GMX_REF_FILEPATH):
             tng[idx]
 
 
-@pytest.mark.skip(reason="Write mode not implemented yet.")
 def test_seek_write(MISSING_FILEPATH):
     with pytng.TNGFile(MISSING_FILEPATH, mode='w') as tng:
         with pytest.raises(IOError) as excinfo:
@@ -210,9 +204,19 @@ def test_read_not_open(GMX_REF_FILEPATH):
     assert 'No file opened' in str(excinfo.value)
 
 
-@pytest.mark.skip(reason="Write mode not implemented yet.")
 def test_read_not_mode_r(MISSING_FILEPATH):
-    with pytest.raises(IOError) as excinfo:
+    with pytest.raises(IOError, match='Reading only allow'):
         with pytng.TNGFile(MISSING_FILEPATH, mode='w') as tng:
             tng.read()
-    assert 'Reading only allow in mode "r"' in str(excinfo.value)
+
+
+def test_writting(GMX_REF_FILEPATH, tmpdir):
+    outfile = str(tmpdir.join('foo.tng'))
+    with pytng.TNGFile(GMX_REF_FILEPATH) as ref, pytng.TNGFile(outfile,
+                                                               'w') as out:
+        for ts in ref:
+            out.write(ts.positions, ts.box, ts.time)
+
+    with pytng.TNGFile(GMX_REF_FILEPATH) as ref, pytng.TNGFile(outfile) as out:
+        for r, o in zip(ref, out):
+            np.testing.assert_almost_equal(r.positions, o.positions, decimal=4)
