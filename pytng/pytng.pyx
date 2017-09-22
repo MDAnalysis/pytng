@@ -175,6 +175,10 @@ cdef extern from "tng/tng_io.h":
         const char compression)
 
 
+    tng_function_status tng_frame_set_write(
+        const tng_trajectory_t tng_data,
+        const char hash_mode)
+
 TNGFrame = namedtuple("TNGFrame", "positions time step box")
 
 cdef class TNGFile:
@@ -466,6 +470,9 @@ cdef class TNGFile:
             ok = tng_util_pos_with_time_write(self._traj, self.step,
                                               time, &xyz[0, 0])
         if_not_ok(ok, 'Could not write positions')
+
+        # finish frame set to write step, hashing should be configurable
+        tng_frame_set_write(self._traj, TNG_USE_HASH)
 
         self.step += 1
         self._n_frames += 1
