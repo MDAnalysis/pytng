@@ -208,3 +208,15 @@ def test_read_not_mode_r(MISSING_FILEPATH):
     with pytest.raises(IOError, match='Reading only allow'):
         with pytng.TNGFile(MISSING_FILEPATH, mode='w') as tng:
             tng.read()
+
+
+def test_writting(GMX_REF_FILEPATH, tmpdir):
+    outfile = str(tmpdir.join('foo.tng'))
+    with pytng.TNGFile(GMX_REF_FILEPATH) as ref, pytng.TNGFile(outfile,
+                                                               'w') as out:
+        for ts in ref:
+            out.write(ts.positions, ts.box, ts.time)
+
+    with pytng.TNGFile(GMX_REF_FILEPATH) as ref, pytng.TNGFile(outfile) as out:
+        for r, o in zip(ref, out):
+            np.testing.assert_almost_equal(r.positions, o.positions, decimal=4)
