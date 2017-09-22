@@ -216,3 +216,11 @@ def test_read_not_mode_r(MISSING_FILEPATH):
         with pytng.TNGFile(MISSING_FILEPATH, mode='w') as tng:
             tng.read()
     assert 'Reading only allow in mode "r"' in str(excinfo.value)
+
+
+def test_seek_reset_eof(GMX_REF_FILEPATH):
+    with pytng.TNGFile(GMX_REF_FILEPATH) as tng:
+        for ts in tng:
+            pass
+        tng.seek(0)
+        next(tng)
