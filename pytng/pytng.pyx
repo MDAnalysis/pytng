@@ -375,6 +375,8 @@ cdef class TNGFile:
         finally:
             if box_shape != NULL:
                 free(box_shape)
+            # DO NOT FREE float_box or double_box here. They point to the same
+            # memory as box_shape
 
         self.step += 1
         return TNGFrame(xyz, time, self.step - 1, box)
