@@ -261,9 +261,11 @@ cdef class TNGFile:
     def close(self):
         """Make sure the file handle is closed"""
         if self.is_open:
-            tng_util_trajectory_close(&self._traj)
+            ok = tng_util_trajectory_close(&self._traj)
+            if_not_ok(ok, "couldn't close")
             self.is_open = False
             self._n_frames = -1
+            print("closed file")
 
     def __enter__(self):
         # Support context manager
