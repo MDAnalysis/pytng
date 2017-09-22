@@ -204,9 +204,7 @@ def test_read_not_open(GMX_REF_FILEPATH):
     assert 'No file opened' in str(excinfo.value)
 
 
-@pytest.mark.skip(reason="Write mode not implemented yet.")
 def test_read_not_mode_r(MISSING_FILEPATH):
-    with pytest.raises(IOError) as excinfo:
+    with pytest.raises(IOError, match='Reading only allow'):
         with pytng.TNGFile(MISSING_FILEPATH, mode='w') as tng:
             tng.read()
-    assert 'Reading only allow in mode "r"' in str(excinfo.value)
