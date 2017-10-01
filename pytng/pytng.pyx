@@ -279,8 +279,8 @@ cdef class TNGFile:
                 step += len(self)
             if (step < 0) or (step >= len(self)):
                 raise IndexError("Seek index out of bounds")
-
             self.step = step
+            self.reached_eof = False
         else:
             raise IOError('No file currently opened')
 
