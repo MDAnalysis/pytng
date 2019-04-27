@@ -9,9 +9,6 @@ import os
 import numbers
 import numpy as np
 
-cimport numpy as np
-np.import_array()
-
 ctypedef enum tng_function_status: TNG_SUCCESS, TNG_FAILURE, TNG_CRITICAL
 ctypedef enum tng_data_type: TNG_CHAR_DATA, TNG_INT_DATA, TNG_FLOAT_DATA, TNG_DOUBLE_DATA
 ctypedef enum tng_hash_mode: TNG_SKIP_HASH, TNG_USE_HASH
@@ -209,7 +206,7 @@ cdef class TNGFile:
             self.reached_eof = True
             raise StopIteration("Reached EOF in read")
 
-        cdef np.ndarray[ndim=2, dtype=np.float32_t, mode='c'] xyz = np.empty((self.n_atoms, 3), dtype=np.float32)
+        cdef float[:, ::1] xyz = np.empty((self.n_atoms, 3), dtype=np.float32)
         cdef float* positions = NULL
         cdef int64_t stride_length, ok, i, n_values_per_frame
 
@@ -220,8 +217,7 @@ cdef class TNGFile:
 
             for i in range(self._n_atoms):
                 for j in range(3):
-                    xyz[i, j] = positions[i*3 + j]
-            xyz *= self.distance_scale
+                    xyz[i, j] = positions[i*3 + j] * self.distance_scale
         finally:
             if positions != NULL:
                 free(positions)
@@ -234,7 +230,7 @@ cdef class TNGFile:
         else:
             time = frame_time * 1e12
 
-        cdef np.ndarray[ndim=2, dtype=np.float32_t, mode='c'] box = np.empty((3, 3), dtype=np.float32)
+        cdef float[:, ::1] box = np.empty((3, 3), dtype=np.float32)
         cdef char data_type
         cdef void* box_shape = NULL
         cdef float* float_box
@@ -255,8 +251,7 @@ cdef class TNGFile:
                 float_box = <float*>box_shape
                 for j in range(3):
                     for k in range(3):
-                        box[j, k] = float_box[j*3 + k]
-            box *= self.distance_scale
+                        box[j, k] = float_box[j*3 + k] * self.distance_scale
         finally:
             if box_shape != NULL:
                 free(box_shape)
