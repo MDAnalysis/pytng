@@ -1,0 +1,293 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>pytng - A python library to read TNG files! &#8212; pytng 0.1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="shortcut icon" href="_static/mdanalysis-logo.ico"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="toctree-wrapper compound">
+</div>
+<div class="section" id="pytng-a-python-library-to-read-tng-files">
+<h1>pytng - A python library to read TNG files!<a class="headerlink" href="#pytng-a-python-library-to-read-tng-files" title="Permalink to this headline">¶</a></h1>
+<a class="reference external image-reference" href="https://travis-ci.org/MDAnalysis/pytng"><img alt="https://travis-ci.org/MDAnalysis/pytng.svg?branch=master" src="https://travis-ci.org/MDAnalysis/pytng.svg?branch=master" /></a>
+<a class="reference external image-reference" href="https://codecov.io/gh/MDAnalysis/pytng"><img alt="https://codecov.io/gh/MDAnalysis/pytng/branch/master/graph/badge.svg" src="https://codecov.io/gh/MDAnalysis/pytng/branch/master/graph/badge.svg" /></a>
+<p>This package provides the <code class="docutils literal notranslate"><span class="pre">TNGFile</span></code> object to allow simple Pythonic access to data
+contained within TNG files:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pytng</span>
+
+<span class="k">with</span> <span class="n">pytng</span><span class="o">.</span><span class="n">TNGFile</span><span class="p">(</span><span class="s1">&#39;traj.tng&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">ts</span> <span class="ow">in</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">time</span> <span class="o">=</span> <span class="n">ts</span><span class="o">.</span><span class="n">time</span>
+        <span class="n">coordinates</span> <span class="o">=</span> <span class="n">ts</span><span class="o">.</span><span class="n">positions</span>
+</pre></div>
+</div>
+<p>This package contains Python bindings to <a class="reference external" href="https://github.com/gromacs/tng">libtng</a> for TNG file format[<a class="reference external" href="http://link.springer.com/article/10.1007%2Fs00894-010-0948-5">1</a>] [<a class="reference external" href="http://onlinelibrary.wiley.com/doi/10.1002/jcc.23495/abstract">2</a>].
+This is used by molecular simulation programs such as <a class="reference external" href="http://manual.gromacs.org/online/tng.html">Gromacs</a> for storing the
+topology and results from molecular dynamics simulations.</p>
+<div class="section" id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<p>To install using pip, simply run</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>pip install pytng
+</pre></div>
+</div>
+<p>To install the latest development version from source, run</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>git clone git@github.com:MDAnalysis/pytng.git
+<span class="nb">cd</span> pytng
+python setup.py install
+</pre></div>
+</div>
+</div>
+<div class="section" id="getting-help">
+<h2>Getting help<a class="headerlink" href="#getting-help" title="Permalink to this headline">¶</a></h2>
+<p>For help using this library, please drop by the <a class="reference external" href="https://github.com/MDAnalysis/pytng/issues">Github Issue tracker</a></p>
+</div>
+<div class="section" id="usage-example-for-tngfile">
+<h2>Usage example for TNGFile<a class="headerlink" href="#usage-example-for-tngfile" title="Permalink to this headline">¶</a></h2>
+<p>TNG files can be read using the TNGFile class as a file handle,
+which supports use as a context manager.
+The TNGFile returns one frame at a time, which each frame being returned as a
+namedtuple with the following attributes:</p>
+<table class="docutils align-center">
+<colgroup>
+<col style="width: 23%" />
+<col style="width: 13%" />
+<col style="width: 64%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>attribute</p></th>
+<th class="head"><p>type</p></th>
+<th class="head"><p>description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">positions</span></code></p></td>
+<td><p>float32</p></td>
+<td><p>coordinates for each atom in the frame</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">time</span></code></p></td>
+<td><p>float</p></td>
+<td><p>current system time</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">step</span></code></p></td>
+<td><p>int</p></td>
+<td><p>frame index</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">box</span></code></p></td>
+<td><p>float32</p></td>
+<td><p>3x3 matrix of the system volume</p></td>
+</tr>
+</tbody>
+</table>
+<p>For example, the coordinate information can be accessed via the <cite>.positions</cite>
+attribute of the returned object.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pytng</span>
+
+<span class="k">with</span> <span class="n">pytng</span><span class="o">.</span><span class="n">TNGFile</span><span class="p">(</span><span class="s1">&#39;traj.tng&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">ts</span> <span class="ow">in</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">ts</span><span class="o">.</span><span class="n">positions</span>
+</pre></div>
+</div>
+<p>It is also possible to slice and index the file object to select particular
+frames</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pytng</span>
+
+<span class="k">with</span> <span class="n">pytng</span><span class="o">.</span><span class="n">TNGFile</span><span class="p">(</span><span class="s1">&#39;traj.tng&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">first_frame</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">last_frame</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="n">every_other_frame</span> <span class="o">=</span> <span class="p">[</span><span class="n">ts</span> <span class="k">for</span> <span class="n">ts</span> <span class="ow">in</span> <span class="n">f</span><span class="p">[::</span><span class="mi">2</span><span class="p">]]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="api-for-the-tngfile-class">
+<h2>API for the TNGFile class<a class="headerlink" href="#api-for-the-tngfile-class" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pytng.pytng.TNGFile">
+<em class="property">class </em><code class="descclassname">pytng.pytng.</code><code class="descname">TNGFile</code><a class="headerlink" href="#pytng.pytng.TNGFile" title="Permalink to this definition">¶</a></dt>
+<dd><p>File handle object for TNG files</p>
+<p>Supports use as a context manager (“with” blocks).</p>
+<dl class="method">
+<dt id="pytng.pytng.TNGFile.close">
+<code class="descname">close</code><span class="sig-paren">(</span><em>self</em><span class="sig-paren">)</span><a class="headerlink" href="#pytng.pytng.TNGFile.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make sure the file handle is closed</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pytng.pytng.TNGFile.n_atoms">
+<code class="descname">n_atoms</code><a class="headerlink" href="#pytng.pytng.TNGFile.n_atoms" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of atoms in each frame</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pytng.pytng.TNGFile.n_frames">
+<code class="descname">n_frames</code><a class="headerlink" href="#pytng.pytng.TNGFile.n_frames" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of frames in the trajectory</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pytng.pytng.TNGFile.open">
+<code class="descname">open</code><span class="sig-paren">(</span><em>self</em>, <em>fname</em>, <em>mode</em><span class="sig-paren">)</span><a class="headerlink" href="#pytng.pytng.TNGFile.open" title="Permalink to this definition">¶</a></dt>
+<dd><p>Open a file handle</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fname</strong> (<em>str</em>) – path to the file</p></li>
+<li><p><strong>mode</strong> (<em>str</em>) – mode to open the file in, ‘r’ for read, ‘w’ for write</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pytng.pytng.TNGFile.read">
+<code class="descname">read</code><span class="sig-paren">(</span><em>self</em><span class="sig-paren">)</span><a class="headerlink" href="#pytng.pytng.TNGFile.read" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read the next frame</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>frame</strong> – contains all data from this frame</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>namedtuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pytng.pytng.TNGFile.seek">
+<code class="descname">seek</code><span class="sig-paren">(</span><em>self</em>, <em>step</em><span class="sig-paren">)</span><a class="headerlink" href="#pytng.pytng.TNGFile.seek" title="Permalink to this definition">¶</a></dt>
+<dd><p>Move the file handle to a particular frame number</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>step</strong> (<em>int</em>) – desired frame number</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pytng.pytng.TNGFile.tell">
+<code class="descname">tell</code><span class="sig-paren">(</span><em>self</em><span class="sig-paren">)</span><a class="headerlink" href="#pytng.pytng.TNGFile.tell" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get current frame</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="#">
+              <img class="logo" src="_static/mdanalysis-logo-200x150.png" alt="Logo"/>
+            </a></p>
+<p class="logo">
+  <a href="#">
+    <img class="logo" src="_static/logos/mdanalysis-logo-200x150.png" alt="Logo"/>
+    
+    <h1 class="logo logo-name">pytng</h1>
+    
+  </a>
+</p>
+
+
+
+<p class="blurb">Reading TNG trajectories with Python</p>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+
+<hr />
+<ul>
+    
+    <li class="toctree-l1"><a href="http://mdanalysis.org">MDAnalysis</a></li>
+    
+    <li class="toctree-l1"><a href="http://www.gromacs.org">Gromacs</a></li>
+    
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Max Linke, Richard J Gowers.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+    <a href="https://github.com/MDAnalysis/pytng" class="github">
+        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"  class="github"/>
+    </a>
+    
+
+    
+  </body>
+</html>
