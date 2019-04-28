@@ -11,6 +11,13 @@ import numpy as np
 
 cimport numpy as np
 np.import_array()
+from numpy cimport (PyArray_SimpleNewFromData,
+                    PyArray_SetBaseObject,
+                    NPY_FLOAT,
+                    Py_INCREF,
+                    npy_intp,
+)
+
 
 ctypedef enum tng_function_status: TNG_SUCCESS, TNG_FAILURE, TNG_CRITICAL
 ctypedef enum tng_data_type: TNG_CHAR_DATA, TNG_INT_DATA, TNG_FLOAT_DATA, TNG_DOUBLE_DATA
@@ -67,6 +74,24 @@ cdef extern from "tng/tng_io.h":
         char *type)
 
 TNGFrame = namedtuple("TNGFrame", "positions time step box")
+
+
+cdef class MemoryWrapper:
+    # holds a pointer to C allocated memory, deals with malloc&free
+    # based on:
+    # https://gist.github.com/GaelVaroquaux/1249305/ac4f4190c26110fe2791a1e7a6bed9c733b3413f
+    cdef void* ptr
+
+    def __cinit__(MemoryWrapper self, int size):
+        # malloc not PyMem_Malloc as gmx later does realloc
+        self.ptr = malloc(size)
+        if self.ptr is NULL:
+            raise MemoryError
+
+    def __dealloc__(MemoryWrapper self):
+        if self.ptr != NULL:
+            free(self.ptr)
+
 
 cdef class TNGFile:
     """File handle object for TNG files
@@ -209,22 +234,30 @@ cdef class TNGFile:
             self.reached_eof = True
             raise StopIteration("Reached EOF in read")
 
-        cdef np.ndarray[ndim=2, dtype=np.float32_t, mode='c'] xyz = np.empty((self.n_atoms, 3), dtype=np.float32)
-        cdef float* positions = NULL
+        cdef MemoryWrapper wrap
+        cdef float* positions
+        wrap = MemoryWrapper(3 * self.n_atoms * sizeof(float))
+        positions = <float*> wrap.ptr
+
         cdef int64_t stride_length, ok, i, n_values_per_frame
+        ok = tng_util_pos_read_range(self._traj, self.step, self.step, &positions, &stride_length)
+        if ok != TNG_SUCCESS:
+            raise IOError("error reading frame")
 
-        try:
-            ok = tng_util_pos_read_range(self._traj, self.step, self.step, &positions, &stride_length)
-            if ok != TNG_SUCCESS:
-                raise IOError("error reading frame")
+        # move C data to numpy array
+        cdef np.ndarray xyz
+        cdef npy_intp dims[2]
+        cdef int err
+        cdef int nd = 2
 
-            for i in range(self._n_atoms):
-                for j in range(3):
-                    xyz[i, j] = positions[i*3 + j]
-            xyz *= self.distance_scale
-        finally:
-            if positions != NULL:
-                free(positions)
+        dims[0] = self.n_atoms
+        dims[1] = 3
+        xyz = PyArray_SimpleNewFromData(nd, dims, NPY_FLOAT, wrap.ptr)
+        Py_INCREF(wrap)
+        err = PyArray_SetBaseObject(xyz, wrap)
+        if err:
+            raise ValueError('failed to create positions array')
+        xyz *= self.distance_scale
 
         cdef double frame_time
         ok = tng_util_time_of_frame_get(self._traj, self.step, &frame_time)
