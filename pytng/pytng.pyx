@@ -77,22 +77,20 @@ TNGFrame = namedtuple("TNGFrame", "positions time step box")
 
 
 cdef class MemoryWrapper:
-    # holds a pointer to C allocated memory
+    # holds a pointer to C allocated memory, deals with malloc&free
+    # based on:
+    # https://gist.github.com/GaelVaroquaux/1249305/ac4f4190c26110fe2791a1e7a6bed9c733b3413f
     cdef void* ptr
-    cdef int size
 
-    def __cinit__(MemoryWrapper self):
-        self.size = 0
-        self.ptr = NULL
+    def __cinit__(MemoryWrapper self, int size):
+        # malloc not PyMem_Malloc as gmx later does realloc
+        self.ptr = malloc(size)
+        if self.ptr is NULL:
+            raise MemoryError
 
     def __dealloc__(MemoryWrapper self):
         if self.ptr != NULL:
             free(self.ptr)
-
-    cdef void set_data(MemoryWrapper self, void* ptr, int size):
-        self.ptr = ptr
-        self.size = size
-
 
 
 cdef class TNGFile:
@@ -238,27 +236,23 @@ cdef class TNGFile:
 
         cdef MemoryWrapper wrap
         cdef float* positions
-        # malloc not PyMem_Malloc as gmx later does realloc call on this
-        # freeing is done in Wrapper object __dealloc__
-        positions = <float*> malloc(3 * self.n_atoms * sizeof(float))
-        wrap = MemoryWrapper()
-        wrap.set_data(<void*> positions, 3 * self.n_atoms)
+        wrap = MemoryWrapper(3 * self.n_atoms * sizeof(float))
+        positions = <float*> wrap.ptr
 
-        cdef np.ndarray xyz
         cdef int64_t stride_length, ok, i, n_values_per_frame
-
         ok = tng_util_pos_read_range(self._traj, self.step, self.step, &positions, &stride_length)
         if ok != TNG_SUCCESS:
             raise IOError("error reading frame")
 
         # move C data to numpy array
+        cdef np.ndarray xyz
         cdef npy_intp dims[2]
         cdef int err
         cdef int nd = 2
 
         dims[0] = self.n_atoms
         dims[1] = 3
-        xyz = PyArray_SimpleNewFromData(nd, dims, NPY_FLOAT, <void*>positions)
+        xyz = PyArray_SimpleNewFromData(nd, dims, NPY_FLOAT, wrap.ptr)
         Py_INCREF(wrap)
         err = PyArray_SetBaseObject(xyz, wrap)
         if err:
