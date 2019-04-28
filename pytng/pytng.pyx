@@ -301,7 +301,7 @@ cdef class TNGFile:
                 free(box_shape)
 
         self.step += 1
-        return TNGFrame(xyz.reshape(self.n_atoms, 3), time, self.step - 1, box)
+        return TNGFrame(xyz, time, self.step - 1, box)
 
     def seek(self, step):
         """Move the file handle to a particular frame number
