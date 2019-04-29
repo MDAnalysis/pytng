@@ -31,10 +31,19 @@ cdef extern from "tng/tng_io.h":
     ctypedef struct tng_trajectory_t:
         pass
 
+    tng_function_status tng_num_frame_sets_get(
+        const tng_trajectory_t tng_data,
+        int64_t *n)
+
+    tng_function_status tng_first_frame_nr_of_next_frame_set_get(
+        const tng_trajectory_t tng_data,
+        int64_t *frame)
+
     tng_function_status tng_util_trajectory_open(
         const char *filename,
         const char mode,
         tng_trajectory_t *tng_data_p)
+
     tng_function_status tng_util_trajectory_close(
         tng_trajectory_t *tng_data_p)
 
@@ -72,6 +81,10 @@ cdef extern from "tng/tng_io.h":
         int64_t *stride_length,
         int64_t *n_values_per_frame,
         char *type)
+
+    tng_function_status tng_num_frame_sets_get(
+        const tng_trajectory_t tng_data,
+        int64_t* n)
 
 TNGFrame = namedtuple("TNGFrame", "positions time step box")
 
@@ -151,7 +164,7 @@ cdef class TNGFile:
             raise IOError("An error ocurred opening the file. {}".format(status_error_message[ok]))
 
         if self.mode == 'r':
-            ok = tng_num_frames_get(self._traj, &self._n_frames)
+            ok = tng_num_frame_sets_get(self._traj, &self._n_frames)
             if ok != TNG_SUCCESS:
                 raise IOError("An error ocurred reading n_frames. {}".format(status_error_message[ok]))
 
@@ -234,13 +247,20 @@ cdef class TNGFile:
             self.reached_eof = True
             raise StopIteration("Reached EOF in read")
 
+        # get frame index of next frame
+        cdef tng_function_status ok
+        cdef int64_t frame
+
+        ok = tng_first_frame_nr_of_next_frame_set_get(
+            self._traj, &frame)
+
         cdef MemoryWrapper wrap
         cdef float* positions
         wrap = MemoryWrapper(3 * self.n_atoms * sizeof(float))
         positions = <float*> wrap.ptr
 
-        cdef int64_t stride_length, ok, i, n_values_per_frame
-        ok = tng_util_pos_read_range(self._traj, self.step, self.step, &positions, &stride_length)
+        cdef int64_t stride_length, n_values_per_frame
+        ok = tng_util_pos_read_range(self._traj, frame, frame, &positions, &stride_length)
         if ok != TNG_SUCCESS:
             raise IOError("error reading frame")
 
@@ -260,7 +280,7 @@ cdef class TNGFile:
         xyz *= self.distance_scale
 
         cdef double frame_time
-        ok = tng_util_time_of_frame_get(self._traj, self.step, &frame_time)
+        ok = tng_util_time_of_frame_get(self._traj, frame, &frame_time)
         if ok != TNG_SUCCESS:
             # No time available
             time = None
@@ -274,7 +294,7 @@ cdef class TNGFile:
         cdef double* double_box
 
         try:
-            ok = tng_data_vector_interval_get(self._traj, TNG_TRAJ_BOX_SHAPE, self.step, self.step, TNG_USE_HASH,
+            ok = tng_data_vector_interval_get(self._traj, TNG_TRAJ_BOX_SHAPE, frame, frame, TNG_USE_HASH,
                                               &box_shape, &stride_length, &n_values_per_frame, &data_type)
             if ok != TNG_SUCCESS:
                 raise IOError("error reading box shape")
