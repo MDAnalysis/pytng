@@ -2,7 +2,7 @@
 # cython: embedsignature=True
 # distutils: define_macros=CYTHON_TRACE=1
 from libc.stdint cimport int64_t
-from libc.stdlib cimport malloc, free
+from libc.stdlib cimport malloc, free, realloc
 
 from collections import namedtuple
 import os
@@ -151,29 +151,48 @@ cdef class TNGFile:
     cdef int64_t blocks
     cdef int64_t* block_ids
     cdef int64_t last_frame
+    cdef int64_t* frame_ids
 
     def __cinit__(self, fname, mode='r'):
         self.fname = fname
         self._n_frames = -1
         self.block_ids = NULL
+        self.frame_ids = NULL
         self.open(self.fname, mode)
 
     def __dealloc__(self):
         if not self.block_ids == NULL:
             free(self.block_ids)
+        if not self.frame_ids == NULL:
+            free(self.frame_ids)
         self.close()
 
     cdef int64_t _get_nframes(self):
         # figure out how many frames of interest there are
         cdef int64_t i, next_id
+        # Initially expect 25 frames, then work upwards
+        cdef int frame_buffer = 25
+        self.frame_ids = <int64_t*> malloc(sizeof(int64_t) * frame_buffer)
 
         i = 0
+        self.frame_ids[0] = -1  # to get 0th frame, set last frame to -1
         next_id = self.find_next_frame_id(-1)
         while next_id >= 0:
+            # push back
+            if (i + 1) > frame_buffer:
+                frame_buffer *= 2
+                self.frame_ids = <int64_t*> realloc(<void*> self.frame_ids, sizeof(int64_t) * frame_buffer)
+            self.frame_ids[i + 1] = next_id
+
             i += 1
             next_id = self.find_next_frame_id(next_id)
+        # finally resize frame_ids array
+        self.frame_ids = <int64_t*> realloc(<void*> self.frame_ids, sizeof(int64_t) * i)
 
         return i
+
+    def get_frameids(self):
+        return [self.frame_ids[i] for i in range(len(self))]
 
     cpdef int64_t find_next_frame_id(self, int64_t current_frame):
         # return next frame id or -1 for EOF
@@ -423,6 +442,7 @@ cdef class TNGFile:
                 step += len(self)
             if (step < 0) or (step >= len(self)):
                 raise IndexError("Seek index out of bounds")
+            self.last_frame = self.frame_ids[step]
             self.step = step
             self.reached_eof = False
         else:
