@@ -24,6 +24,9 @@ ctypedef enum tng_data_type: TNG_CHAR_DATA, TNG_INT_DATA, TNG_FLOAT_DATA, TNG_DO
 ctypedef enum tng_hash_mode: TNG_SKIP_HASH, TNG_USE_HASH
 
 cdef long long TNG_TRAJ_BOX_SHAPE = 0x0000000010000000LL
+cdef long long TNG_TRAJ_POSITIONS = 0x0000000010000001LL
+cdef long long TNG_TRAJ_VELOCITIES = 0x0000000010000002LL
+cdef long long TNG_TRAJ_FORCES = 0x0000000010000003LL
 
 status_error_message = ['OK', 'Failure', 'Critical']
 
@@ -85,6 +88,16 @@ cdef extern from "tng/tng_io.h":
     tng_function_status tng_num_frame_sets_get(
         const tng_trajectory_t tng_data,
         int64_t* n)
+
+    tng_function_status tng_util_trajectory_next_frame_present_data_blocks_find(
+        const tng_trajectory_t tng_data,
+        int64_t current_frame,
+        const int64_t n_requested_data_block_ids,
+        const int64_t *requested_data_block_ids,
+        int64_t *next_frame,
+        int64_t *n_data_blocks_in_next_frame,
+        int64_t **data_block_ids_in_next_frame)
+
 
 TNGFrame = namedtuple("TNGFrame", "positions time step box")
 
