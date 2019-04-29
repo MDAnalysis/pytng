@@ -155,17 +155,12 @@ cdef class TNGFile:
     def __cinit__(self, fname, mode='r'):
         self.fname = fname
         self._n_frames = -1
-        # initialise what blocks we care about
-        # TODO: One day make this customisable
-        self.blocks = 2
-        self.block_ids = <int64_t*>malloc(sizeof(int64_t) * 2)
-        self.block_ids[0] = TNG_TRAJ_BOX_SHAPE
-        self.block_ids[1] = TNG_TRAJ_POSITIONS
-        self.last_frame = -1
+        self.block_ids = NULL
         self.open(self.fname, mode)
 
     def __dealloc__(self):
-        free(self.block_ids)
+        if not self.block_ids == NULL:
+            free(self.block_ids)
         self.close()
 
     cdef int64_t _get_nframes(self):
@@ -230,6 +225,13 @@ cdef class TNGFile:
         mode : str
            mode to open the file in, 'r' for read, 'w' for write
         """
+        self.last_frame = -1
+        # initialise what blocks we care about
+        # TODO: One day make this customisable
+        self.blocks = 2
+        self.block_ids = <int64_t*>malloc(sizeof(int64_t) * 2)
+        self.block_ids[0] = TNG_TRAJ_BOX_SHAPE
+        self.block_ids[1] = TNG_TRAJ_POSITIONS
         self.mode = mode
 
         cdef char _mode
