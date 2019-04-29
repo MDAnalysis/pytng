@@ -133,14 +133,76 @@ cdef class TNGFile:
     cdef int64_t _n_atoms
     cdef int64_t step
     cdef float distance_scale
+    cdef int64_t blocks
+    cdef int64_t* block_ids
 
     def __cinit__(self, fname, mode='r'):
         self.fname = fname
         self._n_frames = -1
+        # initialise what blocks we care about
+        # TODO: One day make this customisable
+        self.blocks = 2
+        self.block_ids = <int64_t*>malloc(sizeof(int64_t) * 2)
+        self.block_ids[0] = TNG_TRAJ_BOX_SHAPE
+        self.block_ids[1] = TNG_TRAJ_POSITIONS
+
         self.open(self.fname, mode)
 
     def __dealloc__(self):
+        free(self.block_ids)
         self.close()
+
+    cdef int64_t _get_nframes(self):
+        # figure out how many frames of interest there are
+        cdef int64_t i, next_id
+
+        i = 0
+        next_id = self.find_next_frame_id(-1)
+        while next_id >= 0:
+            i += 1
+            next_id = self.find_next_frame_id(next_id)
+
+        return i
+
+    cpdef int64_t find_next_frame_id(self, int64_t current_frame):
+        # return next frame id or -1 for EOF
+        cdef tng_function_status status
+        cdef int64_t next_id, num_blocks
+        cdef int64_t* block_ids
+
+        cdef MemoryWrapper wrap
+        wrap = MemoryWrapper(sizeof(int64_t) * 1)
+        block_ids = <int64_t*>malloc(sizeof(int64_t) * 1)
+
+        status = tng_util_trajectory_next_frame_present_data_blocks_find(
+            self._traj,
+            current_frame,
+            self.blocks, &self.block_ids[0],
+            &next_id,
+            &num_blocks,
+            &block_ids)
+
+        free(block_ids)
+
+        # if we errored or no blocks found
+        if status or (num_blocks == 0):
+            return -1
+        else:
+            return next_id
+
+        #print("Next frame id: ", next_id)
+        #print("Blocks found: ", num_blocks)
+        #print("Blocktypes: ")
+        #print("Box ", req_blocks[0])
+        #print("Positions ", req_blocks[1])
+        #print("Velocities ", req_blocks[2])
+        #print("Forces ", req_blocks[3])
+        #print("Found: ")
+        #for i in range(num_blocks):
+        #    print(block_ids[i])
+        #free(block_ids)
+
+        return next_id
 
     def open(self, fname, mode):
         """Open a file handle
@@ -177,9 +239,7 @@ cdef class TNGFile:
             raise IOError("An error ocurred opening the file. {}".format(status_error_message[ok]))
 
         if self.mode == 'r':
-            ok = tng_num_frame_sets_get(self._traj, &self._n_frames)
-            if ok != TNG_SUCCESS:
-                raise IOError("An error ocurred reading n_frames. {}".format(status_error_message[ok]))
+            self._n_frames = self._get_nframes()
 
             ok = tng_num_particles_get(self._traj, & self._n_atoms)
             if ok != TNG_SUCCESS:
