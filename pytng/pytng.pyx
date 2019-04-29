@@ -118,6 +118,21 @@ cdef class MemoryWrapper:
         if self.ptr != NULL:
             free(self.ptr)
 
+    cdef np.ndarray to_array(MemoryWrapper self, int nd, npy_intp* dims, int dtype):
+        # convert wrapped memory to numpy array
+        cdef np.ndarray arr
+        cdef int err
+
+        arr = PyArray_SimpleNewFromData(nd, dims, dtype, self.ptr)
+        Py_INCREF(self)
+        err = PyArray_SetBaseObject(arr, self)
+
+        if err:
+            raise ValueError("Failed to convert to array")
+        return arr
+
+
+
 
 cdef class TNGFile:
     """File handle object for TNG files
@@ -135,6 +150,7 @@ cdef class TNGFile:
     cdef float distance_scale
     cdef int64_t blocks
     cdef int64_t* block_ids
+    cdef int64_t last_frame
 
     def __cinit__(self, fname, mode='r'):
         self.fname = fname
@@ -145,7 +161,7 @@ cdef class TNGFile:
         self.block_ids = <int64_t*>malloc(sizeof(int64_t) * 2)
         self.block_ids[0] = TNG_TRAJ_BOX_SHAPE
         self.block_ids[1] = TNG_TRAJ_POSITIONS
-
+        self.last_frame = -1
         self.open(self.fname, mode)
 
     def __dealloc__(self):
@@ -321,11 +337,10 @@ cdef class TNGFile:
             raise StopIteration("Reached EOF in read")
 
         # get frame index of next frame
-        cdef tng_function_status ok
-        cdef int64_t frame
+        cdef tng_function_status status
+        cdef int64_t next_frame
 
-        ok = tng_first_frame_nr_of_next_frame_set_get(
-            self._traj, &frame)
+        next_frame = self.find_next_frame_id(self.last_frame)
 
         cdef MemoryWrapper wrap
         cdef float* positions
@@ -333,8 +348,8 @@ cdef class TNGFile:
         positions = <float*> wrap.ptr
 
         cdef int64_t stride_length, n_values_per_frame
-        ok = tng_util_pos_read_range(self._traj, frame, frame, &positions, &stride_length)
-        if ok != TNG_SUCCESS:
+        status = tng_util_pos_read_range(self._traj, next_frame, next_frame, &positions, &stride_length)
+        if status != TNG_SUCCESS:
             raise IOError("error reading frame")
 
         # move C data to numpy array
@@ -345,15 +360,15 @@ cdef class TNGFile:
 
         dims[0] = self.n_atoms
         dims[1] = 3
-        xyz = PyArray_SimpleNewFromData(nd, dims, NPY_FLOAT, wrap.ptr)
-        Py_INCREF(wrap)
-        err = PyArray_SetBaseObject(xyz, wrap)
+
+        xyz = wrap.to_array(nd, &dims[0], NPY_FLOAT)
+
         if err:
             raise ValueError('failed to create positions array')
         xyz *= self.distance_scale
 
         cdef double frame_time
-        ok = tng_util_time_of_frame_get(self._traj, frame, &frame_time)
+        ok = tng_util_time_of_frame_get(self._traj, next_frame, &frame_time)
         if ok != TNG_SUCCESS:
             # No time available
             time = None
@@ -367,7 +382,7 @@ cdef class TNGFile:
         cdef double* double_box
 
         try:
-            ok = tng_data_vector_interval_get(self._traj, TNG_TRAJ_BOX_SHAPE, frame, frame, TNG_USE_HASH,
+            ok = tng_data_vector_interval_get(self._traj, TNG_TRAJ_BOX_SHAPE, next_frame, next_frame, TNG_USE_HASH,
                                               &box_shape, &stride_length, &n_values_per_frame, &data_type)
             if ok != TNG_SUCCESS:
                 raise IOError("error reading box shape")
@@ -388,6 +403,7 @@ cdef class TNGFile:
                 free(box_shape)
 
         self.step += 1
+        self.last_frame = next_frame
         return TNGFrame(xyz, time, self.step - 1, box)
 
     def seek(self, step):
