@@ -172,22 +172,21 @@ cdef class TNGFile:
         cdef int64_t i, next_id
         # Initially expect 25 frames, then work upwards
         cdef int frame_buffer = 25
-        self.frame_ids = <int64_t*> malloc(sizeof(int64_t) * frame_buffer)
+        self.frame_ids = <int64_t*>malloc(sizeof(int64_t) * frame_buffer)
 
-        i = 0
-        self.frame_ids[0] = -1  # to get 0th frame, set last frame to -1
         next_id = self.find_next_frame_id(-1)
-        while next_id >= 0:
-            # push back
-            if (i + 1) > frame_buffer:
-                frame_buffer *= 2
-                self.frame_ids = <int64_t*> realloc(<void*> self.frame_ids, sizeof(int64_t) * frame_buffer)
-            self.frame_ids[i + 1] = next_id
-
+        i = 0
+        while next_id >= 0:  # first frame can be 0, but not negative
             i += 1
+            # push back
+            if i > frame_buffer:
+                frame_buffer *= 2
+                self.frame_ids = <int64_t*>realloc(<void*>self.frame_ids, sizeof(int64_t) * frame_buffer)
+            self.frame_ids[i - 1] = next_id
             next_id = self.find_next_frame_id(next_id)
+
         # finally resize frame_ids array
-        self.frame_ids = <int64_t*> realloc(<void*> self.frame_ids, sizeof(int64_t) * i)
+        self.frame_ids = <int64_t*> realloc(<void*>self.frame_ids, sizeof(int64_t) * i)
 
         return i
 
@@ -244,7 +243,6 @@ cdef class TNGFile:
         mode : str
            mode to open the file in, 'r' for read, 'w' for write
         """
-        self.last_frame = -1
         # initialise what blocks we care about
         # TODO: One day make this customisable
         self.blocks = 2
@@ -361,7 +359,7 @@ cdef class TNGFile:
         cdef tng_function_status status
         cdef int64_t next_frame
 
-        next_frame = self.find_next_frame_id(self.last_frame)
+        frame = self.frame_ids[self.step]
 
         cdef MemoryWrapper wrap
         cdef float* positions
@@ -369,7 +367,7 @@ cdef class TNGFile:
         positions = <float*> wrap.ptr
 
         cdef int64_t stride_length, n_values_per_frame
-        status = tng_util_pos_read_range(self._traj, next_frame, next_frame, &positions, &stride_length)
+        status = tng_util_pos_read_range(self._traj, frame, frame, &positions, &stride_length)
         if status != TNG_SUCCESS:
             raise IOError("error reading frame")
 
@@ -389,7 +387,7 @@ cdef class TNGFile:
         xyz *= self.distance_scale
 
         cdef double frame_time
-        ok = tng_util_time_of_frame_get(self._traj, next_frame, &frame_time)
+        ok = tng_util_time_of_frame_get(self._traj, frame, &frame_time)
         if ok != TNG_SUCCESS:
             # No time available
             time = None
@@ -403,7 +401,7 @@ cdef class TNGFile:
         cdef double* double_box
 
         try:
-            ok = tng_data_vector_interval_get(self._traj, TNG_TRAJ_BOX_SHAPE, next_frame, next_frame, TNG_USE_HASH,
+            ok = tng_data_vector_interval_get(self._traj, TNG_TRAJ_BOX_SHAPE, frame, frame, TNG_USE_HASH,
                                               &box_shape, &stride_length, &n_values_per_frame, &data_type)
             if ok != TNG_SUCCESS:
                 raise IOError("error reading box shape")
@@ -424,7 +422,6 @@ cdef class TNGFile:
                 free(box_shape)
 
         self.step += 1
-        self.last_frame = next_frame
         return TNGFrame(xyz, time, self.step - 1, box)
 
     def seek(self, step):
@@ -442,7 +439,6 @@ cdef class TNGFile:
                 step += len(self)
             if (step < 0) or (step >= len(self)):
                 raise IndexError("Seek index out of bounds")
-            self.last_frame = self.frame_ids[step]
             self.step = step
             self.reached_eof = False
         else:
