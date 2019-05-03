@@ -38,6 +38,10 @@ cdef extern from "tng/tng_io.h":
         const tng_trajectory_t tng_data,
         int64_t *n)
 
+    tng_function_status tng_num_frames_per_frame_set_get(
+        const tng_trajectory_t tng_data,
+        int64_t *n)
+
     tng_function_status tng_first_frame_nr_of_next_frame_set_get(
         const tng_trajectory_t tng_data,
         int64_t *frame)
@@ -84,10 +88,6 @@ cdef extern from "tng/tng_io.h":
         int64_t *stride_length,
         int64_t *n_values_per_frame,
         char *type)
-
-    tng_function_status tng_num_frame_sets_get(
-        const tng_trajectory_t tng_data,
-        int64_t* n)
 
     tng_function_status tng_util_trajectory_next_frame_present_data_blocks_find(
         const tng_trajectory_t tng_data,
@@ -193,6 +193,15 @@ cdef class TNGFile:
     def get_frameids(self):
         return [self.frame_ids[i] for i in range(len(self))]
 
+    def frame_debug(self):
+        cdef int64_t nframe_sets, frames_per_set
+        cdef tng_function_status status
+
+        status = tng_num_frame_sets_get(self._traj, &nframe_sets)
+        status = tng_num_frames_per_frame_set_get(self._traj, &frames_per_set)
+
+        print(nframe_sets, frames_per_set)
+
     cpdef int64_t find_next_frame_id(self, int64_t current_frame):
         # return next frame id or -1 for EOF
         cdef tng_function_status status
@@ -215,6 +224,7 @@ cdef class TNGFile:
 
         # if we errored or no blocks found
         if status or (num_blocks == 0):
+            print(status, num_blocks)
             return -1
         else:
             return next_id
@@ -357,9 +367,10 @@ cdef class TNGFile:
 
         # get frame index of next frame
         cdef tng_function_status status
-        cdef int64_t next_frame
+        cdef int64_t frame
 
         frame = self.frame_ids[self.step]
+        print(frame)
 
         cdef MemoryWrapper wrap
         cdef float* positions
@@ -369,7 +380,7 @@ cdef class TNGFile:
         cdef int64_t stride_length, n_values_per_frame
         status = tng_util_pos_read_range(self._traj, frame, frame, &positions, &stride_length)
         if status != TNG_SUCCESS:
-            raise IOError("error reading frame")
+            raise IOError("error reading frame {}".format(status))
 
         # move C data to numpy array
         cdef np.ndarray xyz
@@ -439,7 +450,9 @@ cdef class TNGFile:
                 step += len(self)
             if (step < 0) or (step >= len(self)):
                 raise IndexError("Seek index out of bounds")
+            print(self.step)
             self.step = step
+            print(self.step)
             self.reached_eof = False
         else:
             raise IOError('No file currently opened')

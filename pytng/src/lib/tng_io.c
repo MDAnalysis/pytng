@@ -11193,8 +11193,9 @@ tng_function_status DECLSPECDLLEXPORT tng_frame_set_of_frame_find
 
     /* Take long steps forward until a long step forward would be too long or
      * the right frame set is found */
-    while(file_pos > 0 && first_frame + long_stride_length *
-          n_frames_per_frame_set <= frame)
+    while(file_pos > 0 &&
+	  frame_set->long_stride_next_frame_set_file_pos > 0 &&
+	  first_frame + long_stride_length * n_frames_per_frame_set <= frame)
     {
         file_pos = frame_set->long_stride_next_frame_set_file_pos;
         if(file_pos > 0)
@@ -11228,8 +11229,9 @@ tng_function_status DECLSPECDLLEXPORT tng_frame_set_of_frame_find
 
     /* Take medium steps forward until a medium step forward would be too long
      * or the right frame set is found */
-    while(file_pos > 0 && first_frame + medium_stride_length *
-          n_frames_per_frame_set <= frame)
+    while(file_pos > 0 &&
+	  frame_set->medium_stride_next_frame_set_file_pos > 0 &&
+	  first_frame + medium_stride_length * n_frames_per_frame_set <= frame)
     {
         file_pos = frame_set->medium_stride_next_frame_set_file_pos;
         if(file_pos > 0)
@@ -11264,7 +11266,10 @@ tng_function_status DECLSPECDLLEXPORT tng_frame_set_of_frame_find
     }
 
     /* Take one step forward until the right frame set is found */
-    while(file_pos > 0 && first_frame < frame && last_frame < frame)
+    while(file_pos > 0 &&
+	  frame_set->next_frame_set_file_pos > 0 &&
+	  first_frame < frame &&
+	  last_frame < frame)
     {
         file_pos = frame_set->next_frame_set_file_pos;
         if(file_pos > 0)
@@ -11300,8 +11305,9 @@ tng_function_status DECLSPECDLLEXPORT tng_frame_set_of_frame_find
 
     /* Take long steps backward until a long step backward would be too long
      * or the right frame set is found */
-    while(file_pos > 0 && first_frame - long_stride_length *
-          n_frames_per_frame_set >= frame)
+    while(file_pos > 0 &&
+	  frame_set->long_stride_prev_frame_set_file_pos > 0 &&
+	  first_frame - long_stride_length * n_frames_per_frame_set >= frame)
     {
         file_pos = frame_set->long_stride_prev_frame_set_file_pos;
         if(file_pos > 0)
@@ -11337,8 +11343,9 @@ tng_function_status DECLSPECDLLEXPORT tng_frame_set_of_frame_find
 
     /* Take medium steps backward until a medium step backward would be too long
      * or the right frame set is found */
-    while(file_pos > 0 && first_frame - medium_stride_length *
-          n_frames_per_frame_set >= frame)
+    while(file_pos > 0 &&
+	  frame_set->medium_stride_prev_frame_set_file_pos > 0 &&
+	  first_frame - medium_stride_length * n_frames_per_frame_set >= frame)
     {
         file_pos = frame_set->medium_stride_prev_frame_set_file_pos;
         if(file_pos > 0)
@@ -11373,7 +11380,9 @@ tng_function_status DECLSPECDLLEXPORT tng_frame_set_of_frame_find
     }
 
     /* Take one step backward until the right frame set is found */
-    while(file_pos > 0 && first_frame > frame && last_frame > frame)
+    while(file_pos > 0 &&
+	  frame_set->prev_frame_set_file_pos > 0 &&
+	  first_frame > frame && last_frame > frame)
     {
         file_pos = frame_set->prev_frame_set_file_pos;
         if(file_pos > 0)
