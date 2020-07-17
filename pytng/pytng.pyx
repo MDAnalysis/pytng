@@ -35,6 +35,7 @@ cdef extern from "tng/tng_io.h":
         const char *filename,
         const char mode,
         tng_trajectory_t *tng_data_p)
+
     tng_function_status tng_util_trajectory_close(
         tng_trajectory_t *tng_data_p)
 
@@ -56,6 +57,48 @@ cdef extern from "tng/tng_io.h":
         const int64_t last_frame,
         float **positions,
         int64_t *stride_length)
+
+    tng_function_status tng_util_box_shape_read_range(
+        const tng_trajectory_t tng_data,
+        const int64_t first_frame,
+        const int64_t last_frame,
+        float **box_shape,
+        int64_t *stride_length)
+
+    tng_function_status tng_util_vel_read_range(
+        const tng_trajectory_t tng_data,
+        const int64_t first_frame,
+        const int64_t last_frame,
+        float **velocities,
+        int64_t *stride_length)
+
+    tng_function_status tng_util_force_read_range(
+        const tng_trajectory_t tng_data,
+        const int64_t first_frame,
+        const int64_t last_frame,
+        float **forces,
+        int64_t *stride_length)
+
+    tng_function_status tng_util_pos_read(
+        const tng_trajectory_t tng_data,
+        float **positions,
+        int64_t *stride_length)
+
+    tng_function_status tng_util_box_shape_read(
+        const tng_trajectory_t tng_data,
+        float **box_shape,
+        int64_t *stride_length)
+
+    tng_function_status tng_util_vel_read(
+        const tng_trajectory_t tng_data,
+        float **velocities,
+        int64_t *stride_length)
+
+    tng_function_status tng_util_force_read(
+        const tng_trajectory_t tng_data,
+        float **forces,
+        int64_t *stride_length)
+
 
     tng_function_status tng_util_time_of_frame_get(
         const tng_trajectory_t tng_data,
