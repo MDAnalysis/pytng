@@ -1,5 +1,6 @@
 import pytng
 import numpy as np
+from numpy.testing import (assert_almost_equal, assert_equal)
 import pytest
 
 T, F = True, False
@@ -23,22 +24,23 @@ def test_open_mode_w(MISSING_FILEPATH):
         pytng.TNGFile(MISSING_FILEPATH, mode='w')
 
 
-def test_open_invalide_mode(GMX_REF_FILEPATH):
+def test_open_invalide_mode(TNG_EXAMPLE):
     with pytest.raises(IOError) as excinfo:
-        pytng.TNGFile(GMX_REF_FILEPATH, mode='invalid')
+        pytng.TNGFile(TNG_EXAMPLE, mode='invalid')
     assert 'mode must be one of "r" or "w"' in str(excinfo.value)
 
 
-def test_len(GMX_REF_DATA, GMX_REF_FILEPATH):
-    with pytng.TNGFile(GMX_REF_FILEPATH) as tng:
-        assert GMX_REF_DATA.length == tng.n_frames
-        assert GMX_REF_DATA.length == len(tng)
+def test_len(TNG_EXAMPLE):
+    with pytng.TNGFile(TNG_EXAMPLE) as tng:
+        assert_equal(tng.n_frames, 10)
+        assert_equal(len(tng), 10)
 
 
-# def test_iter(GMX_REF_DATA, GMX_REF_FILEPATH):
-#     with pytng.TNGFile(GMX_REF_FILEPATH) as tng:
-#         for i, ts in enumerate(tng):
-#             assert i == ts.step
+
+def test_iter(TNG_EXAMPLE):
+    with pytng.TNGFile(TNG_EXAMPLE) as tng:
+        for i, ts in enumerate(tng):
+            assert i == ts.step
 
 
 # @pytest.mark.parametrize('slice_idx', [

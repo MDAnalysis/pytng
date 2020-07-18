@@ -30,9 +30,9 @@ def ARGON_NPT_COMPRESSED():
 
 @pytest.fixture()
 def WATER_NPT_COMPRESSED_TRJCONV():
-    return os.path.join(, 'reference_files', 'water_npt_compressed_trjconv.tng')
+    return os.path.join(HERE, 'reference_files', 'water_npt_compressed_trjconv.tng')
 
 
 @pytest.fixture()
 def WATER_NPT_COMPRESSED_TRJCONV():
-    return os.path.join(, 'reference_files', 'water_uncompressed_vels_forces.tng')
+    return os.path.join(HERE, 'reference_files', 'water_uncompressed_vels_forces.tng')
