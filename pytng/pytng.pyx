@@ -310,7 +310,10 @@ cdef class TNGFile:
             time = frame_time * 1e12
 
         # BOX SHAPE
-        cdef float*  box_shape
+        cdef MemoryWrapper wrap_box
+        cdef float* box_s
+        wrap_box = MemoryWrapper(3 * 3 * sizeof(float))
+        box_shape = <float*> wrap_box.ptr
         cdef np.ndarray[ndim=2, dtype=np.float32_t, mode='c'] box = np.empty((3, 3), dtype=np.float32)
         ok = tng_util_box_shape_read_range(self._traj, self.step, self.step, &box_shape, &stride_length) #TODO this will break when using frames spaced more than 1 apart
         if ok != TNG_SUCCESS:

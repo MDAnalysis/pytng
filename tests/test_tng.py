@@ -53,11 +53,11 @@ def test_iter(TNG_EXAMPLE):
 #     (0, -1, None),
 #     (None, 99, None),  # Out of bound
 # ])
-# def test_sliced_iteration(slice_idx, GMX_REF_DATA, GMX_REF_FILEPATH):
+# def test_sliced_iteration(slice_idx, TNG_EXAMPLE):
 #     start, stop, step = slice_idx
-#     ref_steps = np.arange(0, GMX_REF_DATA.length)[start:stop:step]
+#     ref_steps = np.arange(0, 10)[start:stop:step]
 
-#     with pytng.TNGFile(GMX_REF_FILEPATH) as tng:
+#     with pytng.TNGFile(TNG_EXAMPLE) as tng:
 #         for ref_ts, ts in zip(ref_steps, tng[start:stop:step]):
 #             assert ref_ts == ts.step
 
