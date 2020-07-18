@@ -123,7 +123,7 @@ cdef class MemoryWrapper:
     # holds a pointer to C allocated memory, deals with malloc&free
     # based on:
     # https://gist.github.com/GaelVaroquaux/1249305/ac4f4190c26110fe2791a1e7a6bed9c733b3413f
-    cdef void* ptr
+    cdef void* ptr  #TODO do we want to use std::unique_ptr?
 
     def __cinit__(MemoryWrapper self, int size):
         # malloc not PyMem_Malloc as gmx later does realloc
@@ -277,31 +277,31 @@ cdef class TNGFile:
             self.reached_eof = True
             raise StopIteration("Reached EOF in read")
 
-        cdef MemoryWrapper wrap
-        cdef float* positions
-        wrap = MemoryWrapper(3 * self.n_atoms * sizeof(float))
-        positions = <float*> wrap.ptr
-
-        cdef int64_t stride_length, ok, i, n_values_per_frame
+        cdef MemoryWrapper wrap_pos
+        cdef float* position
+        wrap_pos = MemoryWrapper(3 * self.n_atoms * sizeof(float))
+        positions = <float*> wrap_pos.ptr
+        cdef int64_t stride_length, ok
         ok = tng_util_pos_read_range(self._traj, self.step, self.step, &positions, &stride_length)
         if ok != TNG_SUCCESS:
             raise IOError("error reading frame")
 
         # move C data to numpy array
-        cdef np.ndarray xyz
-        cdef npy_intp dims[2]
-        cdef int err
-        cdef int nd = 2
+        #cdef np.ndarray xyz
+        #cdef npy_intp dims[2]
+        #cdef int err
+        #cdef int nd = 2
 
-        dims[0] = self.n_atoms
-        dims[1] = 3
-        xyz = PyArray_SimpleNewFromData(nd, dims, NPY_FLOAT, wrap.ptr)
-        Py_INCREF(wrap)
-        err = PyArray_SetBaseObject(xyz, wrap)
-        if err:
-            raise ValueError('failed to create positions array')
-        xyz *= self.distance_scale
+        #dims[0] = self.n_atoms
+        #dims[1] = 3
+        #xyz = PyArray_SimpleNewFromData(nd, dims, NPY_FLOAT, wrap.ptr)
+        #Py_INCREF(wrap)
+        #err = PyArray_SetBaseObject(xyz, wrap)
+        #if err:
+        #    raise ValueError('failed to create positions array')
+        #xyz *= self.distance_scale
 
+        # FRAME
         cdef double frame_time
         ok = tng_util_time_of_frame_get(self._traj, self.step, &frame_time)
         if ok != TNG_SUCCESS:
@@ -310,35 +310,19 @@ cdef class TNGFile:
         else:
             time = frame_time * 1e12
 
-        cdef np.ndarray[ndim=2, dtype=np.float32_t, mode='c'] box = np.empty((3, 3), dtype=np.float32)
-        cdef char data_type
-        cdef void* box_shape = NULL
-        cdef float* float_box
-        cdef double* double_box
+        # BOX SHAPE
+        cdef MemoryWrapper wrap_box
+        cdef float* box_shape
+        wrap_box = MemoryWrapper(3 * 3 * sizeof(float))
+        box = <float*> wrap_box.ptr
+        #cdef np.ndarray[ndim=2, dtype=np.float32_t, mode='c'] box = np.empty((3, 3), dtype=np.float32)
+        ok = tng_util_box_shape_read_range(self._traj, self.step, self.step, &box_shape, &stride_length)
+        if ok != TNG_SUCCESS:
+            raise IOError("error reading box shape")
 
-        try:
-            ok = tng_data_vector_interval_get(self._traj, TNG_TRAJ_BOX_SHAPE, self.step, self.step, TNG_USE_HASH,
-                                              &box_shape, &stride_length, &n_values_per_frame, &data_type)
-            if ok != TNG_SUCCESS:
-                raise IOError("error reading box shape")
-
-            if data_type == TNG_DOUBLE_DATA:
-                double_box = <double*>box_shape
-                for j in range(3):
-                    for k in range(3):
-                        box[j, k] = double_box[j*3 + k]
-            else:
-                float_box = <float*>box_shape
-                for j in range(3):
-                    for k in range(3):
-                        box[j, k] = float_box[j*3 + k]
-            box *= self.distance_scale
-        finally:
-            if box_shape != NULL:
-                free(box_shape)
-
+        # return frame_data
         self.step += 1
-        return TNGFrame(xyz, time, self.step - 1, box)
+        #return TNGFrame(xyz, time, self.step - 1, box)
 
     def seek(self, step):
         """Move the file handle to a particular frame number
