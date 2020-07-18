@@ -285,7 +285,7 @@ cdef class TNGFile:
         if ok != TNG_SUCCESS:
             raise IOError("error reading frame")
 
-        #move C data to numpy array
+        #move C data to numpy array # TODO move to own function
         cdef np.ndarray xyz
         cdef npy_intp dims[2]
         cdef int err
@@ -315,6 +315,10 @@ cdef class TNGFile:
         ok = tng_util_box_shape_read_range(self._traj, self.step, self.step, &box_shape, &stride_length) #TODO this will break when using frames spaced more than 1 apart
         if ok != TNG_SUCCESS:
             raise IOError("error reading box shape")
+        #populate box, can this be done the same way as positions above? #TODO is there a canonical way to convert to numpy array
+        for i in range(3):
+            for j in range(3):
+                box[i,j] = box[i+j] 
 
         # return frame_data
         self.step += 1
