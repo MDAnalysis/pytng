@@ -22,15 +22,17 @@ def MISSING_FILEPATH():
 def TNG_EXAMPLE():
     return os.path.join(HERE, 'reference_files', 'tng_example.tng')
 
+
 @pytest.fixture()
 def ARGON_NPT_COMPRESSED():
     return os.path.join(HERE, 'reference_files', 'argon_npt_compressed.tng')
 
-@pytest.fixture()
-def WATER_NPT_COMPRESSED_TRJCONV():
-    return os.path.join(    , 'reference_files', 'water_npt_compressed_trjconv.tng')
 
 @pytest.fixture()
 def WATER_NPT_COMPRESSED_TRJCONV():
-    return os.path.join(    , 'reference_files', 'water_uncompressed_vels_forces.tng')
+    return os.path.join(, 'reference_files', 'water_npt_compressed_trjconv.tng')
 
+
+@pytest.fixture()
+def WATER_NPT_COMPRESSED_TRJCONV():
+    return os.path.join(, 'reference_files', 'water_uncompressed_vels_forces.tng')
