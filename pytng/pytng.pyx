@@ -23,7 +23,6 @@ ctypedef enum tng_function_status: TNG_SUCCESS, TNG_FAILURE, TNG_CRITICAL
 ctypedef enum tng_data_type: TNG_CHAR_DATA, TNG_INT_DATA, TNG_FLOAT_DATA, TNG_DOUBLE_DATA
 ctypedef enum tng_hash_mode: TNG_SKIP_HASH, TNG_USE_HASH
 
-cdef long long TNG_TRAJ_BOX_SHAPE = 0x0000000010000000LL
 
 status_error_message = ['OK', 'Failure', 'Critical']
 
@@ -282,24 +281,24 @@ cdef class TNGFile:
         wrap_pos = MemoryWrapper(3 * self.n_atoms * sizeof(float))
         positions = <float*> wrap_pos.ptr
         cdef int64_t stride_length, ok
-        ok = tng_util_pos_read_range(self._traj, self.step, self.step, &positions, &stride_length)
+        ok = tng_util_pos_read_range(self._traj, self.step, self.step, &positions, &stride_length) #TODO this will break when using frames spaced more than 1 apart
         if ok != TNG_SUCCESS:
             raise IOError("error reading frame")
 
-        # move C data to numpy array
-        #cdef np.ndarray xyz
-        #cdef npy_intp dims[2]
-        #cdef int err
-        #cdef int nd = 2
+        #move C data to numpy array
+        cdef np.ndarray xyz
+        cdef npy_intp dims[2]
+        cdef int err
+        cdef int nd = 2
 
-        #dims[0] = self.n_atoms
-        #dims[1] = 3
-        #xyz = PyArray_SimpleNewFromData(nd, dims, NPY_FLOAT, wrap.ptr)
-        #Py_INCREF(wrap)
-        #err = PyArray_SetBaseObject(xyz, wrap)
-        #if err:
-        #    raise ValueError('failed to create positions array')
-        #xyz *= self.distance_scale
+        dims[0] = self.n_atoms
+        dims[1] = 3
+        xyz = PyArray_SimpleNewFromData(nd, dims, NPY_FLOAT, wrap_pos.ptr)
+        Py_INCREF(wrap_pos)
+        err = PyArray_SetBaseObject(xyz, wrap_pos)
+        if err:
+            raise ValueError('failed to create positions array')
+        xyz *= self.distance_scale
 
         # FRAME
         cdef double frame_time
@@ -311,18 +310,15 @@ cdef class TNGFile:
             time = frame_time * 1e12
 
         # BOX SHAPE
-        cdef MemoryWrapper wrap_box
-        cdef float* box_shape
-        wrap_box = MemoryWrapper(3 * 3 * sizeof(float))
-        box = <float*> wrap_box.ptr
-        #cdef np.ndarray[ndim=2, dtype=np.float32_t, mode='c'] box = np.empty((3, 3), dtype=np.float32)
-        ok = tng_util_box_shape_read_range(self._traj, self.step, self.step, &box_shape, &stride_length)
+        cdef float*  box_shape
+        cdef np.ndarray[ndim=2, dtype=np.float32_t, mode='c'] box = np.empty((3, 3), dtype=np.float32)
+        ok = tng_util_box_shape_read_range(self._traj, self.step, self.step, &box_shape, &stride_length) #TODO this will break when using frames spaced more than 1 apart
         if ok != TNG_SUCCESS:
             raise IOError("error reading box shape")
 
         # return frame_data
         self.step += 1
-        #return TNGFrame(xyz, time, self.step - 1, box)
+        return TNGFrame(xyz, time, self.step - 1, box)
 
     def seek(self, step):
         """Move the file handle to a particular frame number
