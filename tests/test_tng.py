@@ -270,6 +270,6 @@ def test_argon_npt_compressed_last_positions(ARGON_NPT_COMPRESSED, ARGON_NPT_COM
     with pytng.TNGFile(ARGON_NPT_COMPRESSED) as tng:
         tng.seek(tng.n_frames-1)
         last_frame = tng.read().positions
-        last_frame_last_10 = last_frame[90:100, :]
+        last_frame_last_10 = last_frame[990:1000, :]
         assert_array_almost_equal(
             ARGON_NPT_COMPRESSED_DATA.last_frame_last_10, last_frame_last_10)
