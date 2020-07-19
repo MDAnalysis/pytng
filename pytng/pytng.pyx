@@ -315,13 +315,13 @@ cdef class TNGFile:
         wrap_box = MemoryWrapper(3 * 3 * sizeof(float))
         box_shape = <float*> wrap_box.ptr
         cdef np.ndarray[ndim=2, dtype=np.float32_t, mode='c'] box = np.empty((3, 3), dtype=np.float32)
-        ok = tng_util_box_shape_read_range(self._traj, self.step, self.step, &box_shape, &stride_length) #TODO this will break when using frames spaced more than 1 apart
-        if ok != TNG_SUCCESS:
-            raise IOError("error reading box shape")
+        #ok = tng_util_box_shape_read_range(self._traj, self.step, self.step, &box_shape, &stride_length) #TODO this will break when using frames spaced more than 1 apart
+        #if ok != TNG_SUCCESS:
+        #    raise IOError("error reading box shape")
         #populate box, can this be done the same way as positions above? #TODO is there a canonical way to convert to numpy array
-        for i in range(3):
-            for j in range(3):
-                box[i,j] = box[i+j] 
+        #for i in range(3):
+        #    for j in range(3):
+        #        box[i,j] = box[i+j] 
 
         # return frame_data
         self.step += 1
