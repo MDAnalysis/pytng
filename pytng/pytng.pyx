@@ -1,6 +1,13 @@
 # cython: linetrace=True
 # cython: embedsignature=True
 # distutils: define_macros=CYTHON_TRACE=1
+from numpy cimport(PyArray_SimpleNewFromData,
+                   PyArray_SetBaseObject,
+                   NPY_FLOAT,
+                   Py_INCREF,
+                   npy_intp,
+                   )
+
 from libc.stdint cimport int64_t
 from libc.stdlib cimport malloc, free
 
@@ -11,12 +18,6 @@ import numpy as np
 
 cimport numpy as np
 np.import_array()
-from numpy cimport (PyArray_SimpleNewFromData,
-                    PyArray_SetBaseObject,
-                    NPY_FLOAT,
-                    Py_INCREF,
-                    npy_intp,
-)
 
 
 ctypedef enum tng_function_status: TNG_SUCCESS, TNG_FAILURE, TNG_CRITICAL
@@ -31,78 +32,77 @@ cdef extern from "tng/tng_io.h":
         pass
 
     tng_function_status tng_util_trajectory_open(
-        const char *filename,
+        const char * filename,
         const char mode,
-        tng_trajectory_t *tng_data_p)
+        tng_trajectory_t * tng_data_p)
 
     tng_function_status tng_util_trajectory_close(
-        tng_trajectory_t *tng_data_p)
+        tng_trajectory_t * tng_data_p)
 
     tng_function_status tng_num_frames_get(
         const tng_trajectory_t tng_data,
-        int64_t *n)
+        int64_t * n)
 
     tng_function_status tng_num_particles_get(
         const tng_trajectory_t tng_data,
-        int64_t *n)
+        int64_t * n)
 
     tng_function_status tng_distance_unit_exponential_get(
         const tng_trajectory_t tng_data,
-        int64_t *exp);
+        int64_t * exp)
 
     tng_function_status tng_util_pos_read_range(
         const tng_trajectory_t tng_data,
         const int64_t first_frame,
         const int64_t last_frame,
-        float **positions,
-        int64_t *stride_length)
+        float ** positions,
+        int64_t * stride_length)
 
     tng_function_status tng_util_box_shape_read_range(
         const tng_trajectory_t tng_data,
         const int64_t first_frame,
         const int64_t last_frame,
-        float **box_shape,
-        int64_t *stride_length)
+        float ** box_shape,
+        int64_t * stride_length)
 
     tng_function_status tng_util_vel_read_range(
         const tng_trajectory_t tng_data,
         const int64_t first_frame,
         const int64_t last_frame,
-        float **velocities,
-        int64_t *stride_length)
+        float ** velocities,
+        int64_t * stride_length)
 
     tng_function_status tng_util_force_read_range(
         const tng_trajectory_t tng_data,
         const int64_t first_frame,
         const int64_t last_frame,
-        float **forces,
-        int64_t *stride_length)
+        float ** forces,
+        int64_t * stride_length)
 
     tng_function_status tng_util_pos_read(
         const tng_trajectory_t tng_data,
-        float **positions,
-        int64_t *stride_length)
+        float ** positions,
+        int64_t * stride_length)
 
     tng_function_status tng_util_box_shape_read(
         const tng_trajectory_t tng_data,
-        float **box_shape,
-        int64_t *stride_length)
+        float ** box_shape,
+        int64_t * stride_length)
 
     tng_function_status tng_util_vel_read(
         const tng_trajectory_t tng_data,
-        float **velocities,
-        int64_t *stride_length)
+        float ** velocities,
+        int64_t * stride_length)
 
     tng_function_status tng_util_force_read(
         const tng_trajectory_t tng_data,
-        float **forces,
-        int64_t *stride_length)
-
+        float ** forces,
+        int64_t * stride_length)
 
     tng_function_status tng_util_time_of_frame_get(
         const tng_trajectory_t tng_data,
         const int64_t frame_nr,
-        double *time)
+        double * time)
 
     tng_function_status tng_data_vector_interval_get(
         const tng_trajectory_t tng_data,
@@ -110,10 +110,10 @@ cdef extern from "tng/tng_io.h":
         const int64_t start_frame_nr,
         const int64_t end_frame_nr,
         const char hash_mode,
-        void **values,
-        int64_t *stride_length,
-        int64_t *n_values_per_frame,
-        char *type)
+        void ** values,
+        int64_t * stride_length,
+        int64_t * n_values_per_frame,
+        char * type)
 
 TNGFrame = namedtuple("TNGFrame", "positions time step box")
 
@@ -122,7 +122,7 @@ cdef class MemoryWrapper:
     # holds a pointer to C allocated memory, deals with malloc&free
     # based on:
     # https://gist.github.com/GaelVaroquaux/1249305/ac4f4190c26110fe2791a1e7a6bed9c733b3413f
-    cdef void* ptr  #TODO do we want to use std::unique_ptr?
+    cdef void * ptr  # TODO do we want to use std::unique_ptr?
 
     def __cinit__(MemoryWrapper self, int size):
         # malloc not PyMem_Malloc as gmx later does realloc
@@ -147,13 +147,26 @@ cdef class TNGFile:
     cdef int reached_eof
     cdef int64_t _n_frames
     cdef int64_t _n_atoms
+    cdef bint _pos
+    cdef bint _frc
+    cdef bint _vel
+    cdef int64_t _pos_stride
+    cdef int64_t _frc_stride
+    cdef int64_t _vel_stride
     cdef int64_t step
     cdef float distance_scale
 
     def __cinit__(self, fname, mode='r'):
         self.fname = fname
         self._n_frames = -1
+        self._pos   = 0
+        self._frc   = 0
+        self._vel   = 0
+        self._pos_stride = 0
+        self._frc_stride = 0
+        self._vel_stride = 0
         self.open(self.fname, mode)
+        self.get_strides()
 
     def __dealloc__(self):
         self.close()
@@ -190,30 +203,55 @@ cdef class TNGFile:
         fname_bytes = fname.encode('UTF-8')
         ok = tng_util_trajectory_open(fname_bytes, _mode, & self._traj)
         if ok != TNG_SUCCESS:
-            raise IOError("An error ocurred opening the file. {}".format(status_error_message[ok]))
+            raise IOError("An error ocurred opening the file. {}".format(
+                status_error_message[ok]))
 
         if self.mode == 'r':
-            ok = tng_num_frames_get(self._traj, &self._n_frames)
+            ok = tng_num_frames_get(self._traj, & self._n_frames)
             if ok != TNG_SUCCESS:
-                raise IOError("An error ocurred reading n_frames. {}".format(status_error_message[ok]))
+                raise IOError("An error ocurred reading n_frames. {}".format(
+                    status_error_message[ok]))
 
             ok = tng_num_particles_get(self._traj, & self._n_atoms)
             if ok != TNG_SUCCESS:
-                raise IOError("An error ocurred reading n_atoms. {}".format(status_error_message[ok]))
+                raise IOError("An error ocurred reading n_atoms. {}".format(
+                    status_error_message[ok]))
 
-            ok = tng_distance_unit_exponential_get(self._traj, &exponent)
+            ok = tng_distance_unit_exponential_get(self._traj, & exponent)
             if ok != TNG_SUCCESS:
-                raise IOError("An error ocurred reading distance unit exponent. {}".format(status_error_message[ok]))
+                raise IOError("An error ocurred reading distance unit exponent. {}".format(
+                    status_error_message[ok]))
             self.distance_scale = 10.0**(exponent+9)
 
         self.is_open = True
         self.step = 0
         self.reached_eof = False
 
+    def get_strides(self):
+        cdef float * pos_ptr = NULL
+        cdef float * vel_ptr = NULL
+        cdef float * frc_ptr = NULL
+        cdef int64_t stride_length = 0
+
+        tng_util_pos_read_range(self._traj, 0, 0, & pos_ptr, & stride_length)
+        if (pos_ptr):
+            self._pos = 1 #true
+            self._pos_stride = stride_length
+
+        tng_util_vel_read_range(self._traj, 0, 0, & vel_ptr, & stride_length)
+        if (vel_ptr):
+            self._vel = 1 #true
+            self._vel_stride = stride_length
+
+        tng_util_force_read_range(self._traj, 0, 0, & frc_ptr, & stride_length)
+        if (frc_ptr):
+            self._frc = 1 #true
+            self._frc_stride = stride_length
+
     def close(self):
         """Make sure the file handle is closed"""
         if self.is_open:
-            tng_util_trajectory_close(&self._traj)
+            tng_util_trajectory_close( & self._traj)
             self.is_open = False
             self._n_frames = -1
 
@@ -277,15 +315,16 @@ cdef class TNGFile:
             raise StopIteration("Reached EOF in read")
 
         cdef MemoryWrapper wrap_pos
-        #cdef float* position
+        # cdef float* position
         wrap_pos = MemoryWrapper(3 * self.n_atoms * sizeof(float))
         positions = <float*> wrap_pos.ptr
         cdef int64_t stride_length, ok
-        ok = tng_util_pos_read_range(self._traj, self.step, self.step, &positions, &stride_length) #TODO this will break when using frames spaced more than 1 apart
+        # TODO this will break when using frames spaced more than 1 apart
+        ok = tng_util_pos_read_range(self._traj, self.step, self.step, & positions, & stride_length)
         if ok != TNG_SUCCESS:
             raise IOError("error reading frame")
 
-        #move C data to numpy array # TODO move to own function
+        # move C data to numpy array # TODO move to own function
         cdef np.ndarray xyz
         cdef npy_intp dims[2]
         cdef int err
@@ -302,7 +341,7 @@ cdef class TNGFile:
 
         # FRAME
         cdef double frame_time
-        ok = tng_util_time_of_frame_get(self._traj, self.step, &frame_time)
+        ok = tng_util_time_of_frame_get(self._traj, self.step, & frame_time)
         if ok != TNG_SUCCESS:
             # No time available
             time = None
@@ -311,17 +350,17 @@ cdef class TNGFile:
 
         # BOX SHAPE
         cdef MemoryWrapper wrap_box
-        #cdef float* box_s
+        # cdef float* box_s
         wrap_box = MemoryWrapper(3 * 3 * sizeof(float))
         box_shape = <float*> wrap_box.ptr
-        cdef np.ndarray[ndim=2, dtype=np.float32_t, mode='c'] box = np.empty((3, 3), dtype=np.float32)
-        #ok = tng_util_box_shape_read_range(self._traj, self.step, self.step, &box_shape, &stride_length) #TODO this will break when using frames spaced more than 1 apart
-        #if ok != TNG_SUCCESS:
+        cdef np.ndarray[ndim = 2, dtype = np.float32_t, mode = 'c'] box = np.empty((3, 3), dtype=np.float32)
+        # ok = tng_util_box_shape_read_range(self._traj, self.step, self.step, &box_shape, &stride_length) #TODO this will break when using frames spaced more than 1 apart
+        # if ok != TNG_SUCCESS:
         #    raise IOError("error reading box shape")
-        #populate box, can this be done the same way as positions above? #TODO is there a canonical way to convert to numpy array
-        #for i in range(3):
+        # populate box, can this be done the same way as positions above? #TODO is there a canonical way to convert to numpy array
+        # for i in range(3):
         #    for j in range(3):
-        #        box[i,j] = box[i+j] 
+        #        box[i,j] = box[i+j]
 
         # return frame_data
         self.step += 1
@@ -356,7 +395,8 @@ cdef class TNGFile:
         elif isinstance(frame, (list, np.ndarray)):
             if isinstance(frame[0], (bool, np.bool_)):
                 if not (len(frame) == len(self)):
-                    raise TypeError("Boolean index must match length of trajectory")
+                    raise TypeError(
+                        "Boolean index must match length of trajectory")
 
                 # Avoid having list of bools
                 frame = np.asarray(frame, dtype=np.bool)
@@ -374,6 +414,7 @@ cdef class TNGFile:
             start = frame.start if frame.start is not None else 0
             stop = frame.stop if frame.stop is not None else self.n_frames
             step = frame.step if frame.step is not None else 1
+
             def sliceiter(start, stop, step):
                 for i in range(start, stop, step):
                     self.seek(i)
