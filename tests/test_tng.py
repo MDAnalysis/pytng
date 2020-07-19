@@ -251,10 +251,13 @@ def test_argon_npt_compressed_n_particles(ARGON_NPT_COMPRESSED):
         assert tng.n_atoms
 
 
-def test_argon_npt_compressed_n_particles(ARGON_NPT_COMPRESSED):
+def test_argon_npt_compressed_n_particles(ARGON_NPT_COMPRESSED, ARGON_NPT_COMPRESSED_DATA):
     with pytng.TNGFile(ARGON_NPT_COMPRESSED) as tng:
-        assert tng.n_atoms
+        assert ARGON_NPT_COMPRESSED_DATA.n_frames == tng.n_atoms
 
+def test_argon_npt_compressed_n_particles(ARGON_NPT_COMPRESSED, ARGON_NPT_COMPRESSED_DATA):
+    with pytng.TNGFile(ARGON_NPT_COMPRESSED) as tng:
+        assert ARGON_NPT_COMPRESSED_DATA.length == tng.n_frames
 
 def test_argon_npt_compressed_first_positions(ARGON_NPT_COMPRESSED, ARGON_NPT_COMPRESSED_DATA):
     with pytng.TNGFile(ARGON_NPT_COMPRESSED) as tng:
