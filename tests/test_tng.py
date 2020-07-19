@@ -1,6 +1,7 @@
 import pytng
 import numpy as np
-from numpy.testing import (assert_almost_equal, assert_equal)
+from numpy.testing import (
+    assert_almost_equal, assert_equal, assert_array_almost_equal)
 import pytest
 
 T, F = True, False
@@ -34,7 +35,6 @@ def test_tng_example_len(TNG_EXAMPLE):
     with pytng.TNGFile(TNG_EXAMPLE) as tng:
         assert_equal(tng.n_frames, 10)
         assert_equal(len(tng), 10)
-
 
 
 def test_tng_example_iter(TNG_EXAMPLE):
@@ -172,8 +172,6 @@ def test_tng_example_time(TNG_EXAMPLE_DATA, TNG_EXAMPLE):
             assert ref_time == ts.time
 
 
-
-
 def test_tng_example_double_iteration(TNG_EXAMPLE):
     with pytng.TNGFile(TNG_EXAMPLE) as tng:
         for i, frame in enumerate(tng):
@@ -236,22 +234,39 @@ def test_tng_example_reached_eof(TNG_EXAMPLE):
         with pytest.raises(StopIteration):
             next(tng)
 
+
 def test_argon_npt_compressed_open(ARGON_NPT_COMPRESSED):
     with pytng.TNGFile(ARGON_NPT_COMPRESSED) as tng:
         pass
 
+
 def test_argon_npt_compressed_len(ARGON_NPT_COMPRESSED):
     with pytng.TNGFile(ARGON_NPT_COMPRESSED) as tng:
         assert tng.n_frames == 500001
-        assert len(tng) ==  500001
+        assert len(tng) == 500001
+
 
 def test_argon_npt_compressed_n_particles(ARGON_NPT_COMPRESSED):
-        with pytng.TNGFile(ARGON_NPT_COMPRESSED) as tng:
-            assert tng.n_atoms
+    with pytng.TNGFile(ARGON_NPT_COMPRESSED) as tng:
+        assert tng.n_atoms
+
 
 def test_argon_npt_compressed_n_particles(ARGON_NPT_COMPRESSED):
-        with pytng.TNGFile(ARGON_NPT_COMPRESSED) as tng:
-            assert tng.n_atoms  
+    with pytng.TNGFile(ARGON_NPT_COMPRESSED) as tng:
+        assert tng.n_atoms
 
 
+def test_argon_npt_compressed_first_positions(ARGON_NPT_COMPRESSED, ARGON_NPT_COMPRESSED_DATA):
+    with pytng.TNGFile(ARGON_NPT_COMPRESSED) as tng:
+        first_frame_first_10 = tng.read().positions[:10,:]
+        assert_array_almost_equal(
+            ARGON_NPT_COMPRESSED_DATA.first_frame_first_10, first_frame_first_10)
 
+
+def test_argon_npt_compressed_last_positions(ARGON_NPT_COMPRESSED, ARGON_NPT_COMPRESSED_DATA):
+    with pytng.TNGFile(ARGON_NPT_COMPRESSED) as tng:
+        tng.seek(tng.n_frames-1)
+        last_frame = tng.read().positions
+        last_frame_last_10 = last_frame[90:100,:]
+        assert_array_almost_equal(
+            ARGON_NPT_COMPRESSED_DATA.last_frame_last_10, last_frame_last_10)

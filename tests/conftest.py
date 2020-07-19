@@ -91,7 +91,7 @@ def ARGON_NPT_COMPRESSED_DATA():
     # reference data for Argon NPT COMPRESSED
     TNG = namedtuple(
         'TNGData',
-        ['length', 'natoms', 'first_frame', 'last_frame', 'time', 'box'])
+        ['length', 'natoms', 'first_frame_first_10', 'last_frame_last_10', 'time', 'box'])
 
     time = [None] * 10
 
