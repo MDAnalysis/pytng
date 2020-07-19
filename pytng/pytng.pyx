@@ -277,7 +277,7 @@ cdef class TNGFile:
             raise StopIteration("Reached EOF in read")
 
         cdef MemoryWrapper wrap_pos
-        cdef float* position
+        #cdef float* position
         wrap_pos = MemoryWrapper(3 * self.n_atoms * sizeof(float))
         positions = <float*> wrap_pos.ptr
         cdef int64_t stride_length, ok
@@ -311,7 +311,7 @@ cdef class TNGFile:
 
         # BOX SHAPE
         cdef MemoryWrapper wrap_box
-        cdef float* box_s
+        #cdef float* box_s
         wrap_box = MemoryWrapper(3 * 3 * sizeof(float))
         box_shape = <float*> wrap_box.ptr
         cdef np.ndarray[ndim=2, dtype=np.float32_t, mode='c'] box = np.empty((3, 3), dtype=np.float32)
