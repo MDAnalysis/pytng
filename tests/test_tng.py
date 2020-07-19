@@ -107,7 +107,7 @@ def test_getitem_single_invalid(idx, TNG_EXAMPLE):
     [T, F, T, F, T, F, T, F, T, F]
 ))
 @pytest.mark.parametrize('cls', [list, np.array])
-def test_getitem_bool(arr, cls, GMX_REF_DATA, GMX_REF_FILEPATH):
+def test_getitem_bool(arr, cls, TNG_EXAMPE_DATA, GMX_REF_FILEPATH):
     slx = cls(arr)
     ref = np.arange(TNG_EXAMPLE.length)[slx]
 
@@ -125,27 +125,27 @@ def test_getitem_bool_TypeError(cls, TNG_EXAMPLE):
                 ts.step
 
 
-def test_natoms(GMX_REF_DATA, TNG_EXAMPLE):
+def test_natoms(TNG_EXAMPE_DATA, TNG_EXAMPLE):
     with pytng.TNGFile(TNG_EXAMPLE) as tng:
-        assert GMX_REF_DATA.natoms == tng.n_atoms
+        assert TNG_EXAMPE_DATA.natoms == tng.n_atoms
 
 
-def test_first_positions(GMX_REF_DATA, TNG_EXAMPLE):
-    with pytng.TNGFile(GMX_REF_FILEPATH) as tng:
+def test_first_positions(TNG_EXAMPE_DATA, TNG_EXAMPLE):
+    with pytng.TNGFile(TNG_EXAMPLE) as tng:
         first_frame = tng.read().positions
-        assert np.array_equal(GMX_REF_DATA.first_frame, first_frame)
+        assert np.array_equal(TNG_EXAMPE_DATA.first_frame, first_frame)
 
 
-def test_last_positions(GMX_REF_DATA, TNG_EXAMPLE):
-    with pytng.TNGFile(GMX_REF_FILEPATH) as tng:
+def test_last_positions(TNG_EXAMPE_DATA, TNG_EXAMPLE):
+    with pytng.TNGFile(TNG_EXAMPLE) as tng:
         tng.seek(tng.n_frames - 1)
         last_frame = tng.read().positions
-        assert np.array_equal(GMX_REF_DATA.last_frame, last_frame)
+        assert np.array_equal(TNG_EXAMPE_DATA.last_frame, last_frame)
 
 
 @pytest.mark.parametrize('idx', [-11, -12, 10, 11])
 def test_seek_IndexError(idx, TNG_EXAMPLE):
-    with pytng.TNGFile(GMX_REF_FILEPATH, 'r') as tng:
+    with pytng.TNGFile(TNG_EXAMPLE, 'r') as tng:
         with pytest.raises(IndexError):
             tng[idx]
 
@@ -166,9 +166,9 @@ def test_seek_not_open(TNG_EXAMPLE):
     assert 'No file currently opened' in str(excinfo.value)
 
 
-def test_time(GMX_REF_DATA, TNG_EXAMPLE):
+def test_time(TNG_EXAMPE_DATA, TNG_EXAMPLE):
     with pytng.TNGFile(TNG_EXAMPLE) as tng:
-        for ref_time, ts in zip(GMX_REF_DATA.time, tng):
+        for ref_time, ts in zip(TNG_EXAMPE_DATA.time, tng):
             assert ref_time == ts.time
 
 
