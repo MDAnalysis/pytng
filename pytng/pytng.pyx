@@ -159,9 +159,9 @@ cdef class TNGFile:
     def __cinit__(self, fname, mode='r'):
         self.fname = fname
         self._n_frames = -1
-        self._pos   = 0
-        self._frc   = 0
-        self._vel   = 0
+        self._pos = 0
+        self._frc = 0
+        self._vel = 0
         self._pos_stride = 0
         self._frc_stride = 0
         self._vel_stride = 0
@@ -235,23 +235,23 @@ cdef class TNGFile:
 
         tng_util_pos_read_range(self._traj, 0, 0, & pos_ptr, & stride_length)
         if (pos_ptr):
-            self._pos = 1 #true
+            self._pos = 1  # true
             self._pos_stride = stride_length
 
         tng_util_vel_read_range(self._traj, 0, 0, & vel_ptr, & stride_length)
         if (vel_ptr):
-            self._vel = 1 #true
+            self._vel = 1  # true
             self._vel_stride = stride_length
 
         tng_util_force_read_range(self._traj, 0, 0, & frc_ptr, & stride_length)
         if (frc_ptr):
-            self._frc = 1 #true
+            self._frc = 1  # true
             self._frc_stride = stride_length
 
     def close(self):
         """Make sure the file handle is closed"""
         if self.is_open:
-            tng_util_trajectory_close( & self._traj)
+            tng_util_trajectory_close(& self._traj)
             self.is_open = False
             self._n_frames = -1
 
@@ -353,7 +353,7 @@ cdef class TNGFile:
         # cdef float* box_s
         wrap_box = MemoryWrapper(3 * 3 * sizeof(float))
         box_shape = <float*> wrap_box.ptr
-        cdef np.ndarray[ndim = 2, dtype = np.float32_t, mode = 'c'] box = np.empty((3, 3), dtype=np.float32)
+        cdef np.ndarray[ndim= 2, dtype = np.float32_t, mode = 'c'] box = np.empty((3, 3), dtype=np.float32)
         # ok = tng_util_box_shape_read_range(self._traj, self.step, self.step, &box_shape, &stride_length) #TODO this will break when using frames spaced more than 1 apart
         # if ok != TNG_SUCCESS:
         #    raise IOError("error reading box shape")
