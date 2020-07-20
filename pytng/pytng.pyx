@@ -239,22 +239,22 @@ cdef class TNGFile:
         cdef tng_function_status ok
 
         ok = tng_util_pos_read_range(self._traj, 0, 0, & pos_ptr, & stride_length)
-        if (pos_ptr):
+        if (ok == TNG_SUCCESS) and pos_ptr:
             self._pos = 1  # true
             self._pos_stride = stride_length
 
-        ok = tng_util_box_shape_read_range(self._traj, 0, 0, & pos_ptr, & stride_length)
-        if (box_ptr):
-            self._box = 1
+        ok = tng_util_box_shape_read_range(self._traj, 0, 0, & box_ptr, & stride_length)
+        if (ok == TNG_SUCCESS) and box_ptr:
+            self._box = 1  # true
             self._box_stride = stride_length
 
         ok = tng_util_vel_read_range(self._traj, 0, 0, & vel_ptr, & stride_length)
-        if (vel_ptr):
+        if (ok == TNG_SUCCESS) and vel_ptr:
             self._vel = 1  # true
             self._vel_stride = stride_length
 
         ok = tng_util_force_read_range(self._traj, 0, 0, & frc_ptr, & stride_length)
-        if (frc_ptr):
+        if (ok == TNG_SUCCESS) and frc_ptr:
             self._frc = 1  # true
             self._frc_stride = stride_length
 
@@ -297,28 +297,28 @@ cdef class TNGFile:
         if not self.is_open:
             raise IOError('No file currently opened')
         return self._n_atoms
-    
+
     @property
     def _pos(self):
         """has positions"""
         if not self.is_open:
             raise IOError('No file currently opened')
         return self._pos
-    
+
     @property
     def _box(self):
         """has box data"""
         if not self.is_open:
             raise IOError('No file currently opened')
         return self._box
-    
+
     @property
     def _vel(self):
         """has vel data"""
         if not self.is_open:
             raise IOError('No file currently opened')
         return self._vel
-    
+
     @property
     def _frc(self):
         """has force data"""
@@ -397,7 +397,7 @@ cdef class TNGFile:
                 # populate box, can this be done the same way as positions above? #TODO is there a canonical way to convert to numpy array
                 for i in range(3):
                     for j in range(3):
-                        box[i, j] = box[i+j]
+                        box[i, j] = box_shape[i+j]
 
         if self._vel:
             if (self.step % self._vel_stride == 0):
