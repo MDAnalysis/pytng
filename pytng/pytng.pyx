@@ -231,6 +231,7 @@ cdef class TNGFile:
         self.reached_eof = False
 
     def get_strides(self):
+        # ugly, relies on there being data of the right type at the first frame
         cdef float * pos_ptr = NULL
         cdef float * box_ptr = NULL
         cdef float * vel_ptr = NULL
@@ -362,7 +363,6 @@ cdef class TNGFile:
 
         if self._pos:
             if (self.step % self._pos_stride == 0):
-                # cdef float* position
                 wrap_pos = MemoryWrapper(3 * self.n_atoms * sizeof(float))
                 positions = <float*> wrap_pos.ptr
                 # TODO this will break when using frames spaced more than 1 apart
@@ -399,13 +399,27 @@ cdef class TNGFile:
                     for j in range(3):
                         box[i, j] = box_shape[3*i + j]
 
+        cdef MemoryWrapper wrap_vel
+        cdef np.ndarray vel
+
         if self._vel:
             if (self.step % self._vel_stride == 0):
-                raise NotImplementedError
+                wrap_vel = MemoryWrapper(3 * self.n_atoms * sizeof(float))
+                velocities = <float*> wrap_vel.ptr
+                ok = tng_util_vel_read_range(self._traj, self.step, self.step, & velocities, & stride_length)
+                if ok != TNG_SUCCESS:
+                    raise IOError("error reading velocities")
+                
+        cdef MemoryWrapper wrap_frc
+        cdef np.ndarray frc
 
         if self._frc:
             if (self.step % self._frc_stride == 0):
-                raise NotImplementedError
+                wrap_frc = MemoryWrapper(3 * self.n_atoms * sizeof(float))
+                forces = <float*> wrap_frc.ptr
+                ok = tng_util_force_read_range(self._traj, self.step, self.step, & forces, & stride_length)
+                if ok != TNG_SUCCESS:
+                    raise IOError("error reading forces")
 
         # FRAME
         cdef double frame_time
