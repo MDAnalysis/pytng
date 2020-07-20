@@ -236,13 +236,14 @@ cdef class TNGFile:
         cdef float * vel_ptr = NULL
         cdef float * frc_ptr = NULL
         cdef int64_t stride_length = 0
+        cdef tng_function_status ok
 
         ok = tng_util_pos_read_range(self._traj, 0, 0, & pos_ptr, & stride_length)
         if (pos_ptr):
             self._pos = 1  # true
             self._pos_stride = stride_length
         
-        ok = tng_util_box_read_range(self._traj, 0, 0, & pos_ptr, & stride_length)
+        ok = tng_util_box_shape_read_range(self._traj, 0, 0, & pos_ptr, & stride_length)
         if (box_ptr):
             self._box = 1
             self._box_stride = stride_length
@@ -322,23 +323,24 @@ cdef class TNGFile:
         if self.step >= self.n_frames:
             self.reached_eof = True
             raise StopIteration("Reached EOF in read")
+
+        #TODO this seem wasteful but can't cdef inside a conditional?
+        cdef MemoryWrapper wrap_pos
+        cdef int64_t stride_length, ok
+        cdef np.ndarray xyz
+        cdef npy_intp dims[2]
+        cdef int err
+        cdef int nd = 2
+
         if self._pos:   
             if (self.step % self._pos_stride == 0):
-                cdef MemoryWrapper wrap_pos
                 # cdef float* position
                 wrap_pos = MemoryWrapper(3 * self.n_atoms * sizeof(float))
                 positions = <float*> wrap_pos.ptr
-                cdef int64_t stride_length, ok
                 # TODO this will break when using frames spaced more than 1 apart
                 ok = tng_util_pos_read_range(self._traj, self.step, self.step, & positions, & stride_length)
                 if ok != TNG_SUCCESS:
                     raise IOError("error reading frame")
-
-                    # move C data to numpy array # TODO move to own function
-                    cdef np.ndarray xyz
-                    cdef npy_intp dims[2]
-                    cdef int err
-                    cdef int nd = 2
 
                 dims[0] = self.n_atoms
                 dims[1] = 3
@@ -349,28 +351,30 @@ cdef class TNGFile:
                     raise ValueError('failed to create positions array')
                 xyz *= self.distance_scale
         
+        #TODO this seem wasteful but can't cdef inside a conditional?
+        cdef MemoryWrapper wrap_box
+        cdef np.ndarray[ndim= 2, dtype = np.float32_t, mode = 'c'] box = np.empty((3, 3), dtype=np.float32)
+
         if self._box:
-            if (self.step % self._box_stride == 0);
-            # BOX SHAPE
-            cdef MemoryWrapper wrap_box
-            # cdef float* box_s
-            wrap_box = MemoryWrapper(3 * 3 * sizeof(float))
-            box_shape = <float*> wrap_box.ptr
-            cdef np.ndarray[ndim= 2, dtype = np.float32_t, mode = 'c'] box = np.empty((3, 3), dtype=np.float32)
-            ok = tng_util_box_shape_read_range(self._traj, self.step, self.step, &box_shape, &stride_length) #TODO this will break when using frames spaced more than 1 apart
-            if ok != TNG_SUCCESS:
-                raise IOError("error reading box shape")
-            # populate box, can this be done the same way as positions above? #TODO is there a canonical way to convert to numpy array
-            for i in range(3):
-                for j in range(3):
-                    box[i,j] = box[i+j]
+            if (self.step % self._box_stride == 0):
+                # BOX SHAPE
+                # cdef float* box_s
+                wrap_box = MemoryWrapper(3 * 3 * sizeof(float))
+                box_shape = <float*> wrap_box.ptr
+                ok = tng_util_box_shape_read_range(self._traj, self.step, self.step, &box_shape, &stride_length) #TODO this will break when using frames spaced more than 1 apart
+                if ok != TNG_SUCCESS:
+                    raise IOError("error reading box shape")
+                # populate box, can this be done the same way as positions above? #TODO is there a canonical way to convert to numpy array
+                for i in range(3):
+                    for j in range(3):
+                        box[i,j] = box[i+j]
 
         if self._vel:
             if (self.step % self._vel_stride == 0):
                 raise NotImplementedError
 
         if self._frc:
-            if  (self.step % self._frc_stride) == 0):
+            if  (self.step % self._frc_stride == 0):
                 raise NotImplementedError
         
         
