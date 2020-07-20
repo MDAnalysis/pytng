@@ -261,7 +261,7 @@ cdef class TNGFile:
     def close(self):
         """Make sure the file handle is closed"""
         if self.is_open:
-            tng_util_trajectory_close(& self._traj)
+            tng_util_trajectory_close( & self._traj)
             self.is_open = False
             self._n_frames = -1
 
@@ -382,7 +382,7 @@ cdef class TNGFile:
 
         # TODO this seem wasteful but can't cdef inside a conditional?
         cdef MemoryWrapper wrap_box
-        cdef np.ndarray[ndim= 2, dtype = np.float32_t, mode = 'c'] box = np.empty((3, 3), dtype=np.float32)
+        cdef np.ndarray[ndim = 2, dtype = np.float32_t, mode = 'c'] box = np.empty((3, 3), dtype=np.float32)
 
         if self._box:
             if (self.step % self._box_stride == 0):
@@ -397,7 +397,7 @@ cdef class TNGFile:
                 # populate box, can this be done the same way as positions above? #TODO is there a canonical way to convert to numpy array
                 for i in range(3):
                     for j in range(3):
-                        box[i, j] = box_shape[i+j]
+                        box[i, j] = box_shape[3*i + j]
 
         if self._vel:
             if (self.step % self._vel_stride == 0):
