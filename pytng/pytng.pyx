@@ -148,9 +148,11 @@ cdef class TNGFile:
     cdef int64_t _n_frames
     cdef int64_t _n_atoms
     cdef bint _pos
+    cdef bint _box
     cdef bint _frc
     cdef bint _vel
     cdef int64_t _pos_stride
+    cdef int64_t _box_stride
     cdef int64_t _frc_stride
     cdef int64_t _vel_stride
     cdef int64_t step
@@ -163,6 +165,7 @@ cdef class TNGFile:
         self._frc = 0
         self._vel = 0
         self._pos_stride = 0
+        self._box_stride = 0
         self._frc_stride = 0
         self._vel_stride = 0
         self.open(self.fname, mode)
@@ -229,21 +232,27 @@ cdef class TNGFile:
 
     def get_strides(self):
         cdef float * pos_ptr = NULL
+        cdef float * box_ptr = NULL
         cdef float * vel_ptr = NULL
         cdef float * frc_ptr = NULL
         cdef int64_t stride_length = 0
 
-        tng_util_pos_read_range(self._traj, 0, 0, & pos_ptr, & stride_length)
+        ok = tng_util_pos_read_range(self._traj, 0, 0, & pos_ptr, & stride_length)
         if (pos_ptr):
             self._pos = 1  # true
             self._pos_stride = stride_length
+        
+        ok = tng_util_box_read_range(self._traj, 0, 0, & pos_ptr, & stride_length)
+        if (box_ptr):
+            self._box = 1
+            self._box_stride = stride_length
 
-        tng_util_vel_read_range(self._traj, 0, 0, & vel_ptr, & stride_length)
+        ok = tng_util_vel_read_range(self._traj, 0, 0, & vel_ptr, & stride_length)
         if (vel_ptr):
             self._vel = 1  # true
             self._vel_stride = stride_length
 
-        tng_util_force_read_range(self._traj, 0, 0, & frc_ptr, & stride_length)
+        ok = tng_util_force_read_range(self._traj, 0, 0, & frc_ptr, & stride_length)
         if (frc_ptr):
             self._frc = 1  # true
             self._frc_stride = stride_length
@@ -313,32 +322,58 @@ cdef class TNGFile:
         if self.step >= self.n_frames:
             self.reached_eof = True
             raise StopIteration("Reached EOF in read")
+        if self._pos:   
+            if (self.step % self._pos_stride == 0):
+                cdef MemoryWrapper wrap_pos
+                # cdef float* position
+                wrap_pos = MemoryWrapper(3 * self.n_atoms * sizeof(float))
+                positions = <float*> wrap_pos.ptr
+                cdef int64_t stride_length, ok
+                # TODO this will break when using frames spaced more than 1 apart
+                ok = tng_util_pos_read_range(self._traj, self.step, self.step, & positions, & stride_length)
+                if ok != TNG_SUCCESS:
+                    raise IOError("error reading frame")
 
-        cdef MemoryWrapper wrap_pos
-        # cdef float* position
-        wrap_pos = MemoryWrapper(3 * self.n_atoms * sizeof(float))
-        positions = <float*> wrap_pos.ptr
-        cdef int64_t stride_length, ok
-        # TODO this will break when using frames spaced more than 1 apart
-        ok = tng_util_pos_read_range(self._traj, self.step, self.step, & positions, & stride_length)
-        if ok != TNG_SUCCESS:
-            raise IOError("error reading frame")
+                    # move C data to numpy array # TODO move to own function
+                    cdef np.ndarray xyz
+                    cdef npy_intp dims[2]
+                    cdef int err
+                    cdef int nd = 2
 
-        # move C data to numpy array # TODO move to own function
-        cdef np.ndarray xyz
-        cdef npy_intp dims[2]
-        cdef int err
-        cdef int nd = 2
+                dims[0] = self.n_atoms
+                dims[1] = 3
+                xyz = PyArray_SimpleNewFromData(nd, dims, NPY_FLOAT, wrap_pos.ptr)
+                Py_INCREF(wrap_pos)
+                err = PyArray_SetBaseObject(xyz, wrap_pos)
+                if err:
+                    raise ValueError('failed to create positions array')
+                xyz *= self.distance_scale
+        
+        if self._box:
+            if (self.step % self._box_stride == 0);
+            # BOX SHAPE
+            cdef MemoryWrapper wrap_box
+            # cdef float* box_s
+            wrap_box = MemoryWrapper(3 * 3 * sizeof(float))
+            box_shape = <float*> wrap_box.ptr
+            cdef np.ndarray[ndim= 2, dtype = np.float32_t, mode = 'c'] box = np.empty((3, 3), dtype=np.float32)
+            ok = tng_util_box_shape_read_range(self._traj, self.step, self.step, &box_shape, &stride_length) #TODO this will break when using frames spaced more than 1 apart
+            if ok != TNG_SUCCESS:
+                raise IOError("error reading box shape")
+            # populate box, can this be done the same way as positions above? #TODO is there a canonical way to convert to numpy array
+            for i in range(3):
+                for j in range(3):
+                    box[i,j] = box[i+j]
 
-        dims[0] = self.n_atoms
-        dims[1] = 3
-        xyz = PyArray_SimpleNewFromData(nd, dims, NPY_FLOAT, wrap_pos.ptr)
-        Py_INCREF(wrap_pos)
-        err = PyArray_SetBaseObject(xyz, wrap_pos)
-        if err:
-            raise ValueError('failed to create positions array')
-        xyz *= self.distance_scale
+        if self._vel:
+            if (self.step % self._vel_stride == 0):
+                raise NotImplementedError
 
+        if self._frc:
+            if  (self.step % self._frc_stride) == 0):
+                raise NotImplementedError
+        
+        
         # FRAME
         cdef double frame_time
         ok = tng_util_time_of_frame_get(self._traj, self.step, & frame_time)
@@ -347,20 +382,8 @@ cdef class TNGFile:
             time = None
         else:
             time = frame_time * 1e12
+    
 
-        # BOX SHAPE
-        cdef MemoryWrapper wrap_box
-        # cdef float* box_s
-        wrap_box = MemoryWrapper(3 * 3 * sizeof(float))
-        box_shape = <float*> wrap_box.ptr
-        cdef np.ndarray[ndim= 2, dtype = np.float32_t, mode = 'c'] box = np.empty((3, 3), dtype=np.float32)
-        # ok = tng_util_box_shape_read_range(self._traj, self.step, self.step, &box_shape, &stride_length) #TODO this will break when using frames spaced more than 1 apart
-        # if ok != TNG_SUCCESS:
-        #    raise IOError("error reading box shape")
-        # populate box, can this be done the same way as positions above? #TODO is there a canonical way to convert to numpy array
-        # for i in range(3):
-        #    for j in range(3):
-        #        box[i,j] = box[i+j]
 
         # return frame_data
         self.step += 1
