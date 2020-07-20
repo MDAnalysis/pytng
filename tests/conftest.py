@@ -91,7 +91,7 @@ def ARGON_NPT_COMPRESSED_DATA():
     # reference data for Argon NPT COMPRESSED
     TNG = namedtuple(
         'TNGData',
-        ['length', 'natoms', 'first_frame_first_10', 'last_frame_last_10', 'time', 'box'])
+        ['length', 'natoms', 'first_frame_first_10', 'last_frame_last_10', 'first_box', 'last_box', 'time'])
 
     time = [None] * 10
 
@@ -121,13 +121,20 @@ def ARGON_NPT_COMPRESSED_DATA():
          [1.28900e+00,  9.98000e-01,  1.64500e+00]],
         dtype=np.float64)
 
+    first_box = np.array([[3.60140, 0.00000, 0.000000], [0.000000,
+                          3.60140, 0.000000], [0.000000, 0.000000, 3.60140]])
+
+    last_box = np.array([[3.589650, 0.000000, 0.000000], [0.000000,
+                         3.589650, 0.000000], [0.000000, 0.000000, 3.589650]])
+
     return TNG(
         length=500001,  # number of frames
         natoms=1000,
         first_frame_first_10=first_frame_first_10,
         last_frame_last_10=last_frame_last_10,
-        time=time,
-        box=np.eye(3) * 50, )
+        first_box = first_box,
+        last_box = last_box,
+        time=time )
 
 
 @pytest.fixture()
@@ -136,5 +143,5 @@ def WATER_NPT_COMPRESSED_TRJCONV():
 
 
 @pytest.fixture()
-def WATER_NPT_COMPRESSED_TRJCONV():
+def WATER_NPT_UNCOMPRESSED_VELS_FORCES():
     return os.path.join(HERE, 'reference_files', 'water_uncompressed_vels_forces.tng')

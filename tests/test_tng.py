@@ -253,18 +253,10 @@ def test_argon_npt_compressed_len(ARGON_NPT_COMPRESSED):
         assert len(tng) == 500001
 
 
-def test_argon_npt_compressed_n_particles(ARGON_NPT_COMPRESSED):
-    with pytng.TNGFile(ARGON_NPT_COMPRESSED) as tng:
-        assert tng.n_atoms
-
-
 def test_argon_npt_compressed_n_particles(ARGON_NPT_COMPRESSED, ARGON_NPT_COMPRESSED_DATA):
     with pytng.TNGFile(ARGON_NPT_COMPRESSED) as tng:
-        assert ARGON_NPT_COMPRESSED_DATA.n_frames == tng.n_atoms
+        assert ARGON_NPT_COMPRESSED_DATA.natoms == tng.n_atoms
 
-def test_argon_npt_compressed_n_particles(ARGON_NPT_COMPRESSED, ARGON_NPT_COMPRESSED_DATA):
-    with pytng.TNGFile(ARGON_NPT_COMPRESSED) as tng:
-        assert ARGON_NPT_COMPRESSED_DATA.length == tng.n_frames
 
 def test_argon_npt_compressed_first_positions(ARGON_NPT_COMPRESSED, ARGON_NPT_COMPRESSED_DATA):
     with pytng.TNGFile(ARGON_NPT_COMPRESSED) as tng:
@@ -280,3 +272,27 @@ def test_argon_npt_compressed_last_positions(ARGON_NPT_COMPRESSED, ARGON_NPT_COM
         last_frame_last_10 = last_frame[990:1000, :]
         assert_array_almost_equal(
             ARGON_NPT_COMPRESSED_DATA.last_frame_last_10, last_frame_last_10)
+
+
+def test_argon_npt_compressed_first_box(ARGON_NPT_COMPRESSED, ARGON_NPT_COMPRESSED_DATA):
+        with pytng.TNGFile(ARGON_NPT_COMPRESSED) as tng:
+            first_box = tng.read().box
+            assert_array_almost_equal(
+            ARGON_NPT_COMPRESSED_DATA.first_box, first_box)
+
+
+
+
+
+
+def test_water_npt_uncompressed_vels_forces_open(WATER_NPT_UNCOMPRESSED_VELS_FORCES):
+    with pytng.TNGFile(WATER_NPT_UNCOMPRESSED_VELS_FORCES) as tng:
+        pass
+
+def test_water_npt_uncompressed_vels_forces_stride_setup(WATER_NPT_UNCOMPRESSED_VELS_FORCES):
+    with pytng.TNGFile(WATER_NPT_UNCOMPRESSED_VELS_FORCES) as tng:
+        assert tng._pos == 1
+        assert tng._box == 1
+        assert tng._vel == 1
+        assert tng._frc == 1
+
