@@ -313,3 +313,17 @@ def test_water_npt_uncompressed_vels_forces_last_vels(WATER_NPT_UNCOMPRESSED_VEL
         assert_array_almost_equal(
             WATER_NPT_UNCOMPRESSED_VELS_FORCES_DATA.last_frame_last_10_vels, last_frame_last_10_vels)
 
+def test_water_npt_uncompressed_vels_forces_first_frc(WATER_NPT_UNCOMPRESSED_VELS_FORCES, WATER_NPT_UNCOMPRESSED_VELS_FORCES_DATA):
+    with pytng.TNGFile(WATER_NPT_UNCOMPRESSED_VELS_FORCES) as tng:
+        first_frame_first_10_frc = tng.read().positions[:10, :]
+        assert_array_almost_equal(
+            WATER_NPT_UNCOMPRESSED_VELS_FORCES_DATA.first_frame_first_10_frc, first_frame_first_10_frc)
+
+
+def test_water_npt_uncompressed_vels_forces_last_frc(WATER_NPT_UNCOMPRESSED_VELS_FORCES, WATER_NPT_UNCOMPRESSED_VELS_FORCES_DATA):
+    with pytng.TNGFile(WATER_NPT_UNCOMPRESSED_VELS_FORCES) as tng:
+        tng.seek(tng.n_frames-1)
+        last_frame_last_10_vels = tng.read().positions[990:1000, :]
+        assert_array_almost_equal(
+            WATER_NPT_UNCOMPRESSED_VELS_FORCES_DATA.last_frame_last_10_frc, last_frame_last_10_frc)
+
