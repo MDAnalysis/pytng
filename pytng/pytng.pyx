@@ -297,6 +297,34 @@ cdef class TNGFile:
         if not self.is_open:
             raise IOError('No file currently opened')
         return self._n_atoms
+    
+    @property
+    def _pos(self):
+        """has positions"""
+        if not self.is_open:
+            raise IOError('No file currently opened')
+        return self._pos
+    
+    @property
+    def _box(self):
+        """has box data"""
+        if not self.is_open:
+            raise IOError('No file currently opened')
+        return self._box
+    
+    @property
+    def _vel(self):
+        """has vel data"""
+        if not self.is_open:
+            raise IOError('No file currently opened')
+        return self._vel
+    
+    @property
+    def _frc(self):
+        """has force data"""
+        if not self.is_open:
+            raise IOError('No file currently opened')
+        return self._frc
 
     def __len__(self):
         return self.n_frames

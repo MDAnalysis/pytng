@@ -239,6 +239,13 @@ def test_argon_npt_compressed_open(ARGON_NPT_COMPRESSED):
     with pytng.TNGFile(ARGON_NPT_COMPRESSED) as tng:
         pass
 
+def test_argon_npt_compressed_stride_setup(ARGON_NPT_COMPRESSED):
+    with pytng.TNGFile(ARGON_NPT_COMPRESSED) as tng:
+        assert tng._pos == 1
+        assert tng._box == 1
+        assert tng._vel == 0
+        assert tng._frc == 0
+
 
 def test_argon_npt_compressed_len(ARGON_NPT_COMPRESSED):
     with pytng.TNGFile(ARGON_NPT_COMPRESSED) as tng:
