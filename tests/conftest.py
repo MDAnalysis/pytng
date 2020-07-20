@@ -91,11 +91,11 @@ def ARGON_NPT_COMPRESSED_DATA():
     # reference data for Argon NPT COMPRESSED
     TNG = namedtuple(
         'TNGData',
-        ['length', 'natoms', 'first_frame_first_10', 'last_frame_last_10', 'first_box', 'last_box', 'time'])
+        ['length', 'natoms', 'first_frame_first_10_pos', 'last_frame_last_10_pos', 'first_box', 'last_box', 'time'])
 
     time = [None] * 10
 
-    first_frame_first_10 = np.array(
+    first_frame_first_10_pos = np.array(
         [[2.53300e+00,  1.24400e+00,  3.50600e+00],
          [8.30000e-01,  2.54400e+00,  3.44800e+00],
          [1.09100e+00,  1.10000e-01,  3.12900e+00],
@@ -108,7 +108,7 @@ def ARGON_NPT_COMPRESSED_DATA():
          [4.87000e-01,  1.15900e+00,  1.17100e+00]],
         dtype=np.float64)
 
-    last_frame_last_10 = np.array(
+    last_frame_last_10_pos = np.array(
         [[7.76000e-01,  1.19600e+00,  7.73000e-01],
          [6.27000e-01,  3.34000e-01,  2.04900e+00],
          [6.09000e-01,  3.46300e+00,  2.57000e-01],
@@ -122,19 +122,19 @@ def ARGON_NPT_COMPRESSED_DATA():
         dtype=np.float64)
 
     first_box = np.array([[3.60140, 0.00000, 0.000000], [0.000000,
-                          3.60140, 0.000000], [0.000000, 0.000000, 3.60140]])
+                                                         3.60140, 0.000000], [0.000000, 0.000000, 3.60140]])
 
     last_box = np.array([[3.589650, 0.000000, 0.000000], [0.000000,
-                         3.589650, 0.000000], [0.000000, 0.000000, 3.589650]])
+                                                          3.589650, 0.000000], [0.000000, 0.000000, 3.589650]])
 
     return TNG(
         length=500001,  # number of frames
         natoms=1000,
-        first_frame_first_10=first_frame_first_10,
-        last_frame_last_10=last_frame_last_10,
-        first_box = first_box,
-        last_box = last_box,
-        time=time )
+        first_frame_first_10_pos=first_frame_first_10_pos,
+        last_frame_last_10_pos=last_frame_last_10_pos,
+        first_box=first_box,
+        last_box=last_box,
+        time=time)
 
 
 @pytest.fixture()
@@ -145,3 +145,114 @@ def WATER_NPT_COMPRESSED_TRJCONV():
 @pytest.fixture()
 def WATER_NPT_UNCOMPRESSED_VELS_FORCES():
     return os.path.join(HERE, 'reference_files', 'water_uncompressed_vels_forces.tng')
+
+
+@pytest.fixture
+def WATER_NPT_UNCOMPRESSED_VELS_FORCES_DATA():
+    # reference data for Argon NPT COMPRESSED
+    TNG = namedtuple(
+        'TNGData',
+        ['length', 'natoms', 'first_frame_first_10_pos', 'last_frame_last_10_pos',
+         'first_box', 'last_box', 'first_frame_first_10_vels', 'last_frame_last_10_vels',
+         'first_frame_first_10_frc', 'last_frame_last_10_frc',
+        'time'])
+
+    time = [None] * 10
+
+    first_frame_first_10_pos = np.array(
+        [[2.53300e+00,  1.24400e+00,  3.50600e+00],
+         [8.30000e-01,  2.54400e+00,  3.44800e+00],
+         [1.09100e+00,  1.10000e-01,  3.12900e+00],
+         [2.45500e+00,  5.00000e-03,  3.01200e+00],
+         [2.71400e+00,  1.35300e+00,  5.53000e-01],
+         [3.05100e+00,  2.89300e+00,  2.69100e+00],
+         [1.42200e+00,  2.77000e+00,  1.46000e-01],
+         [2.22300e+00,  1.21100e+00,  3.26800e+00],
+         [2.81100e+00,  2.78900e+00,  2.38500e+00],
+         [4.87000e-01,  1.15900e+00,  1.17100e+00]],
+        dtype=np.float64)
+
+    last_frame_last_10_pos = np.array(
+        [[7.76000e-01,  1.19600e+00,  7.73000e-01],
+         [6.27000e-01,  3.34000e-01,  2.04900e+00],
+         [6.09000e-01,  3.46300e+00,  2.57000e-01],
+         [3.02000e+00,  3.18400e+00,  2.97600e+00],
+         [2.64700e+00,  7.74000e-01,  1.81500e+00],
+         [1.56000e-01,  1.28300e+00,  3.28100e+00],
+         [6.58000e-01,  3.03300e+00,  2.90800e+00],
+         [2.08500e+00,  3.55100e+00,  1.43600e+00],
+         [1.56000e-01,  3.50200e+00,  3.14000e-01],
+         [1.28900e+00,  9.98000e-01,  1.64500e+00]],
+        dtype=np.float64)
+
+    first_box = np.array([[3.60140, 0.00000, 0.000000], [0.000000,
+                                                         3.60140, 0.000000], [0.000000, 0.000000, 3.60140]])
+
+    last_box = np.array([[3.589650, 0.000000, 0.000000], [0.000000,
+                                                          3.589650, 0.000000], [0.000000, 0.000000, 3.589650]])
+
+    first_frame_first_10_vels = np.array(
+        [[2.53300e+00,  1.24400e+00,  3.50600e+00],
+         [8.30000e-01,  2.54400e+00,  3.44800e+00],
+         [1.09100e+00,  1.10000e-01,  3.12900e+00],
+         [2.45500e+00,  5.00000e-03,  3.01200e+00],
+         [2.71400e+00,  1.35300e+00,  5.53000e-01],
+         [3.05100e+00,  2.89300e+00,  2.69100e+00],
+         [1.42200e+00,  2.77000e+00,  1.46000e-01],
+         [2.22300e+00,  1.21100e+00,  3.26800e+00],
+         [2.81100e+00,  2.78900e+00,  2.38500e+00],
+         [4.87000e-01,  1.15900e+00,  1.17100e+00]],
+        dtype=np.float64)
+
+    last_frame_last_10_vels = np.array(
+        [[7.76000e-01,  1.19600e+00,  7.73000e-01],
+         [6.27000e-01,  3.34000e-01,  2.04900e+00],
+         [6.09000e-01,  3.46300e+00,  2.57000e-01],
+         [3.02000e+00,  3.18400e+00,  2.97600e+00],
+         [2.64700e+00,  7.74000e-01,  1.81500e+00],
+         [1.56000e-01,  1.28300e+00,  3.28100e+00],
+         [6.58000e-01,  3.03300e+00,  2.90800e+00],
+         [2.08500e+00,  3.55100e+00,  1.43600e+00],
+         [1.56000e-01,  3.50200e+00,  3.14000e-01],
+         [1.28900e+00,  9.98000e-01,  1.64500e+00]],
+        dtype=np.float64)
+
+    first_frame_first_10_frc = np.array(
+        [[2.53300e+00,  1.24400e+00,  3.50600e+00],
+         [8.30000e-01,  2.54400e+00,  3.44800e+00],
+         [1.09100e+00,  1.10000e-01,  3.12900e+00],
+         [2.45500e+00,  5.00000e-03,  3.01200e+00],
+         [2.71400e+00,  1.35300e+00,  5.53000e-01],
+         [3.05100e+00,  2.89300e+00,  2.69100e+00],
+         [1.42200e+00,  2.77000e+00,  1.46000e-01],
+         [2.22300e+00,  1.21100e+00,  3.26800e+00],
+         [2.81100e+00,  2.78900e+00,  2.38500e+00],
+         [4.87000e-01,  1.15900e+00,  1.17100e+00]],
+        dtype=np.float64)
+
+    last_frame_last_10_frc = np.array(
+        [[7.76000e-01,  1.19600e+00,  7.73000e-01],
+         [6.27000e-01,  3.34000e-01,  2.04900e+00],
+         [6.09000e-01,  3.46300e+00,  2.57000e-01],
+         [3.02000e+00,  3.18400e+00,  2.97600e+00],
+         [2.64700e+00,  7.74000e-01,  1.81500e+00],
+         [1.56000e-01,  1.28300e+00,  3.28100e+00],
+         [6.58000e-01,  3.03300e+00,  2.90800e+00],
+         [2.08500e+00,  3.55100e+00,  1.43600e+00],
+         [1.56000e-01,  3.50200e+00,  3.14000e-01],
+         [1.28900e+00,  9.98000e-01,  1.64500e+00]],
+        dtype=np.float64)
+
+
+    return TNG(
+        length=500001,  # number of frames
+        natoms=1000,
+        first_frame_first_10_pos=first_frame_first_10_pos,
+        last_frame_last_10_pos=last_frame_last_10_pos,
+        first_box=first_box,
+        last_box=last_box,
+        first_frame_first_10_vels=first_frame_first_10_vels,
+        last_frame_last_10_vels=last_frame_last_10_vels,
+        first_frame_first_10_frc=first_frame_first_10_frc,
+        last_frame_last_10_frc=last_frame_last_10_frc,
+        time=time)
