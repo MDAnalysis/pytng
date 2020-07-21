@@ -115,7 +115,7 @@ cdef extern from "tng/tng_io.h":
         int64_t * n_values_per_frame,
         char * type)
 
-TNGFrame = namedtuple("TNGFrame", "positions time step box")
+TNGFrame = namedtuple("TNGFrame", "positions velocities forces time step box ")
 
 
 cdef class MemoryWrapper:
@@ -361,6 +361,8 @@ cdef class TNGFile:
         cdef int err
         cdef int nd = 2
 
+        xyz = None
+
         if self._pos:
             if (self.step % self._pos_stride == 0):
                 wrap_pos = MemoryWrapper(3 * self.n_atoms * sizeof(float))
@@ -379,6 +381,8 @@ cdef class TNGFile:
                 if err:
                     raise ValueError('failed to create positions array')
                 xyz *= self.distance_scale
+        else:
+            xyz = None
 
         # TODO this seem wasteful but can't cdef inside a conditional?
         cdef MemoryWrapper wrap_box
@@ -398,9 +402,11 @@ cdef class TNGFile:
                 for i in range(3):
                     for j in range(3):
                         box[i, j] = box_shape[3*i + j]
+        else:
+            box = None
 
         cdef MemoryWrapper wrap_vel
-        cdef np.ndarray vel
+        cdef np.ndarray vels
 
         if self._vel:
             if (self.step % self._vel_stride == 0):
@@ -409,6 +415,17 @@ cdef class TNGFile:
                 ok = tng_util_vel_read_range(self._traj, self.step, self.step, & velocities, & stride_length)
                 if ok != TNG_SUCCESS:
                     raise IOError("error reading velocities")
+                
+                dims[0] = self.n_atoms
+                dims[1] = 3
+                vels = PyArray_SimpleNewFromData(
+                    nd, dims, NPY_FLOAT, wrap_vel.ptr)
+                Py_INCREF(wrap_vel)
+                err = PyArray_SetBaseObject(vels, wrap_vel)
+                if err:
+                    raise ValueError('failed to create positions array')
+        else:
+            vels = None
                 
         cdef MemoryWrapper wrap_frc
         cdef np.ndarray frc
@@ -420,6 +437,15 @@ cdef class TNGFile:
                 ok = tng_util_force_read_range(self._traj, self.step, self.step, & forces, & stride_length)
                 if ok != TNG_SUCCESS:
                     raise IOError("error reading forces")
+                
+                dims[0] = self.n_atoms
+                dims[1] = 3
+                frc = PyArray_SimpleNewFromData(
+                    nd, dims, NPY_FLOAT, wrap_frc.ptr)
+                Py_INCREF(wrap_frc)
+                err = PyArray_SetBaseObject(frc, wrap_frc)
+        else:
+            frc = None
 
         # FRAME
         cdef double frame_time
@@ -432,7 +458,9 @@ cdef class TNGFile:
 
         # return frame_data
         self.step += 1
-        return TNGFrame(xyz, time, self.step - 1, box)
+
+
+        return TNGFrame(xyz, vels, frc, time, self.step - 1, box)
 
     def seek(self, step):
         """Move the file handle to a particular frame number
