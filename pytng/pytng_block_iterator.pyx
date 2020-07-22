@@ -148,7 +148,7 @@ cdef class TNGFileIterator:
         self._n_frames = 0
         self._open(self.fname, mode)
         
-        def open(self, fname, mode):
+    def open(self, fname, mode):
         """Open a file handle
 
         Parameters
