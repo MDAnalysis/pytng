@@ -4650,6 +4650,34 @@ extern "C"
     /** @} */ /* end of group2 */
 
 
+    tng_function_status tng_block_init(struct tng_gen_block** block_p);
+
+    struct tng_gen_block
+{
+    /** The size of the block header in bytes */
+    int64_t header_contents_size;
+    /** The size of the block contents in bytes */
+    int64_t block_contents_size;
+    /** The ID of the block to determine its type */
+    int64_t id;
+    /** The MD5 hash of the block to verify integrity */
+    char md5_hash[TNG_MD5_HASH_LEN];
+    /** The name of the block */
+    char* name;
+    /** The library version used to write the block */
+    int64_t block_version;
+    int64_t alt_hash_type;
+    int64_t alt_hash_len;
+    char*   alt_hash;
+    int64_t signature_type;
+    int64_t signature_len;
+    char*   signature;
+    /** The full block header contents */
+    char* header_contents;
+    /** The full block contents */
+    char* block_contents;
+};
+
 #ifdef __cplusplus
 } /* end extern "C" */
 #endif
