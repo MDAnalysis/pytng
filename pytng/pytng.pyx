@@ -28,7 +28,13 @@ ctypedef enum tng_hash_mode: TNG_SKIP_HASH, TNG_USE_HASH
 status_error_message = ['OK', 'Failure', 'Critical']
 
 cdef extern from "tng/tng_io.h":
+
+    # note that the _t suffix is a typedef mangle for a pointer to the base struct
+
     ctypedef struct tng_trajectory_t:
+        pass
+
+    ctypedef struct tng_gen_block_t:
         pass
 
     tng_function_status tng_util_trajectory_open(
@@ -115,6 +121,13 @@ cdef extern from "tng/tng_io.h":
         int64_t * n_values_per_frame,
         char * type)
 
+    tng_function_status  tng_block_read_next(tng_trajectory_t tng_data,
+                                             tng_gen_block_t  block_data,
+                                             char             hash_mode)
+
+    tng_function_status tng_block_init(tng_gen_block_t* block_p)
+
+
 TNGFrame = namedtuple("TNGFrame", "positions velocities forces time step box ")
 
 
@@ -133,6 +146,81 @@ cdef class MemoryWrapper:
     def __dealloc__(MemoryWrapper self):
         if self.ptr != NULL:
             free(self.ptr)
+
+
+cdef class TNGFileIterator:
+    """File handle object for TNG files
+
+    Supports use as a context manager ("with" blocks).
+    """
+    cdef tng_trajectory_t _traj
+    cdef int64_t _n_frames
+    cdef readonly fname
+
+    def __cinit__(self, fname, mode='r'):
+        self.fname = fname
+        self._n_frames = 0
+        self._open(self.fname, mode)
+    
+    def __dealloc__(self):
+        self.close()
+
+    def _open(self, fname, mode):
+        """Open a file handle
+
+        Parameters
+        ----------
+        fname : str
+           path to the file
+        mode : str
+           mode to open the file in, 'r' for read, 'w' for write
+        """
+        self.mode = mode
+
+        cdef char _mode
+        if self.mode == 'r':
+            _mode = 'r'
+        elif self.mode == 'w':
+            _mode = 'w'
+            raise NotImplementedError('Writing is not implemented yet.')
+        elif self.mode == 'a':
+            _mode = 'a'
+            raise NotImplementedError('Appending is not implemented yet')
+        else:
+            raise ValueError('mode must be one of "r", "w", or "a" you '
+                             'supplied {}'.format(mode))
+
+        # handle file not existing at python level,
+        # C level is nasty and causes crash
+        if self.mode == 'r' and not os.path.isfile(fname):
+            raise IOError("File '{}' does not exist".format(fname))
+
+        cdef tng_function_status stat
+        fname_bytes = fname.encode('UTF-8')
+        stat = tng_util_trajectory_open(fname_bytes, _mode, & self._traj)
+        if stat != TNG_SUCCESS:
+            raise IOError("File '{}' cannot be opened".format(fname))
+
+        stat = tng_num_frames_get(self._traj, & self._n_frames)
+        if stat != TNG_SUCCESS:
+            raise IOError("Number of frames cannot be read")
+
+        # python level
+        self.is_open = True
+        self.step = 0
+        self.reached_eof = False
+
+    def _read_next_block(self):
+        cdef tng_function_status stat
+        cdef tng_gen_block_t block
+        stat = tng_block_init( & block)
+        if stat != TNG_SUCCESS:
+            raise ValueError("failed to init block")
+        stat = tng_block_read_next(self._traj, block, TNG_SKIP_HASH)
+        if stat != TNG_SUCCESS:
+            raise ValueError("failed to read subsequent block")
+
+
 
 
 cdef class TNGFile:

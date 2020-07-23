@@ -47,7 +47,7 @@ def extensions():
         Extension(
             'pytng.pytng',
             sources=glob('pytng/src/compression/*.c') + glob(
-                'pytng/src/lib/*.c') + ['pytng/pytng.pyx', 'pytng/pytng_block_iterator.pyx' ],
+                'pytng/src/lib/*.c') + ['pytng/pytng.pyx'],
             include_dirs=[
                 "pytng/include/", "{}/include".format(sys.prefix),
                 np.get_include()

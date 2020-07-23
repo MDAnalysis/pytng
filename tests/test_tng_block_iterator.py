@@ -7,4 +7,4 @@ import pytest
 T, F = True, False
 
 def test_file_open(TNG_EXAMPLE):
-    file_iterator = TNGFileIterator(TNG_EXAMPLE, mode='r')
+    file_iterator = pytng.TNGFileIterator(TNG_EXAMPLE, mode='r')
