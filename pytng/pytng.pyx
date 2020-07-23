@@ -156,6 +156,12 @@ cdef class TNGFileIterator:
     cdef tng_trajectory_t _traj
     cdef int64_t _n_frames
     cdef readonly fname
+    cdef str mode 
+    cdef int is_open
+    cdef int reached_eof
+    cdef int64_t step
+ 
+
 
     def __cinit__(self, fname, mode='r'):
         self.fname = fname
@@ -210,7 +216,7 @@ cdef class TNGFileIterator:
         self.step = 0
         self.reached_eof = False
 
-    def _read_next_block(self):
+    def read_next_block(self):
         cdef tng_function_status stat
         cdef tng_gen_block_t block
         stat = tng_block_init( & block)
