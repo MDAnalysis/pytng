@@ -131,6 +131,7 @@ cdef extern from "tng/tng_io.h":
 
     tng_function_status tng_num_frame_sets_get(tng_trajectory_t tng_data, int64_t* n)
 
+    tng_function_status tng_block_destroy(tng_gen_block_t* block_p)
 
 TNGFrame = namedtuple("TNGFrame", "positions velocities forces time step box ")
 
@@ -170,7 +171,7 @@ cdef class TNGFileIterator:
     cdef float _distance_scale
 
     cdef int64_t _current_frame
-    cdef int64_t _current_set
+    cdef int64_t _current_frame_set
 
     def __cinit__(self, fname, mode='r'):
         self.fname = fname
@@ -236,7 +237,6 @@ cdef class TNGFileIterator:
         #TODO can this be read straight from the struct as self._traj->n_frame_sets?
         #they note that this is not always updated
 
-
         cdef int64_t exponent
         stat = tng_distance_unit_exponential_get(self._traj, & exponent)
         if stat != TNG_SUCCESS:
@@ -259,14 +259,13 @@ cdef class TNGFileIterator:
             raise ValueError("failed to init block")
         stat = tng_block_header_read(self._traj, block)
         if stat != TNG_SUCCESS:
-            # tng_block_destroy(&block)
-            # tng_util_trajectory_close(self._traj)
+            tng_block_destroy(&block)
             raise ValueError("could not read block header")
         stat = tng_block_read_next(self._traj, block, TNG_SKIP_HASH)
         if stat != TNG_SUCCESS:
-            # tng_block_destroy(&block)
-            # tng_util_trajectory_close(self._traj)
+            tng_block_destroy(&block)
             raise ValueError("failed to read subsequent block")
+        
 
 
 cdef class TNGFile:

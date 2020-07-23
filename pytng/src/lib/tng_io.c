@@ -939,7 +939,7 @@ tng_function_status tng_block_init(struct tng_gen_block** block_p)
  * block_p itself.
  * @return TNG_SUCCESS (0) if successful.
  */
-static tng_function_status tng_block_destroy(struct tng_gen_block** block_p)
+tng_function_status tng_block_destroy(struct tng_gen_block** block_p)
 {
     tng_gen_block_t block = *block_p;
 

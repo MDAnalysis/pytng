@@ -4495,6 +4495,8 @@ tng_function_status tng_block_header_read(struct tng_trajectory *tng_data,
 tng_function_status tng_num_frame_sets_get(struct tng_trajectory *tng_data,
                                            int64_t *n);
 
+tng_function_status tng_block_destroy(struct tng_gen_block **block_p);
+
 #ifdef __cplusplus
 } /* end extern "C" */
 #endif
