@@ -12,3 +12,4 @@ def test_file_open(TNG_EXAMPLE):
 def test_next_block_call(TNG_EXAMPLE):
     file_iterator = pytng.TNGFileIterator(TNG_EXAMPLE, mode='r')
     file_iterator.read_next_block()
+    raise Exception

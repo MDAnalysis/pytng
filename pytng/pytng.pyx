@@ -10,6 +10,8 @@ from numpy cimport(PyArray_SimpleNewFromData,
 
 from libc.stdint cimport int64_t
 from libc.stdlib cimport malloc, free
+from libc.stdio cimport printf
+
 
 from collections import namedtuple
 import os
@@ -233,6 +235,7 @@ cdef class TNGFileIterator:
         if stat != TNG_SUCCESS:
             raise IOError("Number of particles cannot be read")
 
+        #NOTE can we just loop over this directly in some way?
         stat = tng_num_frame_sets_get(self._traj, & self._n_frame_sets)
         #TODO can this be read straight from the struct as self._traj->n_frame_sets?
         #they note that this is not always updated
@@ -249,11 +252,13 @@ cdef class TNGFileIterator:
         self.step = 0
         self.reached_eof = False
 
+    #NOTE this looks simple and may work ? may be too low level as it all hinges on whether the file positions are kept up to date
+    # can we just fseek to the first TFS?
     def read_next_block(self):
         cdef tng_function_status stat
         cdef tng_gen_block_t block
         cdef int64_t block_id
-        cdef str block_name
+        cdef char* block_name
         stat = tng_block_init( & block)
         if stat != TNG_SUCCESS:
             raise ValueError("failed to init block")
@@ -265,8 +270,13 @@ cdef class TNGFileIterator:
         if stat != TNG_SUCCESS:
             tng_block_destroy(&block)
             raise ValueError("failed to read subsequent block")
-        
+    
+    # #SKELETON to read whole file ?
+    # for i in range self._n_frame_sets:
+    #     tng_frame_set_read() ? tng_frame_set_read_current_only_data_from_block_id()?
 
+
+        
 
 cdef class TNGFile:
     """File handle object for TNG files
