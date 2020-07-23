@@ -979,7 +979,7 @@ static tng_function_status tng_block_destroy(struct tng_gen_block** block_p)
  * error has occured (not able to read the header size, thus skipping
  * the block) or TNG_CRITICAL (2) if a major error has occured.
  */
-static tng_function_status tng_block_header_read(struct tng_trajectory* tng_data, struct tng_gen_block* block)
+tng_function_status tng_block_header_read(struct tng_trajectory* tng_data, struct tng_gen_block* block)
 {
     int64_t start_pos;
 

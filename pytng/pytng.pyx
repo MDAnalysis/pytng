@@ -125,7 +125,9 @@ cdef extern from "tng/tng_io.h":
                                              tng_gen_block_t  block_data,
                                              char             hash_mode)
 
-    tng_function_status tng_block_init(tng_gen_block_t* block_p)
+    tng_function_status tng_block_init(tng_gen_block_t * block_p)
+
+    tng_function_status tng_block_header_read(tng_trajectory_t tng_data, tng_gen_block_t block)
 
 
 TNGFrame = namedtuple("TNGFrame", "positions velocities forces time step box ")
@@ -156,18 +158,16 @@ cdef class TNGFileIterator:
     cdef tng_trajectory_t _traj
     cdef int64_t _n_frames
     cdef readonly fname
-    cdef str mode 
+    cdef str mode
     cdef int is_open
     cdef int reached_eof
     cdef int64_t step
- 
-
 
     def __cinit__(self, fname, mode='r'):
         self.fname = fname
         self._n_frames = 0
         self._open(self.fname, mode)
-    
+
     def __dealloc__(self):
         self.close()
 
@@ -222,11 +222,12 @@ cdef class TNGFileIterator:
         stat = tng_block_init( & block)
         if stat != TNG_SUCCESS:
             raise ValueError("failed to init block")
+        stat = tng_block_header_read(self._traj, block)
+        if stat != TNG_SUCCESS:
+            raise ValueError("could not read block header")
         stat = tng_block_read_next(self._traj, block, TNG_SKIP_HASH)
         if stat != TNG_SUCCESS:
             raise ValueError("failed to read subsequent block")
-
-
 
 
 cdef class TNGFile:
@@ -509,7 +510,7 @@ cdef class TNGFile:
                 ok = tng_util_vel_read_range(self._traj, self.step, self.step, & velocities, & stride_length)
                 if ok != TNG_SUCCESS:
                     raise IOError("error reading velocities")
-                
+
                 dims[0] = self.n_atoms
                 dims[1] = 3
                 vels = PyArray_SimpleNewFromData(
@@ -520,7 +521,7 @@ cdef class TNGFile:
                     raise ValueError('failed to create positions array')
         else:
             vels = None
-                
+
         cdef MemoryWrapper wrap_frc
         cdef np.ndarray frc
 
@@ -531,7 +532,7 @@ cdef class TNGFile:
                 ok = tng_util_force_read_range(self._traj, self.step, self.step, & forces, & stride_length)
                 if ok != TNG_SUCCESS:
                     raise IOError("error reading forces")
-                
+
                 dims[0] = self.n_atoms
                 dims[1] = 3
                 frc = PyArray_SimpleNewFromData(
@@ -552,7 +553,6 @@ cdef class TNGFile:
 
         # return frame_data
         self.step += 1
-
 
         return TNGFrame(xyz, vels, frc, time, self.step - 1, box)
 
