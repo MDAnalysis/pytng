@@ -129,6 +129,8 @@ cdef extern from "tng/tng_io.h":
 
     tng_function_status tng_block_header_read(tng_trajectory_t tng_data, tng_gen_block_t block)
 
+    tng_function_status tng_num_frame_sets_get(tng_trajectory_t tng_data, int64_t* n)
+
 
 TNGFrame = namedtuple("TNGFrame", "positions velocities forces time step box ")
 
@@ -156,16 +158,29 @@ cdef class TNGFileIterator:
     Supports use as a context manager ("with" blocks).
     """
     cdef tng_trajectory_t _traj
-    cdef int64_t _n_frames
     cdef readonly fname
     cdef str mode
     cdef int is_open
     cdef int reached_eof
     cdef int64_t step
 
+    cdef int64_t _n_frames
+    cdef int64_t _n_particles
+    cdef int64_t _n_frame_sets
+    cdef float _distance_scale
+
+    cdef int64_t _current_frame
+    cdef int64_t _current_set
+
     def __cinit__(self, fname, mode='r'):
         self.fname = fname
-        self._n_frames = 0
+        self._n_frames = -1
+        self._n_particles = -1
+        self._n_frame_sets = -1
+        self._distance_scale = 0.0
+        self._current_frame = -1
+        self._current_frame_set = -1
+
         self._open(self.fname, mode)
 
     def __dealloc__(self):
@@ -202,16 +217,34 @@ cdef class TNGFileIterator:
             raise IOError("File '{}' does not exist".format(fname))
 
         cdef tng_function_status stat
+
         fname_bytes = fname.encode('UTF-8')
         stat = tng_util_trajectory_open(fname_bytes, _mode, & self._traj)
         if stat != TNG_SUCCESS:
             raise IOError("File '{}' cannot be opened".format(fname))
 
+        # TODO propagate errmsg upwards in all the below calls
         stat = tng_num_frames_get(self._traj, & self._n_frames)
         if stat != TNG_SUCCESS:
             raise IOError("Number of frames cannot be read")
 
-        # python level
+        stat = tng_num_particles_get(self._traj, & self._n_particles)
+        if stat != TNG_SUCCESS:
+            raise IOError("Number of particles cannot be read")
+
+        stat = tng_num_frame_sets_get(self._traj, & self._n_frame_sets)
+        #TODO can this be read straight from the struct as self._traj->n_frame_sets?
+        #they note that this is not always updated
+
+
+        cdef int64_t exponent
+        stat = tng_distance_unit_exponential_get(self._traj, & exponent)
+        if stat != TNG_SUCCESS:
+            raise IOError("Distance exponent cannot be read")
+
+        self._distance_scale = 10.0**(exponent+9)
+
+
         self.is_open = True
         self.step = 0
         self.reached_eof = False
