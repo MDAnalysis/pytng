@@ -219,14 +219,20 @@ cdef class TNGFileIterator:
     def read_next_block(self):
         cdef tng_function_status stat
         cdef tng_gen_block_t block
+        cdef int64_t block_id
+        cdef str block_name
         stat = tng_block_init( & block)
         if stat != TNG_SUCCESS:
             raise ValueError("failed to init block")
         stat = tng_block_header_read(self._traj, block)
         if stat != TNG_SUCCESS:
+            # tng_block_destroy(&block)
+            # tng_util_trajectory_close(self._traj)
             raise ValueError("could not read block header")
         stat = tng_block_read_next(self._traj, block, TNG_SKIP_HASH)
         if stat != TNG_SUCCESS:
+            # tng_block_destroy(&block)
+            # tng_util_trajectory_close(self._traj)
             raise ValueError("failed to read subsequent block")
 
 
