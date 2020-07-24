@@ -23,7 +23,8 @@ np.import_array()
 
 
 ctypedef enum tng_function_status: TNG_SUCCESS, TNG_FAILURE, TNG_CRITICAL
-ctypedef enum tng_data_type: TNG_CHAR_DATA, TNG_INT_DATA, TNG_FLOAT_DATA, TNG_DOUBLE_DATA
+ctypedef enum tng_data_type: TNG_CHAR_DATA, TNG_INT_DATA, TNG_FLOAT_DATA, \
+    TNG_DOUBLE_DATA
 ctypedef enum tng_hash_mode: TNG_SKIP_HASH, TNG_USE_HASH
 
 
@@ -139,9 +140,9 @@ TNGFrame = namedtuple("TNGFrame", "positions velocities forces time step box ")
 
 
 cdef class MemoryWrapper:
-    # holds a pointer to C allocated memory, deals with malloc&free
-    # based on:
-    # https://gist.github.com/GaelVaroquaux/1249305/ac4f4190c26110fe2791a1e7a6bed9c733b3413f
+    # holds a pointer to C allocated memory, deals with malloc&free based on:
+    # https://gist.github.com/GaelVaroquaux/
+    # 1249305/ac4f4190c26110fe2791a1e7a6bed9c733b3413f
     cdef void * ptr  # TODO do we want to use std::unique_ptr?
 
     def __cinit__(MemoryWrapper self, int size):
@@ -341,8 +342,8 @@ cdef class TNGFile:
 
         cdef int64_t exponent, ok
 
-        # handle file not existing at python level,
-        # C level is nasty and causes crash
+        # handle file not existing at python level, C level is nasty and causes
+        # crash
         if self.mode == 'r' and not os.path.isfile(fname):
             raise IOError("File '{}' does not exist".format(fname))
 
@@ -365,7 +366,8 @@ cdef class TNGFile:
 
             ok = tng_distance_unit_exponential_get(self._traj, & exponent)
             if ok != TNG_SUCCESS:
-                raise IOError("An error ocurred reading distance unit exponent. {}".format(
+                raise IOError("""An error ocurred reading distance unit
+                 exponent. {}""".format(
                     status_error_message[ok]))
             self.distance_scale = 10.0**(exponent+9)
 
@@ -382,22 +384,26 @@ cdef class TNGFile:
         cdef int64_t stride_length = 0
         cdef tng_function_status ok
 
-        ok = tng_util_pos_read_range(self._traj, 0, 0, & pos_ptr, & stride_length)
+        ok = tng_util_pos_read_range(self._traj, 0, 0, & pos_ptr,
+                                     & stride_length)
         if (ok == TNG_SUCCESS) and pos_ptr:
             self._pos = 1  # true
             self._pos_stride = stride_length
 
-        ok = tng_util_box_shape_read_range(self._traj, 0, 0, & box_ptr, & stride_length)
+        ok = tng_util_box_shape_read_range(self._traj, 0, 0, & box_ptr,
+                                           & stride_length)
         if (ok == TNG_SUCCESS) and box_ptr:
             self._box = 1  # true
             self._box_stride = stride_length
 
-        ok = tng_util_vel_read_range(self._traj, 0, 0, & vel_ptr, & stride_length)
+        ok = tng_util_vel_read_range(self._traj, 0, 0, & vel_ptr,
+                                     & stride_length)
         if (ok == TNG_SUCCESS) and vel_ptr:
             self._vel = 1  # true
             self._vel_stride = stride_length
 
-        ok = tng_util_force_read_range(self._traj, 0, 0, & frc_ptr, & stride_length)
+        ok = tng_util_force_read_range(self._traj, 0, 0, & frc_ptr,
+                                       & stride_length)
         if (ok == TNG_SUCCESS) and frc_ptr:
             self._frc = 1  # true
             self._frc_stride = stride_length
@@ -510,8 +516,10 @@ cdef class TNGFile:
             if (self.step % self._pos_stride == 0):
                 wrap_pos = MemoryWrapper(3 * self.n_atoms * sizeof(float))
                 positions = <float*> wrap_pos.ptr
-                # TODO this will break when using frames spaced more than 1 apart
-                ok = tng_util_pos_read_range(self._traj, self.step, self.step, & positions, & stride_length)
+                # TODO this will break when using frames spaced more than 1
+                # apart
+                ok = tng_util_pos_read_range(self._traj, self.step, self.step,
+                                             & positions, & stride_length)
                 if ok != TNG_SUCCESS:
                     raise IOError("error reading frame")
 
@@ -529,19 +537,24 @@ cdef class TNGFile:
 
         # TODO this seem wasteful but can't cdef inside a conditional?
         cdef MemoryWrapper wrap_box
-        cdef np.ndarray[ndim = 2, dtype = np.float32_t, mode = 'c'] box = np.empty((3, 3), dtype=np.float32)
+        cdef np.ndarray[ndim = 2, dtype = np.float32_t, mode = 'c'] box = \
+            np.empty((3, 3), dtype=np.float32)
 
         if self._box:
             if (self.step % self._box_stride == 0):
-                # BOX SHAPE
-                # cdef float* box_s
+                # BOX SHAPE cdef float* box_s
                 wrap_box = MemoryWrapper(3 * 3 * sizeof(float))
                 box_shape = <float*> wrap_box.ptr
-                # TODO this will break when using frames spaced more than 1 apart
-                ok = tng_util_box_shape_read_range(self._traj, self.step, self.step, & box_shape, & stride_length)
+                # TODO this will break when using frames spaced more than 1
+                # apart
+                ok = tng_util_box_shape_read_range(self._traj, self.step,
+                                                   self.step, & box_shape,
+                                                   & stride_length)
                 if ok != TNG_SUCCESS:
                     raise IOError("error reading box shape")
-                # populate box, can this be done the same way as positions above? #TODO is there a canonical way to convert to numpy array
+                # populate box, can this be done the same way as positions
+                # above? #TODO is there a canonical way to convert to numpy
+                # array
                 for i in range(3):
                     for j in range(3):
                         box[i, j] = box_shape[3*i + j]
@@ -555,7 +568,8 @@ cdef class TNGFile:
             if (self.step % self._vel_stride == 0):
                 wrap_vel = MemoryWrapper(3 * self.n_atoms * sizeof(float))
                 velocities = <float*> wrap_vel.ptr
-                ok = tng_util_vel_read_range(self._traj, self.step, self.step, & velocities, & stride_length)
+                ok = tng_util_vel_read_range(self._traj, self.step, self.step,
+                                             & velocities, & stride_length)
                 if ok != TNG_SUCCESS:
                     raise IOError("error reading velocities")
 
@@ -577,7 +591,9 @@ cdef class TNGFile:
             if (self.step % self._frc_stride == 0):
                 wrap_frc = MemoryWrapper(3 * self.n_atoms * sizeof(float))
                 forces = <float*> wrap_frc.ptr
-                ok = tng_util_force_read_range(self._traj, self.step, self.step, & forces, & stride_length)
+                ok = tng_util_force_read_range(self._traj, self.step,
+                                               self.step, & forces,
+                                               & stride_length)
                 if ok != TNG_SUCCESS:
                     raise IOError("error reading forces")
 
