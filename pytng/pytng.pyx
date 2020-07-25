@@ -21,6 +21,8 @@ import numpy as np
 cimport numpy as np
 np.import_array()
 
+from  cython.operator cimport dereference
+
 
 ctypedef enum tng_function_status: TNG_SUCCESS, TNG_FAILURE, TNG_CRITICAL
 ctypedef enum tng_data_type: TNG_CHAR_DATA, TNG_INT_DATA, TNG_FLOAT_DATA, \
@@ -286,8 +288,13 @@ cdef class TNGFileIterator:
         if stat != TNG_SUCCESS:
             tng_block_destroy(& block)
             return TNG_CRITICAL
+        
+        block_id = dereference(block).id  #why does this not deref? is it because of the C level typedef name mangle in tng_io_fwd.h ?
+        block_name = dereference(block).name # how can we get around it ?
 
         return TNG_SUCCESS
+
+
     # #SKELETON to read whole file ?
     # for i in range self._n_frame_sets:
     #     tng_frame_set_read() ? tng_frame_set_read_current_only_data_from_block_id()?
