@@ -289,10 +289,24 @@ cdef class TNGFileIterator:
             tng_block_destroy(& block)
             return TNG_CRITICAL
         
-        block_id = dereference(block).id  #why does this not deref? is it because of the C level typedef name mangle in tng_io_fwd.h ?
-        block_name = dereference(block).name # how can we get around it ?
+        # block_id = dereference(block).id  #why does this not deref? is it because of the C level typedef name mangle in tng_io_fwd.h ?
+        # block_name = dereference(block).name # how can we get around it ?
 
         return TNG_SUCCESS
+
+    cdef _block_interpret(self):
+        pass
+        #logic to interpret the block types here
+
+    cdef _block_numpy_cast(self):
+        #logic to cast data blocks to numpy arrays here.
+    
+    cdef seek(self):
+        pass
+        #logic to move the file handle pointers here
+        # must be done at both python and C level ?
+
+    
 
 
     # #SKELETON to read whole file ?
