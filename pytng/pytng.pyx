@@ -132,9 +132,9 @@ cdef extern from "tng/tng_io.h":
 
     tng_function_status tng_block_header_read(tng_trajectory_t tng_data, tng_gen_block_t block)
 
-    tng_function_status tng_num_frame_sets_get(tng_trajectory_t tng_data, int64_t* n)
+    tng_function_status tng_num_frame_sets_get(tng_trajectory_t tng_data, int64_t * n)
 
-    tng_function_status tng_block_destroy(tng_gen_block_t* block_p)
+    tng_function_status tng_block_destroy(tng_gen_block_t * block_p)
 
 TNGFrame = namedtuple("TNGFrame", "positions velocities forces time step box ")
 
@@ -188,7 +188,7 @@ cdef class TNGFileIterator:
         self._open(self.fname, mode)
 
     def __dealloc__(self):
-        self.close()
+        self._close()
 
     def _open(self, fname, mode):
         """Open a file handle
@@ -236,10 +236,10 @@ cdef class TNGFileIterator:
         if stat != TNG_SUCCESS:
             raise IOError("Number of particles cannot be read")
 
-        #NOTE can we just loop over this directly in some way?
+        # NOTE can we just loop over this directly in some way?
         stat = tng_num_frame_sets_get(self._traj, & self._n_frame_sets)
-        #TODO can this be read straight from the struct as self._traj->n_frame_sets?
-        #they note that this is not always updated
+        # TODO can this be read straight from the struct as self._traj->n_frame_sets?
+        # they note that this is not always updated
 
         cdef int64_t exponent
         stat = tng_distance_unit_exponential_get(self._traj, & exponent)
@@ -248,36 +248,50 @@ cdef class TNGFileIterator:
 
         self._distance_scale = 10.0**(exponent+9)
 
-
         self.is_open = True
         self.step = 0
         self.reached_eof = False
+    
 
-    #NOTE this looks simple and may work ? may be too low level as it all hinges on whether the file positions are kept up to date
+    def _close(self):
+        """Make sure the file handle is closed"""
+        if self.is_open:
+            tng_util_trajectory_close(& self._traj)
+            self.is_open = False
+            self._n_frames = -1
+
+    def spool(self):
+        cdef tng_function_status stat = TNG_SUCCESS
+        cdef int64_t block_count = 0
+        while stat != TNG_CRITICAL:
+            print("block read called {}".format(block_count))
+            stat = self._read_next_block()
+            block_count += 1
+
+    # NOTE this looks simple and may work ? may be too low level as it all hinges on whether the file positions are kept up to date
     # can we just fseek to the first TFS?
-    def read_next_block(self):
+    cdef tng_function_status _read_next_block(self):
         cdef tng_function_status stat
         cdef tng_gen_block_t block
         cdef int64_t block_id
-        cdef char* block_name
-        stat = tng_block_init( & block)
+        cdef char * block_name
+        stat = tng_block_init(& block)
         if stat != TNG_SUCCESS:
-            raise ValueError("failed to init block")
+            return TNG_CRITICAL
         stat = tng_block_header_read(self._traj, block)
         if stat != TNG_SUCCESS:
-            tng_block_destroy(&block)
-            raise ValueError("could not read block header")
+            tng_block_destroy(& block)
+            return TNG_CRITICAL
         stat = tng_block_read_next(self._traj, block, TNG_SKIP_HASH)
         if stat != TNG_SUCCESS:
-            tng_block_destroy(&block)
-            raise ValueError("failed to read subsequent block")
-    
+            tng_block_destroy(& block)
+            return TNG_CRITICAL
+
+        return TNG_SUCCESS
     # #SKELETON to read whole file ?
     # for i in range self._n_frame_sets:
     #     tng_frame_set_read() ? tng_frame_set_read_current_only_data_from_block_id()?
 
-
-        
 
 cdef class TNGFile:
     """File handle object for TNG files
@@ -411,7 +425,7 @@ cdef class TNGFile:
     def close(self):
         """Make sure the file handle is closed"""
         if self.is_open:
-            tng_util_trajectory_close( & self._traj)
+            tng_util_trajectory_close(& self._traj)
             self.is_open = False
             self._n_frames = -1
 
@@ -537,7 +551,7 @@ cdef class TNGFile:
 
         # TODO this seem wasteful but can't cdef inside a conditional?
         cdef MemoryWrapper wrap_box
-        cdef np.ndarray[ndim = 2, dtype = np.float32_t, mode = 'c'] box = \
+        cdef np.ndarray[ndim= 2, dtype = np.float32_t, mode = 'c'] box = \
             np.empty((3, 3), dtype=np.float32)
 
         if self._box:
