@@ -530,7 +530,7 @@ cdef class TNGFileIterator:
             return TNG_CRITICAL
         
         block_id = dereference(block).id
-        
+        printf(" %f \n", block_id)
         return TNG_SUCCESS
 
     cdef _block_interpret(self):
