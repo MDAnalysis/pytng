@@ -50,8 +50,6 @@ cdef extern from "tng/tng_io.h":
 
     # note that the _t suffix is a typedef mangle for a pointer to the base struct
 
-    ctypedef struct tng_trajectory_t:
-        pass
     
     struct tng_particle_mapping:
 
@@ -296,78 +294,78 @@ cdef extern from "tng/tng_io.h":
     tng_function_status tng_util_trajectory_open(
         const char * filename,
         const char mode,
-        tng_trajectory_t * tng_data_p)
+        tng_trajectory* * tng_data_p)
 
     tng_function_status tng_util_trajectory_close(
-        tng_trajectory_t * tng_data_p)
+        tng_trajectory* * tng_data_p)
 
     tng_function_status tng_num_frames_get(
-        const tng_trajectory_t tng_data,
+        const tng_trajectory* tng_data,
         int64_t * n)
 
     tng_function_status tng_num_particles_get(
-        const tng_trajectory_t tng_data,
+        const tng_trajectory* tng_data,
         int64_t * n)
 
     tng_function_status tng_distance_unit_exponential_get(
-        const tng_trajectory_t tng_data,
+        const tng_trajectory* tng_data,
         int64_t * exp)
 
     tng_function_status tng_util_pos_read_range(
-        const tng_trajectory_t tng_data,
+        const tng_trajectory* tng_data,
         const int64_t first_frame,
         const int64_t last_frame,
         float ** positions,
         int64_t * stride_length)
 
     tng_function_status tng_util_box_shape_read_range(
-        const tng_trajectory_t tng_data,
+        const tng_trajectory* tng_data,
         const int64_t first_frame,
         const int64_t last_frame,
         float ** box_shape,
         int64_t * stride_length)
 
     tng_function_status tng_util_vel_read_range(
-        const tng_trajectory_t tng_data,
+        const tng_trajectory* tng_data,
         const int64_t first_frame,
         const int64_t last_frame,
         float ** velocities,
         int64_t * stride_length)
 
     tng_function_status tng_util_force_read_range(
-        const tng_trajectory_t tng_data,
+        const tng_trajectory* tng_data,
         const int64_t first_frame,
         const int64_t last_frame,
         float ** forces,
         int64_t * stride_length)
 
     tng_function_status tng_util_pos_read(
-        const tng_trajectory_t tng_data,
+        const tng_trajectory* tng_data,
         float ** positions,
         int64_t * stride_length)
 
     tng_function_status tng_util_box_shape_read(
-        const tng_trajectory_t tng_data,
+        const tng_trajectory* tng_data,
         float ** box_shape,
         int64_t * stride_length)
 
     tng_function_status tng_util_vel_read(
-        const tng_trajectory_t tng_data,
+        const tng_trajectory* tng_data,
         float ** velocities,
         int64_t * stride_length)
 
     tng_function_status tng_util_force_read(
-        const tng_trajectory_t tng_data,
+        const tng_trajectory* tng_data,
         float ** forces,
         int64_t * stride_length)
 
     tng_function_status tng_util_time_of_frame_get(
-        const tng_trajectory_t tng_data,
+        const tng_trajectory* tng_data,
         const int64_t frame_nr,
         double * time)
 
     tng_function_status tng_data_vector_interval_get(
-        const tng_trajectory_t tng_data,
+        const tng_trajectory* tng_data,
         const int64_t block_id,
         const int64_t start_frame_nr,
         const int64_t end_frame_nr,
@@ -377,15 +375,15 @@ cdef extern from "tng/tng_io.h":
         int64_t * n_values_per_frame,
         char * type)
 
-    tng_function_status  tng_block_read_next(tng_trajectory_t tng_data,
+    tng_function_status  tng_block_read_next(tng_trajectory* tng_data,
                                              tng_gen_block*  block_data,
                                              char             hash_mode)
 
     tng_function_status tng_block_init(tng_gen_block** block_p)
 
-    tng_function_status tng_block_header_read(tng_trajectory_t tng_data, tng_gen_block* block)
+    tng_function_status tng_block_header_read(tng_trajectory* tng_data, tng_gen_block* block)
 
-    tng_function_status tng_num_frame_sets_get(tng_trajectory_t tng_data, int64_t * n)
+    tng_function_status tng_num_frame_sets_get(tng_trajectory* tng_data, int64_t * n)
 
     tng_function_status tng_block_destroy(tng_gen_block** block_p)
 
@@ -414,7 +412,7 @@ cdef class TNGFileIterator:
 
     Supports use as a context manager ("with" blocks).
     """
-    cdef tng_trajectory_t _traj
+    cdef tng_trajectory* _traj
     cdef readonly fname
     cdef str mode
     cdef int is_open
@@ -579,7 +577,7 @@ cdef class TNGFile:
 
     Supports use as a context manager ("with" blocks).
     """
-    cdef tng_trajectory_t _traj
+    cdef tng_trajectory* _traj
     cdef readonly fname
     cdef str mode
     cdef int is_open
