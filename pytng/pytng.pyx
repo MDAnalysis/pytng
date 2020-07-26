@@ -8,9 +8,13 @@ from numpy cimport(PyArray_SimpleNewFromData,
                    npy_intp,
                    )
 
+from cpython.mem cimport PyMem_Malloc, PyMem_Realloc, PyMem_Free
+
 from libc.stdint cimport int64_t
-from libc.stdlib cimport malloc, free
-from libc.stdio cimport printf
+from libc.stdlib cimport malloc, free, realloc
+from libc.stdio cimport printf, FILE, SEEK_SET, SEEK_CUR, SEEK_END
+
+from posix.types cimport off_t
 
 
 from collections import namedtuple
@@ -32,6 +36,14 @@ ctypedef enum tng_hash_mode: TNG_SKIP_HASH, TNG_USE_HASH
 
 status_error_message = ['OK', 'Failure', 'Critical']
 
+
+cdef extern from "string.h":
+    size_t strlen(char *s)
+
+cdef extern from "<stdio.h>" nogil:
+    # Seek and tell with off_t
+    int fseeko(FILE *, off_t, int)
+    off_t ftello(FILE *)
 
 
 cdef extern from "tng/tng_io.h":
@@ -518,6 +530,10 @@ cdef class TNGFileIterator:
         stat = tng_block_init(& block)
         if stat != TNG_SUCCESS:
             return TNG_CRITICAL
+        
+        fseeko(dereference(self._traj).input_file, 0, SEEK_SET) # set to start of inut file
+
+        #tng_data->current_trajectory_frame_set_input_file_pos = orig_frame_set_file_pos;?
 
         stat = tng_block_header_read(self._traj, block)
         if stat != TNG_SUCCESS:
@@ -530,7 +546,11 @@ cdef class TNGFileIterator:
             return TNG_CRITICAL
         
         block_id = dereference(block).id
-        printf(" %f \n", block_id)
+        printf("\n %ld \n", block_id)
+        cdef name_len = strlen(dereference(block).name) +1
+        cdef bname = <char*> malloc(name_len * sizeof(char)) # TNG_MAX_STR_LEN = 1024
+        bname = dereference(block).name
+        printf(bname)
         return TNG_SUCCESS
 
     cdef _block_interpret(self):
