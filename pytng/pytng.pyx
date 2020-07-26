@@ -514,6 +514,7 @@ cdef class TNGFileIterator:
     def spool(self):
         cdef tng_function_status stat = TNG_SUCCESS
         cdef int64_t block_count = 0
+        #fseeko(dereference(self._traj).input_file, 0, SEEK_SET) # set to start of inut file
         while stat != TNG_CRITICAL:
             print("block read called {}".format(block_count))
             stat = self._read_next_block()
@@ -529,7 +530,6 @@ cdef class TNGFileIterator:
         if stat != TNG_SUCCESS:
             return TNG_CRITICAL
         
-        fseeko(dereference(self._traj).input_file, 0, SEEK_SET) # set to start of inut file
 
         #tng_data->current_trajectory_frame_set_input_file_pos = orig_frame_set_file_pos;?
 
