@@ -10,7 +10,7 @@ from numpy cimport(PyArray_SimpleNewFromData,
 
 from cpython.mem cimport PyMem_Malloc, PyMem_Realloc, PyMem_Free
 
-from libc.stdint cimport int64_t
+from libc.stdint cimport int64_t, uint64_t, int32_t, uint32_t
 from libc.stdlib cimport malloc, free, realloc
 from libc.stdio cimport printf, FILE, SEEK_SET, SEEK_CUR, SEEK_END
 
@@ -49,8 +49,10 @@ cdef extern from "<stdio.h>" nogil:
 cdef extern from "tng/tng_io.h":
 
     # note that the _t suffix is a typedef mangle for a pointer to the base struct
+    ctypedef struct tng_molecule_t:
+        pass
 
-    
+
     struct tng_particle_mapping:
 
         #/** The index number of the first particle in this mapping block */
@@ -163,16 +165,16 @@ cdef extern from "tng/tng_io.h":
         FILE* output_file
         #/** Function to swap 32 bit values to and from the endianness of the
         #* input file */
-        #tng_function_status (*input_endianness_swap_func_32)(const struct tng_trajectory*, uint32_t*);
+        tng_function_status (*input_endianness_swap_func_32)(const tng_trajectory*, uint32_t*);
         #/** Function to swap 64 bit values to and from the endianness of the
         #* input file */
-        #tng_function_status (*input_endianness_swap_func_64)(const  tng_trajectory*, uint64_t*);
+        tng_function_status (*input_endianness_swap_func_64)(const  tng_trajectory*, uint64_t*);
         #/** Function to swap 32 bit values to and from the endianness of the
         #* input file */
-        #tng_function_status (*output_endianness_swap_func_32)(const  tng_trajectory*, uint32_t*);
+        tng_function_status (*output_endianness_swap_func_32)(const  tng_trajectory*, uint32_t*);
         #/** Function to swap 64 bit values to and from the endianness of the
         #* input file */
-        #tng_function_status (*output_endianness_swap_func_64)(const  tng_trajectory*, uint64_t*);
+        tng_function_status (*output_endianness_swap_func_64)(const  tng_trajectory*, uint64_t*);
         #/** The endianness of 32 bit values of the current computer */
         char endianness_32
         #/** The endianness of 64 bit values of the current computer */
@@ -222,7 +224,7 @@ cdef extern from "tng/tng_io.h":
         #/** The number of different kinds of molecules in the trajectory */
         int64_t n_molecules
         #/** A list of molecules in the trajectory */
-        #tng_molecule_t molecules;
+        tng_molecule_t molecules;
         #/** A list of the count of each molecule - if using variable number of
         #*  particles this will be specified in each frame set */
         int64_t* molecule_cnt_list
