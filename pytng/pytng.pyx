@@ -543,11 +543,11 @@ cdef class TNGFileIterator:
             tng_block_destroy(& block)
             return TNG_CRITICAL
         
-        block_id = dereference(block).id
+        block_id = block.id
         printf("\n %ld \n", block_id)
-        cdef name_len = strlen(dereference(block).name) +1
+        cdef name_len = strlen(block.name) +1
         cdef bname = <char*> malloc(name_len * sizeof(char)) # TNG_MAX_STR_LEN = 1024
-        bname = dereference(block).name
+        bname = block.name
         printf(bname)
         return TNG_SUCCESS
 
