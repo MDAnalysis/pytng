@@ -154,13 +154,13 @@ cdef extern from "tng/tng_io.h":
         #/** The path of the input trajectory file */
         char* input_file_path
         #/** A handle to the input file */
-        # FILE* input_file
+        FILE* input_file
         #/** The length of the input file */
         int64_t input_file_len
         #/** The path of the output trajectory file */
         char* output_file_path
         #/** A handle to the output file */
-        # FILE* output_file
+        FILE* output_file
         #/** Function to swap 32 bit values to and from the endianness of the
         #* input file */
         #tng_function_status (*input_endianness_swap_func_32)(const struct tng_trajectory*, uint32_t*);
