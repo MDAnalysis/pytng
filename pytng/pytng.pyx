@@ -583,14 +583,24 @@ cdef class TNGFileIterator:
         cdef double frame_time
         cdef double precision
         cdef int64_t n_values_per_frame, n_atoms
-        #char block_name[1024]
+        cdef bname = <char*> malloc(1024 * sizeof(char)) # TNG_MAX_STR_LEN = 1024
+        cdef double* values = NULL
+        cdef tng_function_status stat_read
 
         while  stat == TNG_SUCCESS:
             for i in range(nBlocks):
-                stat = tng_util_trajectory_next_frame_present_data_blocks_find(self._traj, -1, 0, NULL, &step, &nBlocks, &block_ids);
+                stat_read = get_data_next_frame(block_ids[i], &values, &step, &frame_time, &n_values_per_frame, &n_atoms)
+    
+    
+    cdef tng_function_status get_data_next_frame(self, int64_t block_id, double** values, int64_t* step, double* frame_time, int64_t* n_values_per_frame, int64_t* n_atoms, double* prec, char* name):
+        cdef tng_function_status stat;
+        cdef char                datatype = -1;
+        cdef int64_t             codecId;
+        cdef int                 blockDependency;
+        cdef void*               data = nullptr;
+        cdef double              localPrec;
 
-
-    # cdef get_data_next_frame()
+        
 
 
 
