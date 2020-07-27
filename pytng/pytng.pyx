@@ -389,6 +389,9 @@ cdef extern from "tng/tng_io.h":
 
     tng_function_status tng_block_destroy(tng_gen_block** block_p)
 
+    tng_function_status tng_data_get_stride_length( tng_trajectory* tng_data, int64_t block_id, int64_t frame, int64_t* stride_length)
+
+
 TNGFrame = namedtuple("TNGFrame", "positions velocities forces time step box ")
 
 
@@ -516,9 +519,15 @@ cdef class TNGFileIterator:
     def spool(self):
         cdef tng_function_status stat = TNG_SUCCESS
         cdef int64_t block_count = 0
+        printf("total file_length %ld \n", self._traj.input_file_len)
         fseeko(self._traj.input_file, 0, SEEK_SET) # after init is called, the file SEEK is at the start of the first frame set, so we need to reset to the start block
+        #comment this back in to read from start
+        cdef off_t offset
         while stat != TNG_CRITICAL:
-            print("block read called {}".format(block_count))
+            print("block read called {} \n".format(block_count))
+            printf("NEW BLOCK \n")
+            offset = ftello(self._traj.input_file)
+            printf("file position %ld \n",offset)
             stat = self._read_next_block()
             block_count += 1
 
@@ -532,9 +541,6 @@ cdef class TNGFileIterator:
         if stat != TNG_SUCCESS:
             return TNG_CRITICAL
         
-
-        #tng_data->current_trajectory_frame_set_input_file_pos = orig_frame_set_file_pos;?
-
         stat = tng_block_header_read(self._traj, block)
         if stat != TNG_SUCCESS:
             tng_block_destroy(&block)
@@ -546,16 +552,29 @@ cdef class TNGFileIterator:
             return TNG_CRITICAL
         
         block_id = block.id
-        printf("\n %ld \n", block_id)
+        printf("block id %ld \n", block_id)
         cdef name_len = strlen(block.name) +1
         cdef bname = <char*> malloc(name_len * sizeof(char)) # TNG_MAX_STR_LEN = 1024
         bname = block.name
-        printf(bname)
+        printf("block name %s \n",block.name)
+
+        #cdef int64_t stride = self.get_traj_strides(block_id)
+        #printf("\n %ld \n",stride)
+
+
         return TNG_SUCCESS
+    
+    cdef get_traj_strides(self, block_id): # this hangs and looks like it reads the same block over and over again forever
+        cdef int64_t stride_length
+        tng_data_get_stride_length(self._traj, block_id, 1, &stride_length)
+        return stride_length
+
+
+
 
     cdef _block_interpret(self):
         pass
-        #logic to interpret the block types here
+        #logic to interpret the block types heretng_data_get_stride_length
 
     cdef _block_numpy_cast(self):
         pass

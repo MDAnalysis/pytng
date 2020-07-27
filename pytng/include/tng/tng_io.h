@@ -4800,6 +4800,11 @@ tng_function_status tng_num_frame_sets_get(struct tng_trajectory *tng_data,
 
 tng_function_status tng_block_destroy(struct tng_gen_block **block_p);
 
+tng_function_status DECLSPECDLLEXPORT tng_data_get_stride_length(struct tng_trajectory* tng_data,
+                                                                 const int64_t          block_id,
+                                                                 int64_t                frame,
+                                                                 int64_t* stride_length);
+
 #ifdef __cplusplus
 } /* end extern "C" */
 #endif
