@@ -17,5 +17,15 @@ def test_file_open(TNG_EXAMPLE):
 def test_next_block_call(ARGON_NPT_COMPRESSED):
     file_iterator = pytng.TNGFileIterator(ARGON_NPT_COMPRESSED, mode="r")
     file_iterator.spool()
-    raise Exception
+    #raise Exception
+
+def test_next_block_types(ARGON_NPT_COMPRESSED):
+    file_iterator = pytng.TNGFileIterator(ARGON_NPT_COMPRESSED, mode="r")
+    file_iterator.get_block_types_of_next_frame()
+    #raise Exception
+
+# def test_next_block_call_ex(WATER_NPT_UNCOMPRESSED_VELS_FORCES):
+#     file_iterator = pytng.TNGFileIterator(WATER_NPT_UNCOMPRESSED_VELS_FORCES, mode="r")
+#     file_iterator.spool()
+#     raise Exception
 

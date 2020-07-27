@@ -391,6 +391,8 @@ cdef extern from "tng/tng_io.h":
 
     tng_function_status tng_data_get_stride_length( tng_trajectory* tng_data, int64_t block_id, int64_t frame, int64_t* stride_length)
 
+    tng_function_status tng_util_trajectory_next_frame_present_data_blocks_find(tng_trajectory *tng_data, int64_t current_frame, int64_t n_requested_data_block_ids, int64_t *requested_data_block_ids, int64_t *next_frame, int64_t *n_data_blocks_in_next_frame, int64_t **data_block_ids_in_next_frame)
+
 
 TNGFrame = namedtuple("TNGFrame", "positions velocities forces time step box ")
 
@@ -506,6 +508,7 @@ cdef class TNGFileIterator:
 
         self.is_open = True
         self.step = 0
+
         self.reached_eof = False
     
 
@@ -516,14 +519,14 @@ cdef class TNGFileIterator:
             self.is_open = False
             self._n_frames = -1
 
-    def spool(self):
+    def spool(self): # this reads sucessfully to the end of the file
         cdef tng_function_status stat = TNG_SUCCESS
         cdef int64_t block_count = 0
         printf("total file_length %ld \n", self._traj.input_file_len)
-        fseeko(self._traj.input_file, 0, SEEK_SET) # after init is called, the file SEEK is at the start of the first frame set, so we need to reset to the start block
-        #comment this back in to read from start
+        #fseeko(self._traj.input_file, 0, SEEK_SET) # after init is called, the file SEEK is at the start of the first frame set, so we need to reset to the start block
+        #comment this ^ back in to read from start
         cdef off_t offset
-        while stat != TNG_CRITICAL:
+        while stat != TNG_CRITICAL: #TODO replace with a file len check
             print("block read called {} \n".format(block_count))
             printf("NEW BLOCK \n")
             offset = ftello(self._traj.input_file)
@@ -561,10 +564,37 @@ cdef class TNGFileIterator:
         #cdef int64_t stride = self.get_traj_strides(block_id)
         #printf("\n %ld \n",stride)
 
-
         return TNG_SUCCESS
+
+    cdef get_block_types_of_next_frame(self):
+        cdef int64_t step, nBlocks
+        cdef int64_t *block_ids = NULL
+        stat = tng_util_trajectory_next_frame_present_data_blocks_find(self._traj, -1, 0, NULL, &step, &nBlocks, &block_ids);
+        printf("step = %d \n", step)
+        printf("nblocks = %d \n", nBlocks)
     
-    cdef get_traj_strides(self, block_id): # this hangs and looks like it reads the same block over and over again forever
+    cdef spool2(self):
+        # outer decl
+        cdef int64_t step, nBlocks
+        cdef int64_t *block_ids = NULL
+        cdef tng_function_status stat  = tng_util_trajectory_next_frame_present_data_blocks_find(self._traj, -1, 0, NULL, &step, &nBlocks, &block_ids);
+        
+        #inner loop decls
+        cdef double frame_time
+        cdef double precision
+        cdef int64_t n_values_per_frame, n_atoms
+        #char block_name[1024]
+
+        while  stat == TNG_SUCCESS:
+            for i in range(nBlocks):
+                stat = tng_util_trajectory_next_frame_present_data_blocks_find(self._traj, -1, 0, NULL, &step, &nBlocks, &block_ids);
+
+
+    # cdef get_data_next_frame()
+
+
+
+    cdef get_traj_strides(self, block_id): # TODO BROKEN this hangs and looks like it reads the same block over and over again forever
         cdef int64_t stride_length
         tng_data_get_stride_length(self._traj, block_id, 1, &stride_length)
         return stride_length
