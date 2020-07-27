@@ -600,8 +600,26 @@ cdef class TNGFileIterator:
         cdef void*               data = nullptr;
         cdef double              localPrec;
 
-        
+        stat = tng_data_block_name_get(self._traj, block_id, name, TNG_MAX_STR_LEN)
+        if stat != TNG_SUCCESS:
+            raise Exception("cannot get block_name")
 
+        stat = tng_data_block_dependency_get(self._traj, block_id, &block_dependency)
+        if stat != TNG_SUCCESS:
+            raise Exception("cannot get block_dependency")
+        
+        if block_dependency and TNG_PARTICLE_DEPENDENT:
+            tng_num_particles_get(self._traj, n_atoms)
+            stat = tng_util_particle_data_next_frame_read(self._traj, blockId, &data, &datatype, frameNumber, frameTime)
+        else:
+            deallocate(natoms) = 1
+            stat = tng_util_non_particle_data_next_frame_read(self._traj, blockid, &data, &datatype, frameNumber, frameTime)
+
+        if stat == TNG_CRITICAL:
+            raise Exception("critical data reading failure")
+        
+        if 
+    
 
 
     cdef get_traj_strides(self, block_id): # TODO BROKEN this hangs and looks like it reads the same block over and over again forever
