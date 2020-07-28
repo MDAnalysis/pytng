@@ -620,9 +620,10 @@ cdef class TNGFileIterator:
                 stat = self.get_data_next_frame(block_ids[i], &values, &step, &frame_time, &n_values_per_frame, &n_atoms, &precision, bname)
                 printf("data block name %s \n", bname)
                 printf("n_values_per_frame %ld \n", n_values_per_frame)
-                # for j in range(n_values_per_frame*n_atoms):
-                #     printf(" %f \n", values[j])
-        raise Exception
+                for j in range(n_values_per_frame*n_atoms):
+                    printf(" %f \n", values[j])
+            raise Exception
+
 
     
     cdef tng_function_status get_data_next_frame(self, int64_t block_id, double** values, int64_t* step, double* frame_time, int64_t* n_values_per_frame, int64_t* n_atoms, double* prec, char* name):
@@ -693,7 +694,10 @@ cdef class TNGFileIterator:
         elif datatype == TNG_CHAR_DATA:
             raise NotImplementedError("char data reading is not implemented")
 
-        else:
+        else: # the default is meant to be double, reading correctly can't be reliant on datatype being set properly as it is not always done.
+            # for i in range(n_atoms):
+            #     for j in range(n_vals):
+                    #to[i*n_vals +j ] = (<double*>source)[i *n_vals +j] # we will reinterpret as double by default ?
             printf(" WARNING type %d not understood \n", datatype) #TODO currently non particle block data isnt working
 
         
