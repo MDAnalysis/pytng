@@ -13,6 +13,7 @@ from cpython.mem cimport PyMem_Malloc, PyMem_Realloc, PyMem_Free
 from libc.stdint cimport int64_t, uint64_t, int32_t, uint32_t
 from libc.stdlib cimport malloc, free, realloc
 from libc.stdio cimport printf, FILE, SEEK_SET, SEEK_CUR, SEEK_END
+from libc.string cimport memcpy
 
 from posix.types cimport off_t
 
@@ -616,6 +617,9 @@ cdef class TNGFileIterator:
                 printf("block id %ld \n", block_ids[i])
                 stat = self.get_data_next_frame(block_ids[i], &values, &step, &frame_time, &n_values_per_frame, &n_atoms, &precision, bname)
                 printf("data block name %s \n", bname)
+                printf("n_values_per_frame %ld \n", n_values_per_frame)
+                # for j in range(n_values_per_frame):
+                #     printf(" %f \n", values[j])
         raise Exception
 
     
@@ -639,7 +643,7 @@ cdef class TNGFileIterator:
             tng_num_particles_get(self._traj, n_atoms)
             stat = tng_util_particle_data_next_frame_read(self._traj, block_id, &data, &datatype, step, frame_time)
         else:
-            n_atoms[0] = 1
+            n_atoms[0] = 1 # still used for some allocs
             stat = tng_util_non_particle_data_next_frame_read(self._traj, block_id, &data, &datatype, step, frame_time)
 
         if stat == TNG_CRITICAL:
@@ -652,23 +656,50 @@ cdef class TNGFileIterator:
             #raise Exception("critical data reading failure")
             return TNG_CRITICAL
 
-        values[0] =  <double*> data  #set the values ptr to the read data cast to a double arr
-        #is this valid or do I need to malloc( )?
+        # calling function is responsible for freeing values
+        realloc(values[0], sizeof(double)* n_values_per_frame[0] * n_atoms[0]) # these are all ptrs
 
+        self.convert_to_double_arr(data, values[0], n_atoms[0], n_values_per_frame[0], datatype)
+
+        # free data after it is read
         free(data)
 
         return TNG_SUCCESS
 
+    
+    cdef void convert_to_double_arr(self, void* source, double* to, const int n_atoms, const int n_vals, const char datatype):
+
+        # do we need to account for changes in the decl of double etc ie is this likely to be portable?. GMX uses a consistent cast to their own type real*
+        # I have gone with widening to double here
+        # a lot of this is a bit redundant but could be used to differntiate casts to numpy arrays etc in the future
+
+        cdef int i,j
+
+        if datatype == TNG_FLOAT_DATA:
+            for i in range(n_atoms):
+                for j in range(n_vals):
+                    to[i*n_vals +j ] = <double*> source[i *n_vals +j] # should we use a named cast here? gromacs uses reinterpret_cast<float*>
+
+        elif datatype == TNG_INT_DATA:
+            for i in range(n_atoms):
+                for j in range(n_vals):
+                    to[i*n_vals +j ] = <double*> source[i *n_vals +j] # redundant but could be changed later
+
+        elif datatype == TNG_DOUBLE_DATA:
+            memcpy(to, source, n_vals * sizeof(double) * n_atoms)
+
+        elif datatype == TNG_CHAR_DATA:
+            raise TypeError("datatype not understood")
+
+        else:
+            raise TypeError("datatype not understood")
+
         
 
-
-    
-
-
-    cdef get_traj_strides(self, block_id): # TODO BROKEN this hangs and looks like it reads the same block over and over again forever
-        cdef int64_t stride_length
-        tng_data_get_stride_length(self._traj, block_id, 1, &stride_length)
-        return stride_length
+    # cdef get_traj_strides(self, block_id): # TODO BROKEN this hangs and looks like it reads the same block over and over again forever
+    #     cdef int64_t stride_length
+    #     tng_data_get_stride_length(self._traj, block_id, 1, &stride_length)
+    #     return stride_length
 
 
 
