@@ -4798,6 +4798,26 @@ tng_function_status tng_util_trajectory_next_frame_present_data_blocks_find(
     int64_t *n_data_blocks_in_next_frame,
     int64_t **data_block_ids_in_next_frame);
 
+tng_function_status tng_data_block_name_get(struct tng_trajectory *tng_data,
+                                            const int64_t block_id, char *name,
+                                            const int max_len);
+
+tng_function_status
+tng_data_block_dependency_get(struct tng_trajectory *tng_data,
+                              const int64_t block_id, int *block_dependency);
+
+tng_function_status tng_util_particle_data_next_frame_read(
+    struct tng_trajectory *tng_data, const int64_t block_id, void **values,
+    char *data_type, int64_t *retrieved_frame_number, double *retrieved_time);
+
+
+tng_function_status  tng_util_non_particle_data_next_frame_read(struct tng_trajectory* tng_data,
+                                                                                 const int64_t block_id,
+                                                                                 void** values,
+                                                                                 char*  data_type,
+                                                                                 int64_t* retrieved_frame_number,
+                                                                                 double* retrieved_time);
+
 #ifdef __cplusplus
 } /* end extern "C" */
 #endif

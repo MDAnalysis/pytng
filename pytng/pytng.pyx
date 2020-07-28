@@ -48,6 +48,12 @@ cdef extern from "<stdio.h>" nogil:
 
 cdef extern from "tng/tng_io.h":
 
+    cdef enum:
+        TNG_MAX_STR_LEN
+        TNG_MD5_HASH_LEN
+        TNG_FRAME_DEPENDENT
+        TNG_PARTICLE_DEPENDENT
+
     # note that the _t suffix is a typedef mangle for a pointer to the base struct
     ctypedef struct tng_molecule_t:
         pass
@@ -393,6 +399,13 @@ cdef extern from "tng/tng_io.h":
 
     tng_function_status tng_util_trajectory_next_frame_present_data_blocks_find(tng_trajectory *tng_data, int64_t current_frame, int64_t n_requested_data_block_ids, int64_t *requested_data_block_ids, int64_t *next_frame, int64_t *n_data_blocks_in_next_frame, int64_t **data_block_ids_in_next_frame)
 
+    tng_function_status  tng_data_block_name_get(tng_trajectory* tng_data, const int64_t block_id, char*    name, const int   max_len)
+
+    tng_function_status tng_data_block_dependency_get( tng_trajectory *tng_data, const int64_t block_id, int *block_dependency)
+
+    tng_function_status  tng_util_particle_data_next_frame_read( tng_trajectory* tng_data, const int64_t block_id, void**  values, char* data_type, int64_t* retrieved_frame_number, double* retrieved_time)
+
+    tng_function_status  tng_util_non_particle_data_next_frame_read( tng_trajectory* tng_data, const int64_t block_id, void** values, char*  data_type, int64_t* retrieved_frame_number, double* retrieved_time)
 
 TNGFrame = namedtuple("TNGFrame", "positions velocities forces time step box ")
 
@@ -589,16 +602,17 @@ cdef class TNGFileIterator:
 
         while  stat == TNG_SUCCESS:
             for i in range(nBlocks):
-                stat_read = get_data_next_frame(block_ids[i], &values, &step, &frame_time, &n_values_per_frame, &n_atoms)
+                print("blah")
+                #stat_read = self.get_data_next_frame(block_ids[i], &values, &step, &frame_time, &n_values_per_frame, &n_atoms)
     
     
     cdef tng_function_status get_data_next_frame(self, int64_t block_id, double** values, int64_t* step, double* frame_time, int64_t* n_values_per_frame, int64_t* n_atoms, double* prec, char* name):
         cdef tng_function_status stat;
-        cdef char                datatype = -1;
-        cdef int64_t             codecId;
-        cdef int                 blockDependency;
-        cdef void*               data = nullptr;
-        cdef double              localPrec;
+        cdef char                datatype = -1
+        cdef int64_t             codec_id;
+        cdef int                 block_dependency
+        cdef void*               data = NULL
+        cdef double              local_prec
 
         stat = tng_data_block_name_get(self._traj, block_id, name, TNG_MAX_STR_LEN)
         if stat != TNG_SUCCESS:
@@ -610,15 +624,15 @@ cdef class TNGFileIterator:
         
         if block_dependency and TNG_PARTICLE_DEPENDENT:
             tng_num_particles_get(self._traj, n_atoms)
-            stat = tng_util_particle_data_next_frame_read(self._traj, blockId, &data, &datatype, frameNumber, frameTime)
+            stat = tng_util_particle_data_next_frame_read(self._traj, block_id, &data, &datatype, step, frame_time)
         else:
-            deallocate(natoms) = 1
-            stat = tng_util_non_particle_data_next_frame_read(self._traj, blockid, &data, &datatype, frameNumber, frameTime)
+            n_atoms[0] = 1
+            stat = tng_util_non_particle_data_next_frame_read(self._traj, block_id, &data, &datatype, step, frame_time)
 
         if stat == TNG_CRITICAL:
             raise Exception("critical data reading failure")
         
-        if 
+
     
 
 
