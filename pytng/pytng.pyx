@@ -602,13 +602,21 @@ cdef class TNGFileIterator:
         cdef double frame_time
         cdef double precision
         cdef int64_t n_values_per_frame, n_atoms, i
-        cdef bname = <char*> malloc(TNG_MAX_STR_LEN * sizeof(char)) # TNG_MAX_STR_LEN = 1024
+        cdef char* bname = <char*> malloc(TNG_MAX_STR_LEN * sizeof(char))
         cdef double* values = NULL
-        #raise Exception
-        while  stat == TNG_SUCCESS:
+        cdef off_t offset
+        offset = ftello(self._traj.input_file)
+
+        while  (offset < self._traj.input_file_len):
+            printf("stat %d \n", stat)
+            offset = ftello(self._traj.input_file)
+            printf("file position %ld \n",offset)
             for i in range(nBlocks):
                 printf(" loop %ld \n",i)
+                printf("block id %ld \n", block_ids[i])
                 stat = self.get_data_next_frame(block_ids[i], &values, &step, &frame_time, &n_values_per_frame, &n_atoms, &precision, bname)
+                printf("data block name %s \n", bname)
+        raise Exception
 
     
     cdef tng_function_status get_data_next_frame(self, int64_t block_id, double** values, int64_t* step, double* frame_time, int64_t* n_values_per_frame, int64_t* n_atoms, double* prec, char* name):
