@@ -407,6 +407,8 @@ cdef extern from "tng/tng_io.h":
 
     tng_function_status  tng_util_non_particle_data_next_frame_read( tng_trajectory* tng_data, const int64_t block_id, void** values, char*  data_type, int64_t* retrieved_frame_number, double* retrieved_time)
 
+    tng_function_status tng_data_block_num_values_per_frame_get(tng_trajectory *tng_data,  int64_t block_id, int64_t *n_values_per_frame)
+
 TNGFrame = namedtuple("TNGFrame", "positions velocities forces time step box ")
 
 
@@ -579,32 +581,35 @@ cdef class TNGFileIterator:
 
         return TNG_SUCCESS
 
-    cdef get_block_types_of_next_frame(self):
-        cdef int64_t step, nBlocks
-        cdef int64_t *block_ids = NULL
-        stat = tng_util_trajectory_next_frame_present_data_blocks_find(self._traj, -1, 0, NULL, &step, &nBlocks, &block_ids);
-        printf("step = %d \n", step)
-        printf("nblocks = %d \n", nBlocks)
+    # cdef get_block_types_of_next_frame(self):
+    #     cdef int64_t step, nBlocks
+    #     cdef int64_t *block_ids = NULL
+    #     stat = tng_util_trajectory_next_frame_present_data_blocks_find(self._traj, -1, 0, NULL, &step, &nBlocks, &block_ids);
+    #     printf("step = %d \n", step)
+    #     printf("nblocks = %d \n", nBlocks)
     
-    cdef spool2(self):
+    def spool2(self):
         # outer decl
         cdef int64_t step, nBlocks
         cdef int64_t *block_ids = NULL
+        print("finding first set of blocks")
         cdef tng_function_status stat  = tng_util_trajectory_next_frame_present_data_blocks_find(self._traj, -1, 0, NULL, &step, &nBlocks, &block_ids);
-        
+        printf("n blocks %ld \n", nBlocks)
+        if stat !=TNG_SUCCESS:
+            raise Exception
+        print("worked")
         #inner loop decls
         cdef double frame_time
         cdef double precision
-        cdef int64_t n_values_per_frame, n_atoms
-        cdef bname = <char*> malloc(1024 * sizeof(char)) # TNG_MAX_STR_LEN = 1024
+        cdef int64_t n_values_per_frame, n_atoms, i
+        cdef bname = <char*> malloc(TNG_MAX_STR_LEN * sizeof(char)) # TNG_MAX_STR_LEN = 1024
         cdef double* values = NULL
-        cdef tng_function_status stat_read
-
+        #raise Exception
         while  stat == TNG_SUCCESS:
             for i in range(nBlocks):
-                print("blah")
-                #stat_read = self.get_data_next_frame(block_ids[i], &values, &step, &frame_time, &n_values_per_frame, &n_atoms)
-    
+                printf(" loop %ld \n",i)
+                stat = self.get_data_next_frame(block_ids[i], &values, &step, &frame_time, &n_values_per_frame, &n_atoms, &precision, bname)
+
     
     cdef tng_function_status get_data_next_frame(self, int64_t block_id, double** values, int64_t* step, double* frame_time, int64_t* n_values_per_frame, int64_t* n_atoms, double* prec, char* name):
         cdef tng_function_status stat;
@@ -630,8 +635,24 @@ cdef class TNGFileIterator:
             stat = tng_util_non_particle_data_next_frame_read(self._traj, block_id, &data, &datatype, step, frame_time)
 
         if stat == TNG_CRITICAL:
-            raise Exception("critical data reading failure")
+            #raise Exception("critical data reading failure")
+            return TNG_CRITICAL
+
         
+        stat = tng_data_block_num_values_per_frame_get(self._traj, block_id, n_values_per_frame)
+        if stat == TNG_CRITICAL:
+            #raise Exception("critical data reading failure")
+            return TNG_CRITICAL
+
+        values[0] =  <double*> data  #set the values ptr to the read data cast to a double arr
+        #is this valid or do I need to malloc( )?
+
+        free(data)
+
+        return TNG_SUCCESS
+
+        
+
 
     
 

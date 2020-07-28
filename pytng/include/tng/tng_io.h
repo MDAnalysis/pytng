@@ -4810,13 +4810,14 @@ tng_function_status tng_util_particle_data_next_frame_read(
     struct tng_trajectory *tng_data, const int64_t block_id, void **values,
     char *data_type, int64_t *retrieved_frame_number, double *retrieved_time);
 
+tng_function_status tng_util_non_particle_data_next_frame_read(
+    struct tng_trajectory *tng_data, const int64_t block_id, void **values,
+    char *data_type, int64_t *retrieved_frame_number, double *retrieved_time);
 
-tng_function_status  tng_util_non_particle_data_next_frame_read(struct tng_trajectory* tng_data,
-                                                                                 const int64_t block_id,
-                                                                                 void** values,
-                                                                                 char*  data_type,
-                                                                                 int64_t* retrieved_frame_number,
-                                                                                 double* retrieved_time);
+tng_function_status
+tng_data_block_num_values_per_frame_get(struct tng_trajectory *tng_data,
+                                        const int64_t block_id,
+                                        int64_t *n_values_per_frame);
 
 #ifdef __cplusplus
 } /* end extern "C" */
