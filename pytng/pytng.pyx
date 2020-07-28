@@ -15,6 +15,8 @@ from libc.stdlib cimport malloc, free, realloc
 from libc.stdio cimport printf, FILE, SEEK_SET, SEEK_CUR, SEEK_END
 from libc.string cimport memcpy
 
+#from libcpp.cast cimport reinterpret_cast
+
 from posix.types cimport off_t
 
 
@@ -30,9 +32,8 @@ from  cython.operator cimport dereference
 
 
 ctypedef enum tng_function_status: TNG_SUCCESS, TNG_FAILURE, TNG_CRITICAL
-ctypedef enum tng_data_type: TNG_CHAR_DATA, TNG_INT_DATA, TNG_FLOAT_DATA, \
-    TNG_DOUBLE_DATA
 ctypedef enum tng_hash_mode: TNG_SKIP_HASH, TNG_USE_HASH
+ctypedef enum tng_datatypes: TNG_CHAR_DATA, TNG_INT_DATA, TNG_FLOAT_DATA, TNG_DOUBLE_DATA
 
 
 status_error_message = ['OK', 'Failure', 'Critical']
@@ -54,6 +55,7 @@ cdef extern from "tng/tng_io.h":
         TNG_MD5_HASH_LEN
         TNG_FRAME_DEPENDENT
         TNG_PARTICLE_DEPENDENT
+    
 
     # note that the _t suffix is a typedef mangle for a pointer to the base struct
     ctypedef struct tng_molecule_t:
@@ -602,7 +604,7 @@ cdef class TNGFileIterator:
         #inner loop decls
         cdef double frame_time
         cdef double precision
-        cdef int64_t n_values_per_frame, n_atoms, i
+        cdef int64_t n_values_per_frame, n_atoms, i, j
         cdef char* bname = <char*> malloc(TNG_MAX_STR_LEN * sizeof(char))
         cdef double* values = NULL
         cdef off_t offset
@@ -618,7 +620,7 @@ cdef class TNGFileIterator:
                 stat = self.get_data_next_frame(block_ids[i], &values, &step, &frame_time, &n_values_per_frame, &n_atoms, &precision, bname)
                 printf("data block name %s \n", bname)
                 printf("n_values_per_frame %ld \n", n_values_per_frame)
-                # for j in range(n_values_per_frame):
+                # for j in range(n_values_per_frame*n_atoms):
                 #     printf(" %f \n", values[j])
         raise Exception
 
@@ -656,12 +658,12 @@ cdef class TNGFileIterator:
             #raise Exception("critical data reading failure")
             return TNG_CRITICAL
 
-        # calling function is responsible for freeing values
-        realloc(values[0], sizeof(double)* n_values_per_frame[0] * n_atoms[0]) # these are all ptrs
+        # calling function is responsible for freeing value pointer
+        values[0] = <double*> realloc(values[0], sizeof(double)* n_values_per_frame[0] * n_atoms[0]) # renew to be right size
 
         self.convert_to_double_arr(data, values[0], n_atoms[0], n_values_per_frame[0], datatype)
 
-        # free data after it is read
+        # free data
         free(data)
 
         return TNG_SUCCESS
@@ -673,26 +675,26 @@ cdef class TNGFileIterator:
         # I have gone with widening to double here
         # a lot of this is a bit redundant but could be used to differntiate casts to numpy arrays etc in the future
 
-        cdef int i,j
+        cdef int i, j
 
         if datatype == TNG_FLOAT_DATA:
             for i in range(n_atoms):
                 for j in range(n_vals):
-                    to[i*n_vals +j ] = <double*> source[i *n_vals +j] # should we use a named cast here? gromacs uses reinterpret_cast<float*>
+                    to[i*n_vals +j ] = (<double*>source)[i *n_vals +j] # must use typedef double_p here
 
         elif datatype == TNG_INT_DATA:
             for i in range(n_atoms):
                 for j in range(n_vals):
-                    to[i*n_vals +j ] = <double*> source[i *n_vals +j] # redundant but could be changed later
+                    to[i*n_vals +j ] = (<double*>source)[i *n_vals +j] # redundant but could be changed later
 
         elif datatype == TNG_DOUBLE_DATA:
             memcpy(to, source, n_vals * sizeof(double) * n_atoms)
 
         elif datatype == TNG_CHAR_DATA:
-            raise TypeError("datatype not understood")
+            raise NotImplementedError("char data reading is not implemented")
 
         else:
-            raise TypeError("datatype not understood")
+            printf(" WARNING type %d not understood \n", datatype) #TODO currently non particle block data isnt working
 
         
 
