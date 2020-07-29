@@ -599,13 +599,15 @@ cdef class TNGFileIterator:
     def spool2(self):
         # outer decl
         cdef int64_t step, nBlocks
+        cdef int64_t nframe = 0
         cdef int64_t *block_ids = NULL
         print("finding first set of blocks")
         cdef tng_function_status stat  = tng_util_trajectory_next_frame_present_data_blocks_find(self._traj, -1, 0, NULL, &step, &nBlocks, &block_ids);
         printf("n blocks %ld \n", nBlocks)
         if stat !=TNG_SUCCESS:
             raise Exception
-        print("worked")
+        print("worked\n ")
+
         #inner loop decls
         cdef double frame_time
         cdef double precision
@@ -616,9 +618,10 @@ cdef class TNGFileIterator:
         cdef int64_t block_counter = 0
         offset = ftello(self._traj.input_file)
 
+        cdef tng_function_status read_stat = TNG_SUCCESS
 
-        while  (offset < self._traj.input_file_len):
-            printf("stat %d \n", stat)
+
+        while (read_stat == TNG_SUCCESS):
             offset = ftello(self._traj.input_file)
             printf("file position %ld \n",offset)
             for i in range(nBlocks):
@@ -629,10 +632,15 @@ cdef class TNGFileIterator:
                 printf("data block name %s \n", bname)
                 printf("n_values_per_frame %ld \n", n_values_per_frame)
                 printf("n_atoms  %ld \n", n_atoms)
-                printf("block_count %ld \n\n", block_counter)
+                printf("block_count %ld \n", block_counter)
                 # for j in range(n_values_per_frame*n_atoms):
                 #     printf(" %f ", values[j])
-            raise Exception
+            
+            nframe +=1
+            read_stat = tng_util_trajectory_next_frame_present_data_blocks_find(self._traj, step, 0, NULL, &step, &nBlocks, &block_ids);
+            printf("loop status %d \n", read_stat)
+            printf("nframe  %ld \n\n", nframe)
+
 
 
     
@@ -681,7 +689,7 @@ cdef class TNGFileIterator:
 
         # calling function is responsible for freeing value pointer
         values[0] = <double*> realloc(values[0], sizeof(double)* n_values_per_frame[0] * n_atoms[0]) # renew to be right size
-        printf("realloc values array to be %ld  doubles long \n", n_values_per_frame[0] * n_atoms[0])
+        printf("realloc values array to be %ld  doubles and %ld bits long \n", n_values_per_frame[0] * n_atoms[0], n_values_per_frame[0] * n_atoms[0]*sizeof(double))
 
         self.convert_to_double_arr(data, values[0], n_atoms[0], n_values_per_frame[0], datatype)
 
@@ -701,7 +709,7 @@ cdef class TNGFileIterator:
         if datatype == TNG_FLOAT_DATA:
             for i in range(n_atoms):
                 for j in range(n_vals):
-                    to[i*n_vals +j ] = (<double*>source)[i *n_vals +j]
+                    to[i*n_vals +j ] = (<double*>source)[i *n_vals +j] #NOTE do we explicitly need to use reinterpret_cast ??
 
         elif datatype == TNG_INT_DATA:
             for i in range(n_atoms):
