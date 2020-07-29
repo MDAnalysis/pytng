@@ -628,9 +628,10 @@ cdef class TNGFileIterator:
                 stat = self.get_data_next_frame(block_ids[i], &values, &step, &frame_time, &n_values_per_frame, &n_atoms, &precision, bname)
                 printf("data block name %s \n", bname)
                 printf("n_values_per_frame %ld \n", n_values_per_frame)
+                printf("n_atoms  %ld \n", n_atoms)
                 printf("block_count %ld \n\n", block_counter)
                 # for j in range(n_values_per_frame*n_atoms):
-                #     printf(" %f \n", values[j])
+                #     printf(" %f ", values[j])
             raise Exception
 
 
@@ -680,10 +681,11 @@ cdef class TNGFileIterator:
 
         # calling function is responsible for freeing value pointer
         values[0] = <double*> realloc(values[0], sizeof(double)* n_values_per_frame[0] * n_atoms[0]) # renew to be right size
+        printf("realloc values array to be %ld  doubles long \n", n_values_per_frame[0] * n_atoms[0])
 
         self.convert_to_double_arr(data, values[0], n_atoms[0], n_values_per_frame[0], datatype)
 
-        # free data
+        # free local data
         free(data)
 
         return TNG_SUCCESS
@@ -691,8 +693,7 @@ cdef class TNGFileIterator:
     
     cdef void convert_to_double_arr(self, void* source, double* to, const int n_atoms, const int n_vals, const char datatype):
 
-        # do we need to account for changes in the decl of double etc ie is this likely to be portable?. GMX uses a consistent cast to their own type real*
-        # I have gone with widening to double here
+        # do we need to account for changes in the decl of double etc ie is this likely to be portable?.
         # a lot of this is a bit redundant but could be used to differntiate casts to numpy arrays etc in the future
 
         cdef int i, j
@@ -700,7 +701,7 @@ cdef class TNGFileIterator:
         if datatype == TNG_FLOAT_DATA:
             for i in range(n_atoms):
                 for j in range(n_vals):
-                    to[i*n_vals +j ] = (<double*>source)[i *n_vals +j] # must use typedef double_p here
+                    to[i*n_vals +j ] = (<double*>source)[i *n_vals +j]
 
         elif datatype == TNG_INT_DATA:
             for i in range(n_atoms):
@@ -708,7 +709,10 @@ cdef class TNGFileIterator:
                     to[i*n_vals +j ] = (<double*>source)[i *n_vals +j] # redundant but could be changed later
 
         elif datatype == TNG_DOUBLE_DATA:
-            memcpy(to, source, n_vals * sizeof(double) * n_atoms)
+            for i in range(n_atoms):
+                for j in range(n_vals):
+                    to[i*n_vals +j ] = (<double*>source)[i *n_vals +j] # should probs use memcpy
+            # memcpy(to, source, n_vals * sizeof(double) * n_atoms)
 
         elif datatype == TNG_CHAR_DATA:
             raise NotImplementedError("char data reading is not implemented")
@@ -720,15 +724,6 @@ cdef class TNGFileIterator:
             printf(" WARNING type %d not understood \n", datatype) #TODO currently non particle block data isnt working
 
         
-
-    # cdef get_traj_strides(self, block_id): # TODO BROKEN this hangs and looks like it reads the same block over and over again forever
-    #     cdef int64_t stride_length
-    #     tng_data_get_stride_length(self._traj, block_id, 1, &stride_length)
-    #     return stride_length
-
-
-
-
     cdef _block_interpret(self):
         pass
         #logic to interpret the block types heretng_data_get_stride_length
