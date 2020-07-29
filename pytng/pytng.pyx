@@ -635,13 +635,14 @@ cdef class TNGFileIterator:
                 printf("block_count %ld \n", block_counter)
                 # for j in range(n_values_per_frame*n_atoms):
                 #     printf(" %f ", values[j])
+
             
             nframe +=1
             read_stat = tng_util_trajectory_next_frame_present_data_blocks_find(self._traj, step, 0, NULL, &step, &nBlocks, &block_ids);
             printf("loop status %d \n", read_stat)
             printf("nframe  %ld \n\n", nframe)
-
-
+        
+        free(values)
 
     
     cdef tng_function_status get_data_next_frame(self, int64_t block_id, double** values, int64_t* step, double* frame_time, int64_t* n_values_per_frame, int64_t* n_atoms, double* prec, char* name):
@@ -706,20 +707,21 @@ cdef class TNGFileIterator:
 
         cdef int i, j
 
+
         if datatype == TNG_FLOAT_DATA:
             for i in range(n_atoms):
                 for j in range(n_vals):
-                    to[i*n_vals +j ] = (<double*>source)[i *n_vals +j] #NOTE do we explicitly need to use reinterpret_cast ??
+                    to[i*n_vals +j ] = (<double*>(source))[i *n_vals +j] #NOTE do we explicitly need to use reinterpret_cast ??
 
         elif datatype == TNG_INT_DATA:
             for i in range(n_atoms):
                 for j in range(n_vals):
-                    to[i*n_vals +j ] = (<double*>source)[i *n_vals +j] # redundant but could be changed later
+                    to[i*n_vals +j ] = (<double*>(source))[i *n_vals +j] # redundant but could be changed later
 
         elif datatype == TNG_DOUBLE_DATA:
             for i in range(n_atoms):
                 for j in range(n_vals):
-                    to[i*n_vals +j ] = (<double*>source)[i *n_vals +j] # should probs use memcpy
+                    to[i*n_vals +j ] = (<double*>(source))[i *n_vals +j] # should probs use memcpy
             # memcpy(to, source, n_vals * sizeof(double) * n_atoms)
 
         elif datatype == TNG_CHAR_DATA:
