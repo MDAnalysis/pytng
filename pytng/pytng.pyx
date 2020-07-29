@@ -34,6 +34,9 @@ from  cython.operator cimport dereference
 ctypedef enum tng_function_status: TNG_SUCCESS, TNG_FAILURE, TNG_CRITICAL
 ctypedef enum tng_hash_mode: TNG_SKIP_HASH, TNG_USE_HASH
 ctypedef enum tng_datatypes: TNG_CHAR_DATA, TNG_INT_DATA, TNG_FLOAT_DATA, TNG_DOUBLE_DATA
+ctypedef enum  tng_particle_dependency: TNG_NON_PARTICLE_BLOCK_DATA, TNG_PARTICLE_BLOCK_DATA
+
+
 
 
 status_error_message = ['OK', 'Failure', 'Critical']
@@ -53,8 +56,7 @@ cdef extern from "tng/tng_io.h":
     cdef enum:
         TNG_MAX_STR_LEN
         TNG_MD5_HASH_LEN
-        TNG_FRAME_DEPENDENT
-        TNG_PARTICLE_DEPENDENT
+
     
 
     # note that the _t suffix is a typedef mangle for a pointer to the base struct
@@ -436,7 +438,10 @@ cdef class TNGFileIterator:
     """File handle object for TNG files
 
     Supports use as a context manager ("with" blocks).
+    
     """
+
+
     cdef tng_trajectory* _traj
     cdef readonly fname
     cdef str mode
@@ -608,20 +613,24 @@ cdef class TNGFileIterator:
         cdef char* bname = <char*> malloc(TNG_MAX_STR_LEN * sizeof(char))
         cdef double* values = NULL
         cdef off_t offset
+        cdef int64_t block_counter = 0
         offset = ftello(self._traj.input_file)
+
 
         while  (offset < self._traj.input_file_len):
             printf("stat %d \n", stat)
             offset = ftello(self._traj.input_file)
             printf("file position %ld \n",offset)
             for i in range(nBlocks):
-                printf(" loop %ld \n",i)
+                block_counter += 1
+                printf("\nloop %ld \n",i)
                 printf("block id %ld \n", block_ids[i])
                 stat = self.get_data_next_frame(block_ids[i], &values, &step, &frame_time, &n_values_per_frame, &n_atoms, &precision, bname)
                 printf("data block name %s \n", bname)
                 printf("n_values_per_frame %ld \n", n_values_per_frame)
-                for j in range(n_values_per_frame*n_atoms):
-                    printf(" %f \n", values[j])
+                printf("block_count %ld \n\n", block_counter)
+                # for j in range(n_values_per_frame*n_atoms):
+                #     printf(" %f \n", values[j])
             raise Exception
 
 
@@ -634,6 +643,14 @@ cdef class TNGFileIterator:
         cdef void*               data = NULL
         cdef double              local_prec
 
+
+        #Flag to indicate frame dependent data. */
+        #define TNG_FRAME_DEPENDENT 1
+        cdef int TNG_FRAME_DEPENDENT = 1
+        #Flag to indicate particle dependent data. */
+        #define TNG_PARTICLE_DEPENDENT 2
+        cdef int  TNG_PARTICLE_DEPENDENT = 2
+
         stat = tng_data_block_name_get(self._traj, block_id, name, TNG_MAX_STR_LEN)
         if stat != TNG_SUCCESS:
             raise Exception("cannot get block_name")
@@ -642,10 +659,12 @@ cdef class TNGFileIterator:
         if stat != TNG_SUCCESS:
             raise Exception("cannot get block_dependency")
         
-        if block_dependency and TNG_PARTICLE_DEPENDENT:
+        if block_dependency.__and__(TNG_PARTICLE_DEPENDENT): # bitwise & due to enum defs
+            printf("reading particle data \n")
             tng_num_particles_get(self._traj, n_atoms)
             stat = tng_util_particle_data_next_frame_read(self._traj, block_id, &data, &datatype, step, frame_time)
         else:
+            printf("reading NON particle data \n")
             n_atoms[0] = 1 # still used for some allocs
             stat = tng_util_non_particle_data_next_frame_read(self._traj, block_id, &data, &datatype, step, frame_time)
 
