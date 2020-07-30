@@ -712,17 +712,19 @@ cdef class TNGFileIterator:
             for i in range(n_atoms):
                 for j in range(n_vals):
                     to[i*n_vals +j ] = (<float*>source)[i *n_vals +j] #NOTE do we explicitly need to use reinterpret_cast ??
+            #memcpy(to,  source, n_vals * sizeof(float) * n_atoms)
 
         elif datatype == TNG_INT_DATA:
             for i in range(n_atoms):
                 for j in range(n_vals):
                     to[i*n_vals +j ] = (<int64_t*>source)[i *n_vals +j] # redundant but could be changed later
+            #memcpy(to, source, n_vals * sizeof(int64_t) * n_atoms)
 
         elif datatype == TNG_DOUBLE_DATA:
             for i in range(n_atoms):
                 for j in range(n_vals):
                     to[i*n_vals +j ] = (<double*>source)[i *n_vals +j] # should probs use memcpy
-            # memcpy(to, source, n_vals * sizeof(double) * n_atoms)
+            #memcpy(to, source, n_vals * sizeof(double) * n_atoms)
 
         elif datatype == TNG_CHAR_DATA:
             raise NotImplementedError("char data reading is not implemented")
