@@ -491,7 +491,7 @@ cdef class TNGFileIterator:
     """
 
 
-    cdef tng_trajectory* _traj
+    cdef TrajectoryWrapper _traj  #TODO should we make this a TrajectoryWrapper also
     cdef readonly fname
     cdef str mode
     cdef int is_open
@@ -507,6 +507,8 @@ cdef class TNGFileIterator:
     cdef int64_t _current_frame_set
 
     def __cinit__(self, fname, mode='r'):
+
+        self._traj = self.traj.new_struct()
         self.fname = fname
         self._n_frames = -1
         self._n_particles = -1
@@ -553,26 +555,26 @@ cdef class TNGFileIterator:
         cdef tng_function_status stat
 
         fname_bytes = fname.encode('UTF-8')
-        stat = tng_util_trajectory_open(fname_bytes, _mode, & self._traj)
+        stat = tng_util_trajectory_open(fname_bytes, _mode, & self._traj._ptr)
         if stat != TNG_SUCCESS:
             raise IOError("File '{}' cannot be opened".format(fname))
 
         # TODO propagate errmsg upwards in all the below calls
-        stat = tng_num_frames_get(self._traj, & self._n_frames)
+        stat = tng_num_frames_get(self._traj._ptr, & self._n_frames)
         if stat != TNG_SUCCESS:
             raise IOError("Number of frames cannot be read")
 
-        stat = tng_num_particles_get(self._traj, & self._n_particles)
+        stat = tng_num_particles_get(self._traj._ptr, & self._n_particles)
         if stat != TNG_SUCCESS:
             raise IOError("Number of particles cannot be read")
 
         # NOTE can we just loop over this directly in some way?
-        stat = tng_num_frame_sets_get(self._traj, & self._n_frame_sets)
+        stat = tng_num_frame_sets_get(self._traj._ptr, & self._n_frame_sets)
         # TODO can this be read straight from the struct as self._traj->n_frame_sets?
         # they note that this is not always updated
 
         cdef int64_t exponent
-        stat = tng_distance_unit_exponential_get(self._traj, & exponent)
+        stat = tng_distance_unit_exponential_get(self._traj._ptr, & exponent)
         if stat != TNG_SUCCESS:
             raise IOError("Distance exponent cannot be read")
 
@@ -585,7 +587,7 @@ cdef class TNGFileIterator:
     def _close(self):
         """Make sure the file handle is closed"""
         if self.is_open:
-            tng_util_trajectory_close(& self._traj)
+            tng_util_trajectory_close(& self._traj._ptr)
             self.is_open = False
             self._n_frames = -1
 
@@ -597,14 +599,13 @@ cdef class TNGFileIterator:
         cdef int64_t step, n_blocks
         cdef int64_t nframe = 0
         cdef int64_t *block_ids = NULL
-        cdef tng_function_status stat  = tng_util_trajectory_next_frame_present_data_blocks_find(self._traj, -1, 0, NULL, &step, &n_blocks, &block_ids)
+        cdef tng_function_status stat  = tng_util_trajectory_next_frame_present_data_blocks_find(self._traj._ptr, -1, 0, NULL, &step, &n_blocks, &block_ids)
         if stat !=TNG_SUCCESS:
             raise Exception("cannot find the number of blocks")
 
         cdef int64_t block_counter = 0
         cdef tng_function_status read_stat = TNG_SUCCESS
-        cdef tw = TrajectoryWrapper.from_ptr(self._traj)
-        cdef block = TNGDataBlock(tw, debug=0)
+        cdef block = TNGDataBlock(self._traj, debug=0)
 
         while (read_stat == TNG_SUCCESS):
             for i in range(n_blocks):
@@ -613,7 +614,7 @@ cdef class TNGFileIterator:
                 printf("block_count %ld \n", block_counter)
 
             nframe +=1
-            read_stat = tng_util_trajectory_next_frame_present_data_blocks_find(self._traj, step, 0, NULL, &step, &n_blocks, &block_ids);
+            read_stat = tng_util_trajectory_next_frame_present_data_blocks_find(self._traj._ptr, step, 0, NULL, &step, &n_blocks, &block_ids);
             printf("loop status %d \n", read_stat)
             printf("nframe  %ld \n\n", nframe)  
 
