@@ -2,6 +2,7 @@
 # cython: embedsignature=True
 # cython: profile=True
 # distutils: define_macros=CYTHON_TRACE=1
+from cython.operator cimport dereference
 from numpy cimport(PyArray_SimpleNewFromData,
                    PyArray_SetBaseObject,
                    NPY_FLOAT,
@@ -17,7 +18,7 @@ from libc.stdlib cimport malloc, free, realloc
 from libc.stdio cimport printf, FILE, SEEK_SET, SEEK_CUR, SEEK_END
 from libc.string cimport memcpy
 
-#from libcpp.cast cimport reinterpret_cast
+# from libcpp.cast cimport reinterpret_cast
 
 from posix.types cimport off_t
 
@@ -29,8 +30,6 @@ import numpy as np
 
 cimport numpy as np
 np.import_array()
-
-from  cython.operator cimport dereference
 
 
 ctypedef enum tng_function_status: TNG_SUCCESS, TNG_FAILURE, TNG_CRITICAL
@@ -44,12 +43,12 @@ status_error_message = ['OK', 'Failure', 'Critical']
 
 
 cdef extern from "string.h":
-    size_t strlen(char *s)
+    size_t strlen(char * s)
 
 cdef extern from "<stdio.h>" nogil:
     # Seek and tell with off_t
-    int fseeko(FILE *, off_t, int)
-    off_t ftello(FILE *)
+    int fseeko(FILE * , off_t, int)
+    off_t ftello(FILE * )
 
 
 cdef extern from "tng/tng_io.h":
@@ -58,328 +57,319 @@ cdef extern from "tng/tng_io.h":
         TNG_MAX_STR_LEN
         TNG_MD5_HASH_LEN
 
-    
-
     # note that the _t suffix is a typedef mangle for a pointer to the base struct
     ctypedef struct tng_molecule_t:
         pass
 
-
     struct tng_particle_mapping:
 
-        #/** The index number of the first particle in this mapping block */
+        # /** The index number of the first particle in this mapping block */
         int64_t num_first_particle
-        #/** The number of particles list in this mapping block */
+        # /** The number of particles list in this mapping block */
         int64_t n_particles
-        #/** the mapping of index numbers to the real particle numbers in the
-        #* trajectory. real_particle_numbers[0] is the real particle number
-        #* (as it is numbered in the molecular system) of the first particle
-        #* in the data blocks covered by this particle mapping block */
-        int64_t* real_particle_numbers
-
+        # /** the mapping of index numbers to the real particle numbers in the
+        # * trajectory. real_particle_numbers[0] is the real particle number
+        # * (as it is numbered in the molecular system) of the first particle
+        # * in the data blocks covered by this particle mapping block */
+        int64_t * real_particle_numbers
 
     struct tng_trajectory_frame_set:
 
-        #/** The number of different particle mapping blocks present. */
+        # /** The number of different particle mapping blocks present. */
         int64_t n_mapping_blocks
-        #/** The atom mappings of this frame set */
-        tng_particle_mapping* mappings
-        #/** The first frame of this frame set */
+        # /** The atom mappings of this frame set */
+        tng_particle_mapping * mappings
+        # /** The first frame of this frame set */
         int64_t first_frame
-        #/** The number of frames in this frame set */
+        # /** The number of frames in this frame set */
         int64_t n_frames
-        #/** The number of written frames in this frame set (used when writing o
-        #* frame at a time). */
+        # /** The number of written frames in this frame set (used when writing o
+        # * frame at a time). */
         int64_t n_written_frames
-        #/** The number of frames not yet written to file in this frame set
-        #* (used from the utility functions to finish the writing properly. */
+        # /** The number of frames not yet written to file in this frame set
+        # * (used from the utility functions to finish the writing properly. */
         int64_t n_unwritten_frames
 
-
-        #/** A list of the number of each molecule type - only used when using
-        #* variable number of atoms */
-        int64_t* molecule_cnt_list
-        #/** The number of particles/atoms - only used when using variable numbe
-        #* of atoms */
+        # /** A list of the number of each molecule type - only used when using
+        # * variable number of atoms */
+        int64_t * molecule_cnt_list
+        # /** The number of particles/atoms - only used when using variable numbe
+        # * of atoms */
         int64_t n_particles
-        #/** The file position of the next frame set */
+        # /** The file position of the next frame set */
         int64_t next_frame_set_file_pos
-        #/** The file position of the previous frame set */
+        # /** The file position of the previous frame set */
         int64_t prev_frame_set_file_pos
-        #/** The file position of the frame set one long stride step ahead */
+        # /** The file position of the frame set one long stride step ahead */
         int64_t medium_stride_next_frame_set_file_pos
-        #/** The file position of the frame set one long stride step behind */
+        # /** The file position of the frame set one long stride step behind */
         int64_t medium_stride_prev_frame_set_file_pos
-        #/** The file position of the frame set one long stride step ahead */
+        # /** The file position of the frame set one long stride step ahead */
         int64_t long_stride_next_frame_set_file_pos
-        #/** The file position of the frame set one long stride step behind */
+        # /** The file position of the frame set one long stride step behind */
         int64_t long_stride_prev_frame_set_file_pos
-        #/** Time stamp (in seconds) of first frame in frame set */
+        # /** Time stamp (in seconds) of first frame in frame set */
         double first_frame_time
 
-        #/* The data blocks in a frame set are trajectory data blocks */
-        #/** The number of trajectory data blocks of particle dependent data */
+        # /* The data blocks in a frame set are trajectory data blocks */
+        # /** The number of trajectory data blocks of particle dependent data */
         int n_particle_data_blocks
-        #/** A list of data blocks containing particle dependent data */
-        tng_data* tr_particle_data
-        #/** The number of trajectory data blocks independent of particles */
+        # /** A list of data blocks containing particle dependent data */
+        tng_data * tr_particle_data
+        # /** The number of trajectory data blocks independent of particles */
         int n_data_blocks
-        #/** A list of data blocks containing particle indepdendent data */
-        tng_data* tr_data
+        # /** A list of data blocks containing particle indepdendent data */
+        tng_data * tr_data
 
-
-    
-    #/* FIXME: Should there be a pointer to a tng_gen_block from each data block? */
+    # /* FIXME: Should there be a pointer to a tng_gen_block from each data block? */
     struct tng_data:
-        #/** The block ID of the data block containing this particle data.
+        # /** The block ID of the data block containing this particle data.
         # *  This is used to determine the kind of data that is stored */
         int64_t block_id
-        #/** The name of the data block. This is used to determine the kind of
+        # /** The name of the data block. This is used to determine the kind of
         # *  data that is stored */
-        char* block_name
-        #/** The type of data stored. */
+        char * block_name
+        # /** The type of data stored. */
         char datatype
-        #/** A flag to indicate if this data block contains frame and/or particle dependent
+        # /** A flag to indicate if this data block contains frame and/or particle dependent
         # * data */
         char dependency
-        #/** The frame number of the first data value */
+        # /** The frame number of the first data value */
         int64_t first_frame_with_data
-        #/** The number of frames in this frame set */
+        # /** The number of frames in this frame set */
         int64_t n_frames
-        #/** The number of values stored per frame */
+        # /** The number of values stored per frame */
         int64_t n_values_per_frame
-        #/** The number of frames between each data point - e.g. when
+        # /** The number of frames between each data point - e.g. when
         # *  storing sparse data. */
         int64_t stride_length
-        #/** ID of the CODEC used for compression 0 == no compression. */
+        # /** ID of the CODEC used for compression 0 == no compression. */
         int64_t codec_id
-        #/** If reading one frame at a time this is the last read frame */
+        # /** If reading one frame at a time this is the last read frame */
         int64_t last_retrieved_frame
-        #/** The multiplier used for getting integer values for compression */
+        # /** The multiplier used for getting integer values for compression */
         double compression_multiplier
-        #/** A 1-dimensional array of values of length
+        # /** A 1-dimensional array of values of length
         # *  [sizeof (datatype)] * n_frames * n_particles * n_values_per_frame */
-        void* values
-        #/** If storing character data store it in a 3-dimensional array */
+        void * values
+        # /** If storing character data store it in a 3-dimensional array */
         char**** strings
 
-    
     struct tng_trajectory:
-        #/** The path of the input trajectory file */
-        char* input_file_path
-        #/** A handle to the input file */
-        FILE* input_file
-        #/** The length of the input file */
+        # /** The path of the input trajectory file */
+        char * input_file_path
+        # /** A handle to the input file */
+        FILE * input_file
+        # /** The length of the input file */
         int64_t input_file_len
-        #/** The path of the output trajectory file */
-        char* output_file_path
-        #/** A handle to the output file */
-        FILE* output_file
-        #/** Function to swap 32 bit values to and from the endianness of the
-        #* input file */
-        tng_function_status (*input_endianness_swap_func_32)(const tng_trajectory*, uint32_t*);
-        #/** Function to swap 64 bit values to and from the endianness of the
-        #* input file */
-        tng_function_status (*input_endianness_swap_func_64)(const  tng_trajectory*, uint64_t*);
-        #/** Function to swap 32 bit values to and from the endianness of the
-        #* input file */
-        tng_function_status (*output_endianness_swap_func_32)(const  tng_trajectory*, uint32_t*);
-        #/** Function to swap 64 bit values to and from the endianness of the
-        #* input file */
-        tng_function_status (*output_endianness_swap_func_64)(const  tng_trajectory*, uint64_t*);
-        #/** The endianness of 32 bit values of the current computer */
+        # /** The path of the output trajectory file */
+        char * output_file_path
+        # /** A handle to the output file */
+        FILE * output_file
+        # /** Function to swap 32 bit values to and from the endianness of the
+        # * input file */
+        tng_function_status(*input_endianness_swap_func_32)(const tng_trajectory*, uint32_t*)
+        # /** Function to swap 64 bit values to and from the endianness of the
+        # * input file */
+        tng_function_status(*input_endianness_swap_func_64)(const  tng_trajectory*, uint64_t*)
+        # /** Function to swap 32 bit values to and from the endianness of the
+        # * input file */
+        tng_function_status(*output_endianness_swap_func_32)(const  tng_trajectory*, uint32_t*)
+        # /** Function to swap 64 bit values to and from the endianness of the
+        # * input file */
+        tng_function_status(*output_endianness_swap_func_64)(const  tng_trajectory*, uint64_t*)
+        # /** The endianness of 32 bit values of the current computer */
         char endianness_32
-        #/** The endianness of 64 bit values of the current computer */
+        # /** The endianness of 64 bit values of the current computer */
         char endianness_64
 
-        #/** The name of the program producing this trajectory */
-        char* first_program_name
-        #/** The forcefield used in the simulations */
-        char* forcefield_name
-        #/** The name of the user running the simulations */
-        char* first_user_name
-        #/** The name of the computer on which the simulations were performed */
-        char* first_computer_name
-        #/** The PGP signature of the user creating the file. */
-        char* first_pgp_signature
-        #/** The name of the program used when making last modifications to the
-        #*  file */
-        char* last_program_name
-        #/** The name of the user making the last modifications to the file */
-        char* last_user_name
-        #/** The name of the computer on which the last modifications were made */
-        char* last_computer_name
-        #/** The PGP signature of the user making the last modifications to the
+        # /** The name of the program producing this trajectory */
+        char * first_program_name
+        # /** The forcefield used in the simulations */
+        char * forcefield_name
+        # /** The name of the user running the simulations */
+        char * first_user_name
+        # /** The name of the computer on which the simulations were performed */
+        char * first_computer_name
+        # /** The PGP signature of the user creating the file. */
+        char * first_pgp_signature
+        # /** The name of the program used when making last modifications to the
+        # *  file */
+        char * last_program_name
+        # /** The name of the user making the last modifications to the file */
+        char * last_user_name
+        # /** The name of the computer on which the last modifications were made */
+        char * last_computer_name
+        # /** The PGP signature of the user making the last modifications to the
         # *  file. */
-        char* last_pgp_signature
-        #/** The time (n seconds since 1970) when the file was created */
+        char * last_pgp_signature
+        # /** The time (n seconds since 1970) when the file was created */
         int64_t time
-        #/** The exponential of the value of the distance unit used. The default
-        #* distance unit is nm (1e-9), i.e. distance_unit_exponential = -9. If
-        #* the measurements are in Å the distance_unit_exponential = -10. */
+        # /** The exponential of the value of the distance unit used. The default
+        # * distance unit is nm (1e-9), i.e. distance_unit_exponential = -9. If
+        # * the measurements are in Å the distance_unit_exponential = -10. */
         int64_t distance_unit_exponential
 
-        #/** A flag indicating if the number of atoms can vary throughout the
+        # /** A flag indicating if the number of atoms can vary throughout the
         # *  simulation, e.g. using a grand canonical ensemble */
         char var_num_atoms_flag
-        #/** The number of frames in a frame set. It is allowed to have frame sets
-        #*  with fewer frames, but this will help searching for specific frames */
+        # /** The number of frames in a frame set. It is allowed to have frame sets
+        # *  with fewer frames, but this will help searching for specific frames */
         int64_t frame_set_n_frames
-        #/** The number of frame sets in a medium stride step */
+        # /** The number of frame sets in a medium stride step */
         int64_t medium_stride_length
-        #/** The number of frame sets in a long stride step */
+        # /** The number of frame sets in a long stride step */
         int64_t long_stride_length
-        #/** The current (can change from one frame set to another) time length
-        #*  (in seconds) of one frame */
+        # /** The current (can change from one frame set to another) time length
+        # *  (in seconds) of one frame */
         double time_per_frame
 
-        #/** The number of different kinds of molecules in the trajectory */
+        # /** The number of different kinds of molecules in the trajectory */
         int64_t n_molecules
-        #/** A list of molecules in the trajectory */
-        tng_molecule_t molecules;
-        #/** A list of the count of each molecule - if using variable number of
-        #*  particles this will be specified in each frame set */
-        int64_t* molecule_cnt_list
-        #/** The total number of particles/atoms. If using variable number of
-        #*  particles this will be specified in each frame set */
+        # /** A list of molecules in the trajectory */
+        tng_molecule_t molecules
+        # /** A list of the count of each molecule - if using variable number of
+        # *  particles this will be specified in each frame set */
+        int64_t * molecule_cnt_list
+        # /** The total number of particles/atoms. If using variable number of
+        # *  particles this will be specified in each frame set */
         int64_t n_particles
 
-        #/** The pos in the src file of the first frame set */
+        # /** The pos in the src file of the first frame set */
         int64_t first_trajectory_frame_set_input_file_pos
-        #/** The pos in the dest file of the first frame set */
+        # /** The pos in the dest file of the first frame set */
         int64_t first_trajectory_frame_set_output_file_pos
-        #/** The pos in the src file of the last frame set */
+        # /** The pos in the src file of the last frame set */
         int64_t last_trajectory_frame_set_input_file_pos
-        #/** The pos in the dest file of the last frame set */
+        # /** The pos in the dest file of the last frame set */
         int64_t last_trajectory_frame_set_output_file_pos
-        #/** The currently active frame set */
+        # /** The currently active frame set */
         tng_trajectory_frame_set current_trajectory_frame_set
-        #/** The pos in the src file of the current frame set */
+        # /** The pos in the src file of the current frame set */
         int64_t current_trajectory_frame_set_input_file_pos
-        #/** The pos in the dest file of the current frame set */
+        # /** The pos in the dest file of the current frame set */
         int64_t current_trajectory_frame_set_output_file_pos
-        #/** The number of frame sets in the trajectory N.B. Not saved in file and
-        #*  cannot be trusted to be up-to-date */
+        # /** The number of frame sets in the trajectory N.B. Not saved in file and
+        # *  cannot be trusted to be up-to-date */
         int64_t n_trajectory_frame_sets
 
-        #/* These data blocks are non-trajectory data blocks */
-        #/** The number of non-frame dependent particle dependent data blocks */
+        # /* These data blocks are non-trajectory data blocks */
+        # /** The number of non-frame dependent particle dependent data blocks */
         int n_particle_data_blocks
-        #/** A list of data blocks containing particle dependent data */
-        tng_data* non_tr_particle_data
+        # /** A list of data blocks containing particle dependent data */
+        tng_data * non_tr_particle_data
 
-        #/** The number of frame and particle independent data blocks */
+        # /** The number of frame and particle independent data blocks */
         int n_data_blocks
-        #/** A list of frame and particle indepdendent data blocks */
-        tng_data* non_tr_data
+        # /** A list of frame and particle indepdendent data blocks */
+        tng_data * non_tr_data
 
-        #/** TNG compression algorithm for compressing positions */
-        int* compress_algo_pos
-        #/** TNG compression algorithm for compressing velocities */
-        int* compress_algo_vel
-        #/** The precision used for lossy compression */
+        # /** TNG compression algorithm for compressing positions */
+        int * compress_algo_pos
+        # /** TNG compression algorithm for compressing velocities */
+        int * compress_algo_vel
+        # /** The precision used for lossy compression */
         double compression_precision
 
     struct tng_gen_block:
-        #The size of the block header in bytes */
+        # The size of the block header in bytes */
         int64_t header_contents_size
-        #The size of the block contents in bytes */
+        # The size of the block contents in bytes */
         int64_t block_contents_size
         # The ID of the block to determine its type */
         int64_t id
-        #The MD5 hash of the block to verify integrity */
-        char md5_hash[16] #TNG_MD5_HASH_LEN == 16
-        #The name of the block */
-        char *name
-        #The library version used to write the block */
+        # The MD5 hash of the block to verify integrity */
+        char md5_hash[16]  # TNG_MD5_HASH_LEN == 16
+        # The name of the block */
+        char * name
+        # The library version used to write the block */
         int64_t block_version
         int64_t alt_hash_type
         int64_t alt_hash_len
-        char *alt_hash
+        char * alt_hash
         int64_t signature_type
         int64_t signature_len
-        char *signature
+        char * signature
         # The full block header contents */
-        char *header_contents
+        char * header_contents
         # The full block contents */
-        char *block_contents
-
+        char * block_contents
 
     tng_function_status tng_util_trajectory_open(
         const char * filename,
         const char mode,
-        tng_trajectory* * tng_data_p)
+        tng_trajectory * * tng_data_p)
 
     tng_function_status tng_util_trajectory_close(
-        tng_trajectory* * tng_data_p)
+        tng_trajectory * * tng_data_p)
 
     tng_function_status tng_num_frames_get(
-        const tng_trajectory* tng_data,
+        const tng_trajectory * tng_data,
         int64_t * n)
 
     tng_function_status tng_num_particles_get(
-        const tng_trajectory* tng_data,
+        const tng_trajectory * tng_data,
         int64_t * n)
 
     tng_function_status tng_distance_unit_exponential_get(
-        const tng_trajectory* tng_data,
+        const tng_trajectory * tng_data,
         int64_t * exp)
 
     tng_function_status tng_util_pos_read_range(
-        const tng_trajectory* tng_data,
+        const tng_trajectory * tng_data,
         const int64_t first_frame,
         const int64_t last_frame,
         float ** positions,
         int64_t * stride_length)
 
     tng_function_status tng_util_box_shape_read_range(
-        const tng_trajectory* tng_data,
+        const tng_trajectory * tng_data,
         const int64_t first_frame,
         const int64_t last_frame,
         float ** box_shape,
         int64_t * stride_length)
 
     tng_function_status tng_util_vel_read_range(
-        const tng_trajectory* tng_data,
+        const tng_trajectory * tng_data,
         const int64_t first_frame,
         const int64_t last_frame,
         float ** velocities,
         int64_t * stride_length)
 
     tng_function_status tng_util_force_read_range(
-        const tng_trajectory* tng_data,
+        const tng_trajectory * tng_data,
         const int64_t first_frame,
         const int64_t last_frame,
         float ** forces,
         int64_t * stride_length)
 
     tng_function_status tng_util_pos_read(
-        const tng_trajectory* tng_data,
+        const tng_trajectory * tng_data,
         float ** positions,
         int64_t * stride_length)
 
     tng_function_status tng_util_box_shape_read(
-        const tng_trajectory* tng_data,
+        const tng_trajectory * tng_data,
         float ** box_shape,
         int64_t * stride_length)
 
     tng_function_status tng_util_vel_read(
-        const tng_trajectory* tng_data,
+        const tng_trajectory * tng_data,
         float ** velocities,
         int64_t * stride_length)
 
     tng_function_status tng_util_force_read(
-        const tng_trajectory* tng_data,
+        const tng_trajectory * tng_data,
         float ** forces,
         int64_t * stride_length)
 
     tng_function_status tng_util_time_of_frame_get(
-        const tng_trajectory* tng_data,
+        const tng_trajectory * tng_data,
         const int64_t frame_nr,
         double * time)
 
     tng_function_status tng_data_vector_interval_get(
-        const tng_trajectory* tng_data,
+        const tng_trajectory * tng_data,
         const int64_t block_id,
         const int64_t start_frame_nr,
         const int64_t end_frame_nr,
@@ -389,33 +379,33 @@ cdef extern from "tng/tng_io.h":
         int64_t * n_values_per_frame,
         char * type)
 
-    tng_function_status  tng_block_read_next(tng_trajectory* tng_data,
-                                             tng_gen_block*  block_data,
+    tng_function_status  tng_block_read_next(tng_trajectory * tng_data,
+                                             tng_gen_block * block_data,
                                              char             hash_mode)
 
-    tng_function_status tng_block_init(tng_gen_block** block_p)
+    tng_function_status tng_block_init(tng_gen_block ** block_p)
 
-    tng_function_status tng_block_header_read(tng_trajectory* tng_data, tng_gen_block* block)
+    tng_function_status tng_block_header_read(tng_trajectory * tng_data, tng_gen_block * block)
 
-    tng_function_status tng_num_frame_sets_get(tng_trajectory* tng_data, int64_t * n)
+    tng_function_status tng_num_frame_sets_get(tng_trajectory * tng_data, int64_t * n)
 
-    tng_function_status tng_block_destroy(tng_gen_block** block_p)
+    tng_function_status tng_block_destroy(tng_gen_block ** block_p)
 
-    tng_function_status tng_data_get_stride_length( tng_trajectory* tng_data, int64_t block_id, int64_t frame, int64_t* stride_length)
+    tng_function_status tng_data_get_stride_length(tng_trajectory * tng_data, int64_t block_id, int64_t frame, int64_t * stride_length)
 
-    tng_function_status tng_util_trajectory_next_frame_present_data_blocks_find(tng_trajectory *tng_data, int64_t current_frame, int64_t n_requested_data_block_ids, int64_t *requested_data_block_ids, int64_t *next_frame, int64_t *n_data_blocks_in_next_frame, int64_t **data_block_ids_in_next_frame)
+    tng_function_status tng_util_trajectory_next_frame_present_data_blocks_find(tng_trajectory * tng_data, int64_t current_frame, int64_t n_requested_data_block_ids, int64_t * requested_data_block_ids, int64_t * next_frame, int64_t * n_data_blocks_in_next_frame, int64_t ** data_block_ids_in_next_frame)
 
-    tng_function_status  tng_data_block_name_get(tng_trajectory* tng_data, const int64_t block_id, char*    name, const int   max_len)
+    tng_function_status  tng_data_block_name_get(tng_trajectory * tng_data, const int64_t block_id, char * name, const int   max_len)
 
-    tng_function_status tng_data_block_dependency_get( tng_trajectory *tng_data, const int64_t block_id, int *block_dependency)
+    tng_function_status tng_data_block_dependency_get(tng_trajectory * tng_data, const int64_t block_id, int * block_dependency)
 
-    tng_function_status  tng_util_particle_data_next_frame_read( tng_trajectory* tng_data, const int64_t block_id, void**  values, char* data_type, int64_t* retrieved_frame_number, double* retrieved_time)
+    tng_function_status  tng_util_particle_data_next_frame_read(tng_trajectory * tng_data, const int64_t block_id, void ** values, char * data_type, int64_t * retrieved_frame_number, double * retrieved_time)
 
-    tng_function_status  tng_util_non_particle_data_next_frame_read( tng_trajectory* tng_data, const int64_t block_id, void** values, char*  data_type, int64_t* retrieved_frame_number, double* retrieved_time)
+    tng_function_status  tng_util_non_particle_data_next_frame_read(tng_trajectory * tng_data, const int64_t block_id, void ** values, char * data_type, int64_t * retrieved_frame_number, double * retrieved_time)
 
-    tng_function_status tng_data_block_num_values_per_frame_get(tng_trajectory* tng_data,  int64_t block_id, int64_t *n_values_per_frame)
+    tng_function_status tng_data_block_num_values_per_frame_get(tng_trajectory * tng_data,  int64_t block_id, int64_t * n_values_per_frame)
 
-    tng_function_status  tng_util_frame_current_compression_get(tng_trajectory* tng_data, int64_t block_id, int64_t *codec_id, double *factor)
+    tng_function_status  tng_util_frame_current_compression_get(tng_trajectory * tng_data, int64_t block_id, int64_t * codec_id, double * factor)
 
 TNGFrame = namedtuple("TNGFrame", "positions velocities forces time step box ")
 
@@ -424,15 +414,15 @@ cdef class MemoryWrapper:
     # holds a pointer to C allocated memory, deals with malloc&free based on:
     # https://gist.github.com/GaelVaroquaux/
     # 1249305/ac4f4190c26110fe2791a1e7a6bed9c733b3413f
-    cdef void * ptr 
+    cdef void * ptr
 
     def __cinit__(MemoryWrapper self, int size):
         # malloc not PyMem_Malloc as gmx later does realloc
         self.ptr = malloc(size)
         if self.ptr is NULL:
             raise MemoryError
-        
-    def renew(MemoryWrapper self, int size):    
+
+    def renew(MemoryWrapper self, int size):
         self.ptr = realloc(self.ptr, size)
 
     def __dealloc__(MemoryWrapper self):
@@ -442,7 +432,7 @@ cdef class MemoryWrapper:
 
 cdef class TrajectoryWrapper:
     """A wrapper class for a tng_trajectory"""
-    cdef tng_trajectory *_ptr
+    cdef tng_trajectory * _ptr
     cdef bint ptr_owner
 
     def __cinit__(self):
@@ -464,7 +454,7 @@ cdef class TrajectoryWrapper:
     #     return self._ptr.b if self._ptr is not NULL else None
 
     @staticmethod
-    cdef TrajectoryWrapper from_ptr(tng_trajectory *_ptr, bint owner=False):
+    cdef TrajectoryWrapper from_ptr(tng_trajectory * _ptr, bint owner=False):
         """Factory function to create WrapperClass objects from
         given tng_trajectory pointer.
 
@@ -481,7 +471,7 @@ cdef class TrajectoryWrapper:
     cdef TrajectoryWrapper new_struct():
         """Factory function to create WrapperClass objects with
         newly allocated my_c_struct"""
-        cdef tng_trajectory *_ptr = <tng_trajectory *>malloc(sizeof(tng_trajectory))
+        cdef tng_trajectory * _ptr = <tng_trajectory * >malloc(sizeof(tng_trajectory))
         if _ptr is NULL:
             raise MemoryError
         # _ptr.a = 0
@@ -492,11 +482,10 @@ cdef class TNGFileIterator:
     """File handle object for TNG files
 
     Supports use as a context manager ("with" blocks).
-    
+
     """
 
-
-    cdef tng_trajectory* _traj_p   #TODO should we make this a TrajectoryWrapper also
+    cdef tng_trajectory * _traj_p  # TODO should we make this a TrajectoryWrapper also
     cdef TrajectoryWrapper _traj
     cdef readonly fname
     cdef str mode
@@ -588,25 +577,24 @@ cdef class TNGFileIterator:
         self.is_open = True
         self.step = 0
         self.reached_eof = False
-    
 
     def _close(self):
         """Make sure the file handle is closed"""
         if self.is_open:
-            tng_util_trajectory_close(& self._traj._ptr)
+            tng_util_trajectory_close( & self._traj._ptr)
             self.is_open = False
             self._n_frames = -1
 
     def read_all_frames(self):
         self._spool()
-   
+
     cdef _spool(self):
         # outer decl
         cdef int64_t step, n_blocks
         cdef int64_t nframe = 0
-        cdef int64_t *block_ids = NULL
-        cdef tng_function_status stat  = tng_util_trajectory_next_frame_present_data_blocks_find(self._traj._ptr, -1, 0, NULL, &step, &n_blocks, &block_ids)
-        if stat !=TNG_SUCCESS:
+        cdef int64_t * block_ids = NULL
+        cdef tng_function_status stat = tng_util_trajectory_next_frame_present_data_blocks_find(self._traj._ptr, -1, 0, NULL, & step, & n_blocks, & block_ids)
+        if stat != TNG_SUCCESS:
             raise Exception("cannot find the number of blocks")
 
         cdef int64_t block_counter = 0
@@ -620,45 +608,42 @@ cdef class TNGFileIterator:
                 printf("block_count %ld \n", block_counter)
                 print(block.values)
 
-            nframe +=1
-            read_stat = tng_util_trajectory_next_frame_present_data_blocks_find(self._traj._ptr, step, 0, NULL, &step, &n_blocks, &block_ids);
+            nframe += 1
+            read_stat = tng_util_trajectory_next_frame_present_data_blocks_find(self._traj._ptr, step, 0, NULL, & step, & n_blocks, & block_ids)
             printf("loop status %d \n", read_stat)
-            printf("nframe  %ld \n\n", nframe)  
+            printf("nframe  %ld \n\n", nframe)
 
     cdef _block_interpret(self):
         pass
-        #logic to interpret the block types heretng_data_get_stride_length
+        # logic to interpret the block types heretng_data_get_stride_length
 
     cdef _block_numpy_cast(self):
         pass
-        #logic to cast data blocks to numpy arrays here.
-    
+        # logic to cast data blocks to numpy arrays here.
+
     cdef seek(self):
         pass
-        #logic to move the file handle pointers here
+        # logic to move the file handle pointers here
         # must be done at both python and C level ?
-
-    
 
 
 cdef class TNGDataBlock:
 
-    cdef tng_trajectory* _traj
-    cdef int64_t block_id 
-    cdef bint debug 
+    cdef tng_trajectory * _traj
+    cdef int64_t block_id
+    cdef bint debug
 
     cdef int64_t step
     cdef double frame_time
     cdef double precision
     cdef int64_t n_values_per_frame, n_atoms
-    cdef char* block_name
-    cdef double* _values
+    cdef char * block_name
+    cdef double * _values
     cdef MemoryWrapper _wrapper
     cdef tng_function_status read_stat
     cdef np.ndarray values
 
     cdef bint block_is_read
-
 
     def __cinit__(self, TrajectoryWrapper traj, bint debug=False):
 
@@ -670,33 +655,33 @@ cdef class TNGDataBlock:
         self.frame_time = -1
         self.precision = -1
         self.n_values_per_frame = -1
-        self.n_atoms = -1 
+        self.n_atoms = -1
         self.block_name = <char*> malloc(TNG_MAX_STR_LEN * sizeof(char))
         self._values = NULL
         self.block_is_read = False
 
         self._wrapper = MemoryWrapper(1)
-  
+
     def __dealloc__(self):
         self._close()
-    
-    def block_read(self, id): #NOTE does this have to be python
+
+    def block_read(self, id):  # NOTE does this have to be python
         self._block_read(id)
         self._block_2d_numpy_cast(self.n_values_per_frame, self.n_atoms)
         self.block_is_read = True
-    
+
     @property
     def values(self):
         "the values of the block"
         if not self.block_is_read:
-            raise IOError('Block values are not available until the block_read() method has been called')
+            raise IOError(
+                'Block values are not available until the block_read() method has been called')
         return self.values
 
     cdef _close(self):
         if self._values != NULL:
             free(self._values)
         free(self.block_name)
-        
 
     cdef void _block_2d_numpy_cast(self, int64_t n_values_per_frame, int64_t n_atoms):
         if self.debug:
@@ -708,7 +693,8 @@ cdef class TNGDataBlock:
         cdef npy_intp dims[2]
         dims[0] = n_atoms
         dims[1] = n_values_per_frame
-        self.values = PyArray_SimpleNewFromData(2, dims, NPY_DOUBLE, self._wrapper.ptr)
+        self.values = PyArray_SimpleNewFromData(
+            2, dims, NPY_DOUBLE, self._wrapper.ptr)
         Py_INCREF(self._wrapper)
         err = PyArray_SetBaseObject(self.values, self._wrapper)
         if err:
@@ -718,8 +704,8 @@ cdef class TNGDataBlock:
 
     cdef void _block_read(self, int64_t id):
         self.block_id = id
-        read_stat = self.get_data_next_frame(self.block_id, &self._values, &self.step, &self.frame_time, &self.n_values_per_frame, &self.n_atoms, &self.precision, self.block_name, self.debug)
-        
+        read_stat = self.get_data_next_frame(self.block_id, & self._values, & self.step, & self.frame_time, & self.n_values_per_frame, & self.n_atoms, & self.precision, self.block_name, self.debug)
+
         if self.debug:
             printf("block id %ld \n", self.block_id)
             printf("data block name %s \n", self.block_name)
@@ -728,75 +714,82 @@ cdef class TNGDataBlock:
             for j in range(self.n_values_per_frame * self.n_atoms):
                 printf(" %f ", self._values[j])
 
-    cdef tng_function_status get_data_next_frame(self, int64_t block_id, double** values, int64_t* step, double* frame_time, int64_t* n_values_per_frame, int64_t* n_atoms, double* prec, char* block_name, bint debug):
-    
+    cdef tng_function_status get_data_next_frame(self, int64_t block_id, double ** values, int64_t * step, double * frame_time, int64_t * n_values_per_frame, int64_t * n_atoms, double * prec, char * block_name, bint debug):
+
         cdef tng_function_status stat
         cdef char                datatype = -1
-        cdef int64_t             codec_id;
+        cdef int64_t             codec_id
         cdef int                 block_dependency
-        cdef void*               data = NULL
+        cdef void * data = NULL
         cdef double              local_prec
 
-        #Flag to indicate frame dependent data. */
+        # Flag to indicate frame dependent data. */
         cdef int TNG_FRAME_DEPENDENT = 1
-        #Flag to indicate particle dependent data. */
+        # Flag to indicate particle dependent data. */
         cdef int  TNG_PARTICLE_DEPENDENT = 2
 
-        stat = tng_data_block_name_get(self._traj, block_id, block_name, TNG_MAX_STR_LEN)
+        stat = tng_data_block_name_get(
+            self._traj, block_id, block_name, TNG_MAX_STR_LEN)
         if stat != TNG_SUCCESS:
             raise Exception("cannot get block_name")
 
-        stat = tng_data_block_dependency_get(self._traj, block_id, &block_dependency)
+        stat = tng_data_block_dependency_get(self._traj, block_id, & block_dependency)
         if stat != TNG_SUCCESS:
             raise Exception("cannot get block_dependency")
-        
-        if block_dependency.__and__(TNG_PARTICLE_DEPENDENT): # bitwise & due to enum defs
+
+        # bitwise & due to enum defs
+        if block_dependency.__and__(TNG_PARTICLE_DEPENDENT):
             if debug:
                 printf("reading particle data \n")
             tng_num_particles_get(self._traj, n_atoms)
-            stat = tng_util_particle_data_next_frame_read(self._traj, block_id, &data, &datatype, step, frame_time)
+            stat = tng_util_particle_data_next_frame_read(self._traj, block_id, & data, & datatype, step, frame_time)
         else:
             if debug:
                 printf("reading NON particle data \n")
-            n_atoms[0] = 1 # still used for some allocs
-            stat = tng_util_non_particle_data_next_frame_read(self._traj, block_id, &data, &datatype, step, frame_time)
+            n_atoms[0] = 1  # still used for some allocs
+            stat = tng_util_non_particle_data_next_frame_read(self._traj, block_id, & data, & datatype, step, frame_time)
 
         if stat == TNG_CRITICAL:
             #raise Exception("critical data reading failure")
             return TNG_CRITICAL
 
-        stat = tng_data_block_num_values_per_frame_get(self._traj, block_id, n_values_per_frame)
+        stat = tng_data_block_num_values_per_frame_get(
+            self._traj, block_id, n_values_per_frame)
         if stat == TNG_CRITICAL:
             #raise Exception("critical data reading failure")
             return TNG_CRITICAL
 
-        # this is done in duplicate for now 
-        self._wrapper.renew(sizeof(double)* n_values_per_frame[0] * n_atoms[0] )
+        # this is done in duplicate for now
+        self._wrapper.renew(
+            sizeof(double) * n_values_per_frame[0] * n_atoms[0])
         _wrapped_values = <double*> self._wrapper.ptr
 
-        values[0] = <double*> realloc(values[0], sizeof(double)* n_values_per_frame[0] * n_atoms[0]) # renew to be right size
-        
+        # renew to be right size
+        values[0] = <double*> realloc(values[0], sizeof(double) * n_values_per_frame[0] * n_atoms[0])
+
         if self.debug:
-            printf("realloc values array to be %ld  doubles and %ld bits long \n", n_values_per_frame[0] * n_atoms[0], n_values_per_frame[0] * n_atoms[0]*sizeof(double))
+            printf("realloc values array to be %ld  doubles and %ld bits long \n",
+                   n_values_per_frame[0] * n_atoms[0], n_values_per_frame[0] * n_atoms[0]*sizeof(double))
 
+        # this is done in duplicate for now
+        self.convert_to_double_arr(
+            data, values[0], n_atoms[0], n_values_per_frame[0], datatype, debug)
+        self.convert_to_double_arr(
+            data, _wrapped_values, n_atoms[0], n_values_per_frame[0], datatype, debug)
 
-        # this is done in duplicate for now 
-        self.convert_to_double_arr(data, values[0], n_atoms[0], n_values_per_frame[0], datatype, debug)
-        self.convert_to_double_arr(data, _wrapped_values, n_atoms[0], n_values_per_frame[0], datatype, debug)
-
-        tng_util_frame_current_compression_get(self._traj, block_id, &codec_id, &local_prec)
+        tng_util_frame_current_compression_get(self._traj, block_id, & codec_id, & local_prec)
 
         if codec_id != TNG_TNG_COMPRESSION:
 
             prec[0] = -1.0
         else:
             prec[0] = local_prec
-        
+
         # free local data
         free(data)
         return TNG_SUCCESS
-    
-    cdef void convert_to_double_arr(self, void* source, double* to, const int n_atoms, const int n_vals, const char datatype, bint debug):
+
+    cdef void convert_to_double_arr(self, void * source, double * to, const int n_atoms, const int n_vals, const char datatype, bint debug):
         # do we need to account for changes in the decl of double etc ie is this likely to be portable?.
         # a lot of this is a bit redundant but could be used to differntiate casts to numpy arrays etc in the future
         cdef int i, j
@@ -804,27 +797,27 @@ cdef class TNGDataBlock:
         if datatype == TNG_FLOAT_DATA:
             for i in range(n_atoms):
                 for j in range(n_vals):
-                    to[i*n_vals +j ] = (<float*>source)[i *n_vals +j] #NOTE do we explicitly need to use reinterpret_cast ??
+                    to[i*n_vals + j ] = ( < float*>source)[i * n_vals + j] #NOTE do we explicitly need to use reinterpret_cast ??
             #memcpy(to,  source, n_vals * sizeof(float) * n_atoms)
 
         elif datatype == TNG_INT_DATA:
             for i in range(n_atoms):
                 for j in range(n_vals):
-                    to[i*n_vals +j ] = (<int64_t*>source)[i *n_vals +j] # redundant but could be changed later
+                    to[i*n_vals + j ] = ( < int64_t*>source)[i * n_vals + j] # redundant but could be changed later
             #memcpy(to, source, n_vals * sizeof(int64_t) * n_atoms)
 
         elif datatype == TNG_DOUBLE_DATA:
             for i in range(n_atoms):
                 for j in range(n_vals):
-                    to[i*n_vals +j ] = (<double*>source)[i *n_vals +j] # should probs use memcpy
+                    to[i*n_vals + j ] = ( < double*>source)[i * n_vals + j] # should probs use memcpy
             #memcpy(to, source, n_vals * sizeof(double) * n_atoms)
 
         elif datatype == TNG_CHAR_DATA:
             raise NotImplementedError("char data reading is not implemented")
 
-        else: # the default is meant to be double
-            printf(" WARNING type %d not understood \n", datatype) #TODO currently non particle block data isnt working
-
+        else:  # the default is meant to be double
+            # TODO currently non particle block data isnt working
+            printf(" WARNING type %d not understood \n", datatype)
 
 
 cdef class TNGFile:
@@ -832,7 +825,7 @@ cdef class TNGFile:
 
     Supports use as a context manager ("with" blocks).
     """
-    cdef tng_trajectory* _traj
+    cdef tng_trajectory * _traj
     cdef readonly fname
     cdef str mode
     cdef int is_open
@@ -959,7 +952,7 @@ cdef class TNGFile:
     def close(self):
         """Make sure the file handle is closed"""
         if self.is_open:
-            tng_util_trajectory_close(& self._traj)
+            tng_util_trajectory_close( & self._traj)
             self.is_open = False
             self._n_frames = -1
 
@@ -1085,7 +1078,7 @@ cdef class TNGFile:
 
         # TODO this seem wasteful but can't cdef inside a conditional?
         cdef MemoryWrapper wrap_box
-        cdef np.ndarray[ndim= 2, dtype = np.float32_t, mode = 'c'] box = \
+        cdef np.ndarray[ndim = 2, dtype = np.float32_t, mode = 'c'] box = \
             np.empty((3, 3), dtype=np.float32)
 
         if self._box:
