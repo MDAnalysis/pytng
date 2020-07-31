@@ -5,6 +5,7 @@
 from numpy cimport(PyArray_SimpleNewFromData,
                    PyArray_SetBaseObject,
                    NPY_FLOAT,
+                   NPY_DOUBLE,
                    Py_INCREF,
                    npy_intp,
                    )
@@ -36,8 +37,7 @@ ctypedef enum tng_function_status: TNG_SUCCESS, TNG_FAILURE, TNG_CRITICAL
 ctypedef enum tng_hash_mode: TNG_SKIP_HASH, TNG_USE_HASH
 ctypedef enum tng_datatypes: TNG_CHAR_DATA, TNG_INT_DATA, TNG_FLOAT_DATA, TNG_DOUBLE_DATA
 ctypedef enum  tng_particle_dependency: TNG_NON_PARTICLE_BLOCK_DATA, TNG_PARTICLE_BLOCK_DATA
-
-
+ctypedef enum tng_compression: TNG_UNCOMPRESSED, TNG_XTC_COMPRESSION, TNG_TNG_COMPRESSION, TNG_GZIP_COMPRESSION
 
 
 status_error_message = ['OK', 'Failure', 'Critical']
@@ -413,7 +413,9 @@ cdef extern from "tng/tng_io.h":
 
     tng_function_status  tng_util_non_particle_data_next_frame_read( tng_trajectory* tng_data, const int64_t block_id, void** values, char*  data_type, int64_t* retrieved_frame_number, double* retrieved_time)
 
-    tng_function_status tng_data_block_num_values_per_frame_get(tng_trajectory *tng_data,  int64_t block_id, int64_t *n_values_per_frame)
+    tng_function_status tng_data_block_num_values_per_frame_get(tng_trajectory* tng_data,  int64_t block_id, int64_t *n_values_per_frame)
+
+    tng_function_status  tng_util_frame_current_compression_get(tng_trajectory* tng_data, int64_t block_id, int64_t *codec_id, double *factor)
 
 TNGFrame = namedtuple("TNGFrame", "positions velocities forces time step box ")
 
@@ -422,7 +424,7 @@ cdef class MemoryWrapper:
     # holds a pointer to C allocated memory, deals with malloc&free based on:
     # https://gist.github.com/GaelVaroquaux/
     # 1249305/ac4f4190c26110fe2791a1e7a6bed9c733b3413f
-    cdef void * ptr  # TODO do we want to use std::unique_ptr?
+    cdef void * ptr 
 
     def __cinit__(MemoryWrapper self, int size):
         # malloc not PyMem_Malloc as gmx later does realloc
@@ -606,7 +608,7 @@ cdef class TNGFileIterator:
 
         cdef int64_t block_counter = 0
         cdef tng_function_status read_stat = TNG_SUCCESS
-        cdef block = TNGDataBlock(self._traj, debug=0)
+        cdef block = TNGDataBlock(self._traj, debug=True)
 
         while (read_stat == TNG_SUCCESS):
             for i in range(n_blocks):
@@ -646,10 +648,12 @@ cdef class TNGDataBlock:
     cdef double precision
     cdef int64_t n_values_per_frame, n_atoms
     cdef char* block_name
-    cdef double* values
+    cdef double* _values
     cdef tng_function_status read_stat
+    cdef np.ndarray values
 
-    def __cinit__(self, TrajectoryWrapper traj, debug=1):
+
+    def __cinit__(self, TrajectoryWrapper traj, bint debug=False):
 
         self._traj = traj._ptr
         self.debug = debug
@@ -661,29 +665,44 @@ cdef class TNGDataBlock:
         self.n_values_per_frame = -1
         self.n_atoms = -1 
         self.block_name = <char*> malloc(TNG_MAX_STR_LEN * sizeof(char))
-        self.values = NULL
+        self._values = NULL
+
   
     def __dealloc__(self):
         self._close()
     
     def block_read(self, id): #NOTE does this have to be python
         self._block_read(id)
+        self._block_2d_numpy_cast(self.n_values_per_frame, self.n_atoms)
     
     cdef _close(self):
-        if self.values != NULL:
-            free(self.values)
+        if self._values != NULL:
+            free(self._values)
         free(self.block_name)
+
+    cdef void _block_2d_numpy_cast(self, int64_t n_values_per_frame, int64_t n_atoms):
+        if n_values_per_frame == -1 or n_atoms == -1:
+            raise ValueError("array dimensions are not correct")
+        cdef int nd = 2
+        cdef int err
+        cdef npy_intp dims[2]
+        dims[0] = n_values_per_frame
+        dims[1] = n_atoms
+        # self.values = PyArray_SimpleNewFromData(2, dims, NPY_DOUBLE, self._values)
+        # Py_INCREF(self._values)
+        # err = PyArray_SetBaseObject(self.values, _values)
 
     cdef void _block_read(self, int64_t id):
         self.block_id = id
-        read_stat = self.get_data_next_frame(self.block_id, &self.values, &self.step, &self.frame_time, &self.n_values_per_frame, &self.n_atoms, &self.precision, self.block_name, self.debug)
+        read_stat = self.get_data_next_frame(self.block_id, &self._values, &self.step, &self.frame_time, &self.n_values_per_frame, &self.n_atoms, &self.precision, self.block_name, self.debug)
+
         if self.debug:
             printf("block id %ld \n", self.block_id)
             printf("data block name %s \n", self.block_name)
             printf("n_values_per_frame %ld \n", self.n_values_per_frame)
             printf("n_atoms  %ld \n", self.n_atoms)
             for j in range(self.n_values_per_frame * self.n_atoms):
-                printf(" %f ", self.values[j])
+                printf(" %f ", self._values[j])
 
     cdef tng_function_status get_data_next_frame(self, int64_t block_id, double** values, int64_t* step, double* frame_time, int64_t* n_values_per_frame, int64_t* n_atoms, double* prec, char* block_name, bint debug):
     
@@ -727,7 +746,6 @@ cdef class TNGDataBlock:
             #raise Exception("critical data reading failure")
             return TNG_CRITICAL
 
-        # calling function is responsible for freeing value pointer
         values[0] = <double*> realloc(values[0], sizeof(double)* n_values_per_frame[0] * n_atoms[0]) # renew to be right size
         
         if self.debug:
@@ -735,8 +753,14 @@ cdef class TNGDataBlock:
 
         self.convert_to_double_arr(data, values[0], n_atoms[0], n_values_per_frame[0], datatype, debug)
 
-        #TODO get precision from compression precision
-        prec[0] = 1.0
+        tng_util_frame_current_compression_get(self._traj, block_id, &codec_id, &local_prec)
+
+        if codec_id != TNG_TNG_COMPRESSION:
+
+            prec[0] = -1.0
+        else:
+            prec[0] = local_prec
+        
         # free local data
         free(data)
         return TNG_SUCCESS
