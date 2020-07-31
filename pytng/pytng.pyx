@@ -706,13 +706,15 @@ cdef class TNGDataBlock:
         cdef int nd = 2
         cdef int err
         cdef npy_intp dims[2]
-        dims[0] = n_values_per_frame
-        dims[1] = n_atoms
+        dims[0] = n_atoms
+        dims[1] = n_values_per_frame
         self.values = PyArray_SimpleNewFromData(2, dims, NPY_DOUBLE, self._wrapper.ptr)
         Py_INCREF(self._wrapper)
         err = PyArray_SetBaseObject(self.values, self._wrapper)
         if err:
             raise ValueError("failed to create value array")
+        if self.debug:
+            print(self.values)
 
     cdef void _block_read(self, int64_t id):
         self.block_id = id
@@ -768,13 +770,17 @@ cdef class TNGDataBlock:
             #raise Exception("critical data reading failure")
             return TNG_CRITICAL
 
+        # this is done in duplicate for now 
         self._wrapper.renew(sizeof(double)* n_values_per_frame[0] * n_atoms[0] )
         _wrapped_values = <double*> self._wrapper.ptr
+
         values[0] = <double*> realloc(values[0], sizeof(double)* n_values_per_frame[0] * n_atoms[0]) # renew to be right size
         
         if self.debug:
             printf("realloc values array to be %ld  doubles and %ld bits long \n", n_values_per_frame[0] * n_atoms[0], n_values_per_frame[0] * n_atoms[0]*sizeof(double))
 
+
+        # this is done in duplicate for now 
         self.convert_to_double_arr(data, values[0], n_atoms[0], n_values_per_frame[0], datatype, debug)
         self.convert_to_double_arr(data, _wrapped_values, n_atoms[0], n_values_per_frame[0], datatype, debug)
 
