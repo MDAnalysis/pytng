@@ -431,6 +431,9 @@ cdef class MemoryWrapper:
         self.ptr = malloc(size)
         if self.ptr is NULL:
             raise MemoryError
+        
+    def renew(MemoryWrapper self, int size):    
+        self.ptr = realloc(self.ptr, size)
 
     def __dealloc__(MemoryWrapper self):
         if self.ptr != NULL:
@@ -608,13 +611,14 @@ cdef class TNGFileIterator:
 
         cdef int64_t block_counter = 0
         cdef tng_function_status read_stat = TNG_SUCCESS
-        cdef block = TNGDataBlock(self._traj, debug=True)
+        cdef block = TNGDataBlock(self._traj, debug=False)
 
         while (read_stat == TNG_SUCCESS):
             for i in range(n_blocks):
                 block_counter += 1
                 block.block_read(block_ids[i])
                 printf("block_count %ld \n", block_counter)
+                print(block.values)
 
             nframe +=1
             read_stat = tng_util_trajectory_next_frame_present_data_blocks_find(self._traj._ptr, step, 0, NULL, &step, &n_blocks, &block_ids);
@@ -653,6 +657,8 @@ cdef class TNGDataBlock:
     cdef tng_function_status read_stat
     cdef np.ndarray values
 
+    cdef bint block_is_read
+
 
     def __cinit__(self, TrajectoryWrapper traj, bint debug=False):
 
@@ -667,7 +673,9 @@ cdef class TNGDataBlock:
         self.n_atoms = -1 
         self.block_name = <char*> malloc(TNG_MAX_STR_LEN * sizeof(char))
         self._values = NULL
+        self.block_is_read = False
 
+        self._wrapper = MemoryWrapper(1)
   
     def __dealloc__(self):
         self._close()
@@ -675,11 +683,20 @@ cdef class TNGDataBlock:
     def block_read(self, id): #NOTE does this have to be python
         self._block_read(id)
         self._block_2d_numpy_cast(self.n_values_per_frame, self.n_atoms)
+        self.block_is_read = True
     
+    @property
+    def values(self):
+        "the values of the block"
+        if not self.block_is_read:
+            raise IOError('Block values are not available until the block_read() method has been called')
+        return self.values
+
     cdef _close(self):
         if self._values != NULL:
             free(self._values)
         free(self.block_name)
+        
 
     cdef void _block_2d_numpy_cast(self, int64_t n_values_per_frame, int64_t n_atoms):
         if self.debug:
@@ -691,16 +708,16 @@ cdef class TNGDataBlock:
         cdef npy_intp dims[2]
         dims[0] = n_values_per_frame
         dims[1] = n_atoms
-        # self.values = PyArray_SimpleNewFromData(2, dims, NPY_DOUBLE, self._wrapper.ptr)
-        # Py_INCREF(self._wrapper)
-        # err = PyArray_SetBaseObject(self.values, self._wrapper)
-        # if err:
-        #     raise ValueError("failed to create value array")
+        self.values = PyArray_SimpleNewFromData(2, dims, NPY_DOUBLE, self._wrapper.ptr)
+        Py_INCREF(self._wrapper)
+        err = PyArray_SetBaseObject(self.values, self._wrapper)
+        if err:
+            raise ValueError("failed to create value array")
 
     cdef void _block_read(self, int64_t id):
         self.block_id = id
         read_stat = self.get_data_next_frame(self.block_id, &self._values, &self.step, &self.frame_time, &self.n_values_per_frame, &self.n_atoms, &self.precision, self.block_name, self.debug)
-
+        
         if self.debug:
             printf("block id %ld \n", self.block_id)
             printf("data block name %s \n", self.block_name)
@@ -751,12 +768,15 @@ cdef class TNGDataBlock:
             #raise Exception("critical data reading failure")
             return TNG_CRITICAL
 
+        self._wrapper.renew(sizeof(double)* n_values_per_frame[0] * n_atoms[0] )
+        _wrapped_values = <double*> self._wrapper.ptr
         values[0] = <double*> realloc(values[0], sizeof(double)* n_values_per_frame[0] * n_atoms[0]) # renew to be right size
         
         if self.debug:
             printf("realloc values array to be %ld  doubles and %ld bits long \n", n_values_per_frame[0] * n_atoms[0], n_values_per_frame[0] * n_atoms[0]*sizeof(double))
 
         self.convert_to_double_arr(data, values[0], n_atoms[0], n_values_per_frame[0], datatype, debug)
+        self.convert_to_double_arr(data, _wrapped_values, n_atoms[0], n_values_per_frame[0], datatype, debug)
 
         tng_util_frame_current_compression_get(self._traj, block_id, &codec_id, &local_prec)
 
