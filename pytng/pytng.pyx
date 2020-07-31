@@ -1,5 +1,6 @@
 # cython: linetrace=True
 # cython: embedsignature=True
+# cython: profile=True
 # distutils: define_macros=CYTHON_TRACE=1
 from numpy cimport(PyArray_SimpleNewFromData,
                    PyArray_SetBaseObject,
@@ -434,6 +435,54 @@ cdef class MemoryWrapper:
             free(self.ptr)
 
 
+cdef class TrajectoryWrapper:
+    """A wrapper class for a tng_trajectory"""
+    cdef tng_trajectory *_ptr
+    cdef bint ptr_owner
+
+    def __cinit__(self):
+        self.ptr_owner = False
+
+    def __dealloc__(self):
+        # De-allocate if not null and flag is set
+        if self._ptr is not NULL and self.ptr_owner is True:
+            free(self._ptr)
+            self._ptr = NULL
+
+    # Extension class properties
+    # @property
+    # def a(self):
+    #     return self._ptr.a if self._ptr is not NULL else None
+
+    # @property
+    # def b(self):
+    #     return self._ptr.b if self._ptr is not NULL else None
+
+    @staticmethod
+    cdef TrajectoryWrapper from_ptr(tng_trajectory *_ptr, bint owner=False):
+        """Factory function to create WrapperClass objects from
+        given tng_trajectory pointer.
+
+        Setting ``owner`` flag to ``True`` causes
+        the extension type to ``free`` the structure pointed to by ``_ptr``
+        when the wrapper object is deallocated."""
+        # Call to __new__ bypasses __init__ constructor
+        cdef TrajectoryWrapper wrapper = TrajectoryWrapper.__new__(TrajectoryWrapper)
+        wrapper._ptr = _ptr
+        wrapper.ptr_owner = owner
+        return wrapper
+
+    @staticmethod
+    cdef TrajectoryWrapper new_struct():
+        """Factory function to create WrapperClass objects with
+        newly allocated my_c_struct"""
+        cdef tng_trajectory *_ptr = <tng_trajectory *>malloc(sizeof(tng_trajectory))
+        if _ptr is NULL:
+            raise MemoryError
+        # _ptr.a = 0
+        # _ptr.b = 0
+        return TrajectoryWrapper.from_ptr(_ptr, owner=True)
+
 cdef class TNGFileIterator:
     """File handle object for TNG files
 
@@ -528,10 +577,8 @@ cdef class TNGFileIterator:
             raise IOError("Distance exponent cannot be read")
 
         self._distance_scale = 10.0**(exponent+9)
-
         self.is_open = True
         self.step = 0
-
         self.reached_eof = False
     
 
@@ -542,200 +589,34 @@ cdef class TNGFileIterator:
             self.is_open = False
             self._n_frames = -1
 
-    def spool(self): # this reads sucessfully to the end of the file
-        cdef tng_function_status stat = TNG_SUCCESS
-        cdef int64_t block_count = 0
-        printf("total file_length %ld \n", self._traj.input_file_len)
-        #fseeko(self._traj.input_file, 0, SEEK_SET) # after init is called, the file SEEK is at the start of the first frame set, so we need to reset to the start block
-        #comment this ^ back in to read from start
-        cdef off_t offset
-        while stat != TNG_CRITICAL: #TODO replace with a file len check
-            print("block read called {} \n".format(block_count))
-            printf("NEW BLOCK \n")
-            offset = ftello(self._traj.input_file)
-            printf("file position %ld \n",offset)
-            stat = self._read_next_block()
-            block_count += 1
-
-    # NOTE this looks simple and may work ? may be too low level as it all hinges on whether the file positions are kept up to date
-    # can we just fseek to the first TFS?
-    cdef tng_function_status _read_next_block(self):
-        cdef tng_function_status stat
-        cdef tng_gen_block* block
-        cdef int64_t block_id = -1
-        stat = tng_block_init(& block)
-        if stat != TNG_SUCCESS:
-            return TNG_CRITICAL
-        
-        stat = tng_block_header_read(self._traj, block)
-        if stat != TNG_SUCCESS:
-            tng_block_destroy(&block)
-            return TNG_CRITICAL
-            
-        stat = tng_block_read_next(self._traj, block, TNG_SKIP_HASH)
-        if stat != TNG_SUCCESS:
-            tng_block_destroy(& block)
-            return TNG_CRITICAL
-        
-        block_id = block.id
-        printf("block id %ld \n", block_id)
-        cdef name_len = strlen(block.name) +1
-        cdef bname = <char*> malloc(name_len * sizeof(char)) # TNG_MAX_STR_LEN = 1024
-        bname = block.name
-        printf("block name %s \n",block.name)
-
-        #cdef int64_t stride = self.get_traj_strides(block_id)
-        #printf("\n %ld \n",stride)
-
-        return TNG_SUCCESS
-
-    # cdef get_block_types_of_next_frame(self):
-    #     cdef int64_t step, nBlocks
-    #     cdef int64_t *block_ids = NULL
-    #     stat = tng_util_trajectory_next_frame_present_data_blocks_find(self._traj, -1, 0, NULL, &step, &nBlocks, &block_ids);
-    #     printf("step = %d \n", step)
-    #     printf("nblocks = %d \n", nBlocks)
-    
-    def spool2(self):
+    def read_all_frames(self):
+        self._spool()
+   
+    cdef _spool(self):
         # outer decl
-        cdef int64_t step, nBlocks
+        cdef int64_t step, n_blocks
         cdef int64_t nframe = 0
         cdef int64_t *block_ids = NULL
-        print("finding first set of blocks")
-        cdef tng_function_status stat  = tng_util_trajectory_next_frame_present_data_blocks_find(self._traj, -1, 0, NULL, &step, &nBlocks, &block_ids);
-        printf("n blocks %ld \n", nBlocks)
+        cdef tng_function_status stat  = tng_util_trajectory_next_frame_present_data_blocks_find(self._traj, -1, 0, NULL, &step, &n_blocks, &block_ids)
         if stat !=TNG_SUCCESS:
-            raise Exception
-        print("worked\n ")
+            raise Exception("cannot find the number of blocks")
 
-        #inner loop decls
-        cdef double frame_time
-        cdef double precision
-        cdef int64_t n_values_per_frame, n_atoms, i, j
-        cdef char* bname = <char*> malloc(TNG_MAX_STR_LEN * sizeof(char))
-        cdef double* values = NULL
-        cdef off_t offset
         cdef int64_t block_counter = 0
-        offset = ftello(self._traj.input_file)
-
         cdef tng_function_status read_stat = TNG_SUCCESS
-
+        cdef tw = TrajectoryWrapper.from_ptr(self._traj)
+        cdef block = TNGDataBlock(tw, debug=0)
 
         while (read_stat == TNG_SUCCESS):
-            offset = ftello(self._traj.input_file)
-            printf("file position %ld \n",offset)
-            for i in range(nBlocks):
+            for i in range(n_blocks):
                 block_counter += 1
-                printf("\nloop %ld \n",i)
-                printf("block id %ld \n", block_ids[i])
-                stat = self.get_data_next_frame(block_ids[i], &values, &step, &frame_time, &n_values_per_frame, &n_atoms, &precision, bname)
-                printf("data block name %s \n", bname)
-                printf("n_values_per_frame %ld \n", n_values_per_frame)
-                printf("n_atoms  %ld \n", n_atoms)
+                block.block_read(block_ids[i])
                 printf("block_count %ld \n", block_counter)
-                for j in range(n_values_per_frame*n_atoms):
-                    printf(" %f ", values[j])
 
-            
             nframe +=1
-            read_stat = tng_util_trajectory_next_frame_present_data_blocks_find(self._traj, step, 0, NULL, &step, &nBlocks, &block_ids);
+            read_stat = tng_util_trajectory_next_frame_present_data_blocks_find(self._traj, step, 0, NULL, &step, &n_blocks, &block_ids);
             printf("loop status %d \n", read_stat)
-            printf("nframe  %ld \n\n", nframe)
-        
-        free(values)
+            printf("nframe  %ld \n\n", nframe)  
 
-    
-    cdef tng_function_status get_data_next_frame(self, int64_t block_id, double** values, int64_t* step, double* frame_time, int64_t* n_values_per_frame, int64_t* n_atoms, double* prec, char* name):
-        cdef tng_function_status stat;
-        cdef char                datatype = -1
-        cdef int64_t             codec_id;
-        cdef int                 block_dependency
-        cdef void*               data = NULL
-        cdef double              local_prec
-
-
-        #Flag to indicate frame dependent data. */
-        #define TNG_FRAME_DEPENDENT 1
-        cdef int TNG_FRAME_DEPENDENT = 1
-        #Flag to indicate particle dependent data. */
-        #define TNG_PARTICLE_DEPENDENT 2
-        cdef int  TNG_PARTICLE_DEPENDENT = 2
-
-        stat = tng_data_block_name_get(self._traj, block_id, name, TNG_MAX_STR_LEN)
-        if stat != TNG_SUCCESS:
-            raise Exception("cannot get block_name")
-
-        stat = tng_data_block_dependency_get(self._traj, block_id, &block_dependency)
-        if stat != TNG_SUCCESS:
-            raise Exception("cannot get block_dependency")
-        
-        if block_dependency.__and__(TNG_PARTICLE_DEPENDENT): # bitwise & due to enum defs
-            printf("reading particle data \n")
-            tng_num_particles_get(self._traj, n_atoms)
-            stat = tng_util_particle_data_next_frame_read(self._traj, block_id, &data, &datatype, step, frame_time)
-        else:
-            printf("reading NON particle data \n")
-            n_atoms[0] = 1 # still used for some allocs
-            stat = tng_util_non_particle_data_next_frame_read(self._traj, block_id, &data, &datatype, step, frame_time)
-
-        if stat == TNG_CRITICAL:
-            #raise Exception("critical data reading failure")
-            return TNG_CRITICAL
-
-        
-        stat = tng_data_block_num_values_per_frame_get(self._traj, block_id, n_values_per_frame)
-        if stat == TNG_CRITICAL:
-            #raise Exception("critical data reading failure")
-            return TNG_CRITICAL
-
-        # calling function is responsible for freeing value pointer
-        values[0] = <double*> realloc(values[0], sizeof(double)* n_values_per_frame[0] * n_atoms[0]) # renew to be right size
-        printf("realloc values array to be %ld  doubles and %ld bits long \n", n_values_per_frame[0] * n_atoms[0], n_values_per_frame[0] * n_atoms[0]*sizeof(double))
-
-        self.convert_to_double_arr(data, values[0], n_atoms[0], n_values_per_frame[0], datatype)
-
-        # free local data
-        free(data)
-
-        return TNG_SUCCESS
-
-    
-    cdef void convert_to_double_arr(self, void* source, double* to, const int n_atoms, const int n_vals, const char datatype):
-
-        # do we need to account for changes in the decl of double etc ie is this likely to be portable?.
-        # a lot of this is a bit redundant but could be used to differntiate casts to numpy arrays etc in the future
-
-        cdef int i, j
-
-
-        if datatype == TNG_FLOAT_DATA:
-            for i in range(n_atoms):
-                for j in range(n_vals):
-                    to[i*n_vals +j ] = (<float*>source)[i *n_vals +j] #NOTE do we explicitly need to use reinterpret_cast ??
-            #memcpy(to,  source, n_vals * sizeof(float) * n_atoms)
-
-        elif datatype == TNG_INT_DATA:
-            for i in range(n_atoms):
-                for j in range(n_vals):
-                    to[i*n_vals +j ] = (<int64_t*>source)[i *n_vals +j] # redundant but could be changed later
-            #memcpy(to, source, n_vals * sizeof(int64_t) * n_atoms)
-
-        elif datatype == TNG_DOUBLE_DATA:
-            for i in range(n_atoms):
-                for j in range(n_vals):
-                    to[i*n_vals +j ] = (<double*>source)[i *n_vals +j] # should probs use memcpy
-            #memcpy(to, source, n_vals * sizeof(double) * n_atoms)
-
-        elif datatype == TNG_CHAR_DATA:
-            raise NotImplementedError("char data reading is not implemented")
-
-        else: # the default is meant to be double, reading correctly can't be reliant on datatype being set properly as it is not always done.
-            # for i in range(n_atoms):
-            #     for j in range(n_vals):
-                    #to[i*n_vals +j ] = (<double*>source)[i *n_vals +j] # we will reinterpret as double by default ?
-            printf(" WARNING type %d not understood \n", datatype) #TODO currently non particle block data isnt working
-
-        
     cdef _block_interpret(self):
         pass
         #logic to interpret the block types heretng_data_get_stride_length
@@ -751,42 +632,59 @@ cdef class TNGFileIterator:
 
     
 
-cdef class DataBlock():
 
-    cdef tng_trajectory* traj
+cdef class TNGDataBlock:
+
+    cdef tng_trajectory* _traj
+    cdef int64_t block_id 
+    cdef bint debug 
 
     cdef int64_t step
     cdef double frame_time
     cdef double precision
     cdef int64_t n_values_per_frame, n_atoms
-    cdef int64_t block_id 
-    cdef char* bname
+    cdef char* block_name
     cdef double* values
     cdef tng_function_status read_stat
 
+    def __cinit__(self, TrajectoryWrapper traj, debug=1):
 
-    def __cinit__(self, traj, debug=False):
+        self._traj = traj._ptr
+        self.debug = debug
+        self.block_id = -1
+
         self.step = -1
         self.frame_time = -1
         self.precision = -1
         self.n_values_per_frame = -1
         self.n_atoms = -1 
-        self.bname = <char*> malloc(TNG_MAX_STR_LEN * sizeof(char))
+        self.block_name = <char*> malloc(TNG_MAX_STR_LEN * sizeof(char))
         self.values = NULL
-        self.debug = debug
-    
+  
     def __dealloc__(self):
         self._close()
+    
+    def block_read(self, id): #NOTE does this have to be python
+        self._block_read(id)
     
     cdef _close(self):
         if self.values != NULL:
             free(self.values)
+        free(self.block_name)
 
-    cdef block_read(self):
-        read_stat = self.get_data_next_frame(self.block_id, &self.values, &self.step, &self.frame_time, &self.n_values_per_frame, &self.n_atom, &self.prec, self.bname)
+    cdef void _block_read(self, int64_t id):
+        self.block_id = id
+        read_stat = self.get_data_next_frame(self.block_id, &self.values, &self.step, &self.frame_time, &self.n_values_per_frame, &self.n_atoms, &self.precision, self.block_name, self.debug)
         if self.debug:
+            printf("block id %ld \n", self.block_id)
+            printf("data block name %s \n", self.block_name)
+            printf("n_values_per_frame %ld \n", self.n_values_per_frame)
+            printf("n_atoms  %ld \n", self.n_atoms)
+            for j in range(self.n_values_per_frame * self.n_atoms):
+                printf(" %f ", self.values[j])
 
-    cdef tng_function_status get_data_next_frame(self, int64_t block_id, double** values, int64_t* step, double* frame_time, int64_t* n_values_per_frame, int64_t* n_atoms, double* prec, char* bname):
+    cdef tng_function_status get_data_next_frame(self, int64_t block_id, double** values, int64_t* step, double* frame_time, int64_t* n_values_per_frame, int64_t* n_atoms, double* prec, char* block_name, bint debug):
+    
         cdef tng_function_status stat
         cdef char                datatype = -1
         cdef int64_t             codec_id;
@@ -795,59 +693,56 @@ cdef class DataBlock():
         cdef double              local_prec
 
         #Flag to indicate frame dependent data. */
-        #define TNG_FRAME_DEPENDENT 1
         cdef int TNG_FRAME_DEPENDENT = 1
         #Flag to indicate particle dependent data. */
-        #define TNG_PARTICLE_DEPENDENT 2
         cdef int  TNG_PARTICLE_DEPENDENT = 2
 
-        stat = tng_data_block_name_get(self.traj, self.block_id, self.name, TNG_MAX_STR_LEN)
+        stat = tng_data_block_name_get(self._traj, block_id, block_name, TNG_MAX_STR_LEN)
         if stat != TNG_SUCCESS:
             raise Exception("cannot get block_name")
 
-        stat = tng_data_block_dependency_get(self.traj, self.block_id, &block_dependency)
+        stat = tng_data_block_dependency_get(self._traj, block_id, &block_dependency)
         if stat != TNG_SUCCESS:
             raise Exception("cannot get block_dependency")
         
         if block_dependency.__and__(TNG_PARTICLE_DEPENDENT): # bitwise & due to enum defs
-            printf("reading particle data \n")
-            tng_num_particles_get(self.traj, self.n_atoms)
-            stat = tng_util_particle_data_next_frame_read(self.traj, self.block_id, &self.data, &self.datatype, self.step, self.frame_time)
+            if debug:
+                printf("reading particle data \n")
+            tng_num_particles_get(self._traj, n_atoms)
+            stat = tng_util_particle_data_next_frame_read(self._traj, block_id, &data, &datatype, step, frame_time)
         else:
-            printf("reading NON particle data \n")
+            if debug:
+                printf("reading NON particle data \n")
             n_atoms[0] = 1 # still used for some allocs
-            stat = tng_util_non_particle_data_next_frame_read(self.traj, self.block_id, &data, &datatype, step, frame_time)
+            stat = tng_util_non_particle_data_next_frame_read(self._traj, block_id, &data, &datatype, step, frame_time)
 
         if stat == TNG_CRITICAL:
             #raise Exception("critical data reading failure")
             return TNG_CRITICAL
 
-        
-        stat = tng_data_block_num_values_per_frame_get(self.traj, self.block_id, self.n_values_per_frame)
+        stat = tng_data_block_num_values_per_frame_get(self._traj, block_id, n_values_per_frame)
         if stat == TNG_CRITICAL:
             #raise Exception("critical data reading failure")
             return TNG_CRITICAL
 
         # calling function is responsible for freeing value pointer
-        self.values[0] = <double*> realloc(self.values[0], sizeof(double)* self.n_values_per_frame[0] * self.n_atoms[0]) # renew to be right size
-        printf("realloc values array to be %ld  doubles and %ld bits long \n", self.n_values_per_frame[0] * self.n_atoms[0], self.n_values_per_frame[0] * self.n_atoms[0]*sizeof(double))
+        values[0] = <double*> realloc(values[0], sizeof(double)* n_values_per_frame[0] * n_atoms[0]) # renew to be right size
+        
+        if self.debug:
+            printf("realloc values array to be %ld  doubles and %ld bits long \n", n_values_per_frame[0] * n_atoms[0], n_values_per_frame[0] * n_atoms[0]*sizeof(double))
 
-        self.convert_to_double_arr(data, self.values[0], self.n_atoms[0], self.n_values_per_frame[0], datatype)
+        self.convert_to_double_arr(data, values[0], n_atoms[0], n_values_per_frame[0], datatype, debug)
 
+        #TODO get precision from compression precision
+        prec[0] = 1.0
         # free local data
         free(data)
-
-        local_prec = 1.0
-
         return TNG_SUCCESS
     
-    cdef void convert_to_double_arr(self, void* source, double* to, const int n_atoms, const int n_vals, const char datatype):
-
+    cdef void convert_to_double_arr(self, void* source, double* to, const int n_atoms, const int n_vals, const char datatype, bint debug):
         # do we need to account for changes in the decl of double etc ie is this likely to be portable?.
         # a lot of this is a bit redundant but could be used to differntiate casts to numpy arrays etc in the future
-
         cdef int i, j
-
 
         if datatype == TNG_FLOAT_DATA:
             for i in range(n_atoms):
@@ -870,10 +765,7 @@ cdef class DataBlock():
         elif datatype == TNG_CHAR_DATA:
             raise NotImplementedError("char data reading is not implemented")
 
-        else: # the default is meant to be double, reading correctly can't be reliant on datatype being set properly as it is not always done.
-            # for i in range(n_atoms):
-            #     for j in range(n_vals):
-                    #to[i*n_vals +j ] = (<double*>source)[i *n_vals +j] # we will reinterpret as double by default ?
+        else: # the default is meant to be double
             printf(" WARNING type %d not understood \n", datatype) #TODO currently non particle block data isnt working
 
 
