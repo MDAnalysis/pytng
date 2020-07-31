@@ -649,6 +649,7 @@ cdef class TNGDataBlock:
     cdef int64_t n_values_per_frame, n_atoms
     cdef char* block_name
     cdef double* _values
+    cdef MemoryWrapper _wrapper
     cdef tng_function_status read_stat
     cdef np.ndarray values
 
@@ -681,6 +682,8 @@ cdef class TNGDataBlock:
         free(self.block_name)
 
     cdef void _block_2d_numpy_cast(self, int64_t n_values_per_frame, int64_t n_atoms):
+        if self.debug:
+            printf("CREATING NUMPY_ARRAY \n")
         if n_values_per_frame == -1 or n_atoms == -1:
             raise ValueError("array dimensions are not correct")
         cdef int nd = 2
@@ -688,9 +691,11 @@ cdef class TNGDataBlock:
         cdef npy_intp dims[2]
         dims[0] = n_values_per_frame
         dims[1] = n_atoms
-        # self.values = PyArray_SimpleNewFromData(2, dims, NPY_DOUBLE, self._values)
-        # Py_INCREF(self._values)
-        # err = PyArray_SetBaseObject(self.values, _values)
+        # self.values = PyArray_SimpleNewFromData(2, dims, NPY_DOUBLE, self._wrapper.ptr)
+        # Py_INCREF(self._wrapper)
+        # err = PyArray_SetBaseObject(self.values, self._wrapper)
+        # if err:
+        #     raise ValueError("failed to create value array")
 
     cdef void _block_read(self, int64_t id):
         self.block_id = id
