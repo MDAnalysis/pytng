@@ -491,7 +491,8 @@ cdef class TNGFileIterator:
     """
 
 
-    cdef TrajectoryWrapper _traj  #TODO should we make this a TrajectoryWrapper also
+    cdef tng_trajectory* _traj_p   #TODO should we make this a TrajectoryWrapper also
+    cdef TrajectoryWrapper _traj
     cdef readonly fname
     cdef str mode
     cdef int is_open
@@ -508,7 +509,7 @@ cdef class TNGFileIterator:
 
     def __cinit__(self, fname, mode='r'):
 
-        self._traj = self.traj.new_struct()
+        self._traj = TrajectoryWrapper.from_ptr(self._traj_p, owner=True)
         self.fname = fname
         self._n_frames = -1
         self._n_particles = -1
