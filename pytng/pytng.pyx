@@ -35,8 +35,9 @@ np.import_array()
 ctypedef enum tng_function_status: TNG_SUCCESS, TNG_FAILURE, TNG_CRITICAL
 ctypedef enum tng_hash_mode: TNG_SKIP_HASH, TNG_USE_HASH
 ctypedef enum tng_datatypes: TNG_CHAR_DATA, TNG_INT_DATA, TNG_FLOAT_DATA, TNG_DOUBLE_DATA
-ctypedef enum  tng_particle_dependency: TNG_NON_PARTICLE_BLOCK_DATA, TNG_PARTICLE_BLOCK_DATA
+ctypedef enum tng_particle_dependency: TNG_NON_PARTICLE_BLOCK_DATA, TNG_PARTICLE_BLOCK_DATA
 ctypedef enum tng_compression: TNG_UNCOMPRESSED, TNG_XTC_COMPRESSION, TNG_TNG_COMPRESSION, TNG_GZIP_COMPRESSION
+ctypedef enum tng_bool: TNG_FALSE, TNG_TRUE
 
 
 status_error_message = ['OK', 'Failure', 'Critical']
@@ -47,8 +48,8 @@ cdef extern from "string.h":
 
 cdef extern from "<stdio.h>" nogil:
     # Seek and tell with off_t
-    int fseeko(FILE * , off_t, int)
-    off_t ftello(FILE * )
+    int fseeko(FILE *, off_t, int)
+    off_t ftello(FILE *)
 
 
 cdef extern from "tng/tng_io.h":
@@ -411,6 +412,14 @@ cdef extern from "tng/tng_io.h":
 
     tng_function_status tng_util_num_frames_with_data_of_block_id_get(tng_trajectory * tng_data,  int64_t block_id,  int64_t * n_frames)
 
+    tng_function_status  tng_particle_data_vector_get(tng_trajectory * tng_data, int64_t block_id, void ** values, int64_t * n_frames, int64_t * stride_length, int64_t * n_particles, int64_t * n_values_per_frame, char * type)
+
+    tng_function_status tng_gen_data_vector_get(tng_trajectory * tng_data, const int64_t  block_id, const tng_bool   is_particle_data, void ** values, int64_t * n_frames,
+                                                int64_t * stride_length,
+                                                int64_t * n_particles,
+                                                int64_t * n_values_per_frame,
+                                                char * type)
+
 TNGFrame = namedtuple("TNGFrame", "positions velocities forces time step box ")
 
 
@@ -590,7 +599,7 @@ cdef class TNGFileIterator:
     def _close(self):
         """Make sure the file handle is closed"""
         if self.is_open:
-            tng_util_trajectory_close( & self._traj._ptr)
+            tng_util_trajectory_close(& self._traj._ptr)
             self.is_open = False
             self._n_frames = -1
 
@@ -837,19 +846,19 @@ cdef class TNGDataBlock:
         if datatype == TNG_FLOAT_DATA:
             for i in range(n_atoms):
                 for j in range(n_vals):
-                    to[i*n_vals + j ] = ( < float*>source)[i * n_vals + j] #NOTE do we explicitly need to use reinterpret_cast ??
+                    to[i*n_vals + j ] = (< float*>source)[i * n_vals + j] #NOTE do we explicitly need to use reinterpret_cast ??
             #memcpy(to,  source, n_vals * sizeof(float) * n_atoms)
 
         elif datatype == TNG_INT_DATA:
             for i in range(n_atoms):
                 for j in range(n_vals):
-                    to[i*n_vals + j ] = ( < int64_t*>source)[i * n_vals + j] # redundant but could be changed later
+                    to[i*n_vals + j ] = (< int64_t*>source)[i * n_vals + j] # redundant but could be changed later
             #memcpy(to, source, n_vals * sizeof(int64_t) * n_atoms)
 
         elif datatype == TNG_DOUBLE_DATA:
             for i in range(n_atoms):
                 for j in range(n_vals):
-                    to[i*n_vals + j ] = ( < double*>source)[i * n_vals + j] # should probs use memcpy
+                    to[i*n_vals + j ] = (< double*>source)[i * n_vals + j] # should probs use memcpy
             #memcpy(to, source, n_vals * sizeof(double) * n_atoms)
 
         elif datatype == TNG_CHAR_DATA:
@@ -992,7 +1001,7 @@ cdef class TNGFile:
     def close(self):
         """Make sure the file handle is closed"""
         if self.is_open:
-            tng_util_trajectory_close( & self._traj)
+            tng_util_trajectory_close(& self._traj)
             self.is_open = False
             self._n_frames = -1
 
@@ -1118,7 +1127,7 @@ cdef class TNGFile:
 
         # TODO this seem wasteful but can't cdef inside a conditional?
         cdef MemoryWrapper wrap_box
-        cdef np.ndarray[ndim = 2, dtype = np.float32_t, mode = 'c'] box = \
+        cdef np.ndarray[ndim= 2, dtype = np.float32_t, mode = 'c'] box = \
             np.empty((3, 3), dtype=np.float32)
 
         if self._box:
