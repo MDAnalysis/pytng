@@ -580,15 +580,19 @@ cdef class TNGFileIterator:
         if stat != TNG_SUCCESS:
             raise IOError("Number of particles cannot be read")
 
-        # NOTE can we just loop over this directly in some way?
         stat = tng_num_frame_sets_get(self._traj._ptr, & self._n_frame_sets)
-        # TODO can this be read straight from the struct as self._traj->n_frame_sets?
-        # they note that this is not always updated
+        if stat != TNG_SUCCESS:
+            raise IOError("Number of trajectory frame sets cannot be read")
 
         cdef int64_t exponent
         stat = tng_distance_unit_exponential_get(self._traj._ptr, & exponent)
         if stat != TNG_SUCCESS:
             raise IOError("Distance exponent cannot be read")
+
+        
+        stat = self._get_frame_indicies()
+        if stat != TNG_SUCCESS:
+            raise IOError("Strides for each data block cannot be read")
 
         self._distance_scale = 10.0**(exponent+9)
         self.is_open = True
@@ -602,18 +606,15 @@ cdef class TNGFileIterator:
             self.is_open = False
             self._n_frames = -1
 
-    def read_all_frames(self):
-        self._spool()
-
-    def read_frame_indicies(self):
-        self._get_frame_indicies()
 
     def read_frame(self, frame):
-        for block in self._n_data_frames.keys():
+        for block, stride in self._frame_strides.items():
+            if frame % stride != 0:
+                raise IOError("frame to read must be a multiple of the frame stride for this data block") 
             self._read_single_frame(frame, block)
 
-    # NOTE here we assume that the first TFS has all the blocks that are present in the whole traj
-    cdef _get_frame_indicies(self):
+    cdef tng_function_status _get_frame_indicies(self):     # NOTE here we assume that the first frame has all the blocks that are present in the whole traj
+        
         cdef int64_t step, n_blocks
         cdef int64_t nframes, stride_length
         cdef int64_t block_counter = 0
@@ -622,57 +623,54 @@ cdef class TNGFileIterator:
         cdef tng_function_status read_stat = tng_util_trajectory_next_frame_present_data_blocks_find(self._traj._ptr, -1, 0, NULL, & step, & n_blocks, & block_ids)
 
         for i in range(n_blocks):
-            block_counter += 1
-            printf("block id %ld \n", block_ids[i])
             read_stat = tng_data_get_stride_length(self._traj._ptr, block_ids[i], -1, & stride_length)
             if read_stat != TNG_SUCCESS:
-                raise Exception("cannot get stride lengths of block")
-            printf("stride length %ld \n", stride_length)
+                return TNG_CRITICAL
             read_stat = tng_util_num_frames_with_data_of_block_id_get(self._traj._ptr, block_ids[i], & nframes)
             if read_stat != TNG_SUCCESS:
-                raise Exception(
-                    "cannot get number of frames with data for block")
-            printf("n frames with data  %ld \n\n", nframes)
+                return TNG_CRITICAL
             self._frame_strides[block_ids[i]] = stride_length
             self._n_data_frames[block_ids[i]] = nframes
-        print(self._frame_strides)
-        print(self._n_data_frames)
+        
+        return TNG_SUCCESS
 
     cdef _read_single_frame(self, frame, block_id):
         print("READING BLOCK {}  \n".format(frame))
         cdef int64_t _frame = frame
         cdef int64_t _block_id = block_id
-        # DOESNT YET SEEK TO RIGHT FRAME
         cdef int64_t block_step = self._frame_strides[block_id]*_frame
-        cdef block = TNGDataBlock(self._traj, _frame, debug=True)
-
+        cdef block = TNGDataBlock(self._traj, _frame, debug=False)
         block.block_read(block_id)
         print(block.values)
 
-    cdef _spool(self):
-        # outer decl
-        cdef int64_t step, n_blocks
-        cdef int64_t nframe = 0
-        cdef int64_t * block_ids = NULL
-        cdef tng_function_status stat = tng_util_trajectory_next_frame_present_data_blocks_find(self._traj._ptr, -1, 0, NULL, & step, & n_blocks, & block_ids)
-        if stat != TNG_SUCCESS:
-            raise Exception("cannot find the number of blocks")
 
-        cdef int64_t block_counter = 0
-        cdef tng_function_status read_stat = TNG_SUCCESS
-        cdef block = TNGDataBlock(self._traj, debug=False)
+    # def read_all_frames(self):
+    #     self._spool()
+    
+    # cdef _spool(self):
+    #     # outer decl
+    #     cdef int64_t step, n_blocks
+    #     cdef int64_t nframe = 0
+    #     cdef int64_t * block_ids = NULL
+    #     cdef tng_function_status stat = tng_util_trajectory_next_frame_present_data_blocks_find(self._traj._ptr, -1, 0, NULL, & step, & n_blocks, & block_ids)
+    #     if stat != TNG_SUCCESS:
+    #         raise Exception("cannot find the number of blocks")
 
-        while (read_stat == TNG_SUCCESS):
-            for i in range(n_blocks):
-                block_counter += 1
-                block.block_read(block_ids[i])
-                printf("block_count %ld \n", block_counter)
-                # print(block.values)
+    #     cdef int64_t block_counter = 0
+    #     cdef tng_function_status read_stat = TNG_SUCCESS
+    #     cdef block = TNGDataBlock(self._traj, debug=False)
 
-            nframe += 1
-            read_stat = tng_util_trajectory_next_frame_present_data_blocks_find(self._traj._ptr, step, 0, NULL, & step, & n_blocks, & block_ids)
-            printf("loop status %d \n", read_stat)
-            printf("nframe  %ld \n\n", nframe)
+    #     while (read_stat == TNG_SUCCESS):
+    #         for i in range(n_blocks):
+    #             block_counter += 1
+    #             block.block_read(block_ids[i])
+    #             printf("block_count %ld \n", block_counter)
+    #             # print(block.values)
+
+    #         nframe += 1
+    #         read_stat = tng_util_trajectory_next_frame_present_data_blocks_find(self._traj._ptr, step, 0, NULL, & step, & n_blocks, & block_ids)
+    #         printf("loop status %d \n", read_stat)
+    #         printf("nframe  %ld \n\n", nframe)
 
 
 cdef class TNGDataBlock:
@@ -710,18 +708,18 @@ cdef class TNGDataBlock:
         self._values = NULL
         self.block_is_read = False
 
-        self._wrapper = MemoryWrapper(1)
+        self._wrapper = MemoryWrapper(1) # alloc a single byte, this can be changed if the signature of MemoryWrapper is changed
 
     def __dealloc__(self):
         self._close()
 
-    def block_read(self, id):  # NOTE does this have to be python
+    def block_read(self, id):  # NOTE does this have to be python 
         self._refresh()
         self._block_read(id)
         self._block_2d_numpy_cast(self.n_values_per_frame, self.n_atoms)
         self.block_is_read = True
 
-    cdef _refresh(self):
+    cdef _refresh(self): #need to refresh these values and should not call constructor again
         self.block_id = -1
         self.step = -1
         self.frame_time = -1
@@ -731,7 +729,7 @@ cdef class TNGDataBlock:
         self.block_name = <char*> malloc(TNG_MAX_STR_LEN * sizeof(char))
         self._values = NULL
         self.block_is_read = False
-        self._wrapper = MemoryWrapper(1)
+        self._wrapper = MemoryWrapper(1) # alloc a single byte, this can be changed if the signature of MemoryWrapper is changed
 
     @property
     def values(self):
@@ -788,9 +786,9 @@ cdef class TNGDataBlock:
         cdef int64_t             n_particles
         cdef int64_t             stride_length
 
-        # Flag to indicate frame dependent data. */
+        # Flag to indicate frame dependent data.
         cdef int TNG_FRAME_DEPENDENT = 1
-        # Flag to indicate particle dependent data. */
+        # Flag to indicate particle dependent data.
         cdef int  TNG_PARTICLE_DEPENDENT = 2
 
         stat = tng_data_block_name_get(
@@ -807,14 +805,12 @@ cdef class TNGDataBlock:
             if debug:
                 printf("reading particle data \n")
             tng_num_particles_get(self._traj, n_atoms)
-            stat = tng_gen_data_vector_interval_get(self._traj, block_id, TNG_TRUE, self._frame, self._frame + 1, TNG_USE_HASH,  & data, & n_particles, & stride_length, n_values_per_frame, & datatype)
-            if debug:
-                printf("")
+            stat = tng_gen_data_vector_interval_get(self._traj, block_id, TNG_TRUE, self._frame, self._frame , TNG_USE_HASH,  & data, & n_particles, & stride_length, n_values_per_frame, & datatype)
         else:
             if debug:
                 printf("reading NON particle data \n")
             n_atoms[0] = 1  # still used for some allocs
-            stat = tng_gen_data_vector_interval_get(self._traj, block_id, TNG_FALSE, self._frame, self._frame + 1, TNG_USE_HASH,  & data, NULL, & stride_length, n_values_per_frame, & datatype)
+            stat = tng_gen_data_vector_interval_get(self._traj, block_id, TNG_FALSE, self._frame, self._frame, TNG_USE_HASH,  & data, NULL, & stride_length, n_values_per_frame, & datatype)
 
         if stat != TNG_SUCCESS:
             printf("critical data reading failure in tng_gen_data_vector_get \n")
