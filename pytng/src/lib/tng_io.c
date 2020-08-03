@@ -13496,7 +13496,7 @@ tng_function_status DECLSPECDLLEXPORT tng_data_interval_get(struct tng_trajector
                                       hash_mode, &values, 0, n_values_per_frame, type));
 }
 
-static tng_function_status tng_gen_data_vector_interval_get(struct tng_trajectory* tng_data,
+tng_function_status tng_gen_data_vector_interval_get(struct tng_trajectory* tng_data,
                                                             const int64_t          block_id,
                                                             const tng_bool         is_particle_data,
                                                             const int64_t          start_frame_nr,

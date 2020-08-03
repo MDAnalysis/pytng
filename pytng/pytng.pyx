@@ -39,6 +39,11 @@ ctypedef enum tng_particle_dependency: TNG_NON_PARTICLE_BLOCK_DATA, TNG_PARTICLE
 ctypedef enum tng_compression: TNG_UNCOMPRESSED, TNG_XTC_COMPRESSION, TNG_TNG_COMPRESSION, TNG_GZIP_COMPRESSION
 ctypedef enum tng_bool: TNG_FALSE, TNG_TRUE
 
+cdef union data_values:
+    double d
+    float f
+    int64_t i
+    char * c
 
 status_error_message = ['OK', 'Failure', 'Critical']
 
@@ -412,13 +417,7 @@ cdef extern from "tng/tng_io.h":
 
     tng_function_status tng_util_num_frames_with_data_of_block_id_get(tng_trajectory * tng_data,  int64_t block_id,  int64_t * n_frames)
 
-    tng_function_status  tng_particle_data_vector_get(tng_trajectory * tng_data, int64_t block_id, void ** values, int64_t * n_frames, int64_t * stride_length, int64_t * n_particles, int64_t * n_values_per_frame, char * type)
-
-    tng_function_status tng_gen_data_vector_get(tng_trajectory * tng_data, const int64_t  block_id, const tng_bool   is_particle_data, void ** values, int64_t * n_frames,
-                                                int64_t * stride_length,
-                                                int64_t * n_particles,
-                                                int64_t * n_values_per_frame,
-                                                char * type)
+    tng_function_status tng_gen_data_vector_interval_get(tng_trajectory * tng_data, const int64_t  block_id, const tng_bool is_particle_data, const int64_t  start_frame_nr, const int64_t end_frame_nr, const char  hash_mode, void ** values, int64_t * n_particles, int64_t * stride_length, int64_t * n_values_per_frame, char * type)
 
 TNGFrame = namedtuple("TNGFrame", "positions velocities forces time step box ")
 
@@ -645,7 +644,7 @@ cdef class TNGFileIterator:
         cdef int64_t _block_id = block_id
         # DOESNT YET SEEK TO RIGHT FRAME
         cdef int64_t block_step = self._frame_strides[block_id]*_frame
-        cdef block = TNGDataBlock(self._traj, debug=False)
+        cdef block = TNGDataBlock(self._traj, _frame, debug=True)
 
         block.block_read(block_id)
         print(block.values)
@@ -679,6 +678,7 @@ cdef class TNGFileIterator:
 cdef class TNGDataBlock:
 
     cdef tng_trajectory * _traj
+    cdef int64_t _frame
     cdef int64_t block_id
     cdef bint debug
 
@@ -694,9 +694,10 @@ cdef class TNGDataBlock:
 
     cdef bint block_is_read
 
-    def __cinit__(self, TrajectoryWrapper traj, bint debug=False):
+    def __cinit__(self, TrajectoryWrapper traj, int64_t frame, bint debug=False):
 
         self._traj = traj._ptr
+        self._frame = frame
         self.debug = debug
         self.block_id = -1
 
@@ -715,9 +716,22 @@ cdef class TNGDataBlock:
         self._close()
 
     def block_read(self, id):  # NOTE does this have to be python
+        self._refresh()
         self._block_read(id)
         self._block_2d_numpy_cast(self.n_values_per_frame, self.n_atoms)
         self.block_is_read = True
+
+    cdef _refresh(self):
+        self.block_id = -1
+        self.step = -1
+        self.frame_time = -1
+        self.precision = -1
+        self.n_values_per_frame = -1
+        self.n_atoms = -1
+        self.block_name = <char*> malloc(TNG_MAX_STR_LEN * sizeof(char))
+        self._values = NULL
+        self.block_is_read = False
+        self._wrapper = MemoryWrapper(1)
 
     @property
     def values(self):
@@ -753,17 +767,17 @@ cdef class TNGDataBlock:
 
     cdef void _block_read(self, int64_t id):
         self.block_id = id
-        read_stat = self.get_data_next_frame(self.block_id, & self._values, & self.step, & self.frame_time, & self.n_values_per_frame, & self.n_atoms, & self.precision, self.block_name, self.debug)
+        read_stat = self._get_data_next_frame(self.block_id, & self._values, & self.step, & self.frame_time, & self.n_values_per_frame, & self.n_atoms, & self.precision, self.block_name, self.debug)
 
         if self.debug:
             printf("block id %ld \n", self.block_id)
             printf("data block name %s \n", self.block_name)
             printf("n_values_per_frame %ld \n", self.n_values_per_frame)
             printf("n_atoms  %ld \n", self.n_atoms)
-            for j in range(self.n_values_per_frame * self.n_atoms):
-                printf(" %f ", self._values[j])
+            # for j in range(self.n_values_per_frame * self.n_atoms):
+            #     printf(" %f ", self._values[j])
 
-    cdef tng_function_status get_data_next_frame(self, int64_t block_id, double ** values, int64_t * step, double * frame_time, int64_t * n_values_per_frame, int64_t * n_atoms, double * prec, char * block_name, bint debug):
+    cdef tng_function_status _get_data_next_frame(self, int64_t block_id, double ** values, int64_t * step, double * frame_time, int64_t * n_values_per_frame, int64_t * n_atoms, double * prec, char * block_name, bint debug):
 
         cdef tng_function_status stat
         cdef char                datatype = -1
@@ -771,6 +785,8 @@ cdef class TNGDataBlock:
         cdef int                 block_dependency
         cdef void * data = NULL
         cdef double              local_prec
+        cdef int64_t             n_particles
+        cdef int64_t             stride_length
 
         # Flag to indicate frame dependent data. */
         cdef int TNG_FRAME_DEPENDENT = 1
@@ -791,21 +807,23 @@ cdef class TNGDataBlock:
             if debug:
                 printf("reading particle data \n")
             tng_num_particles_get(self._traj, n_atoms)
-            stat = tng_util_particle_data_next_frame_read(self._traj, block_id, & data, & datatype, step, frame_time)
+            stat = tng_gen_data_vector_interval_get(self._traj, block_id, TNG_TRUE, self._frame, self._frame + 1, TNG_USE_HASH,  & data, & n_particles, & stride_length, n_values_per_frame, & datatype)
+            if debug:
+                printf("")
         else:
             if debug:
                 printf("reading NON particle data \n")
             n_atoms[0] = 1  # still used for some allocs
-            stat = tng_util_non_particle_data_next_frame_read(self._traj, block_id, & data, & datatype, step, frame_time)
+            stat = tng_gen_data_vector_interval_get(self._traj, block_id, TNG_FALSE, self._frame, self._frame + 1, TNG_USE_HASH,  & data, NULL, & stride_length, n_values_per_frame, & datatype)
 
-        if stat == TNG_CRITICAL:
-            #raise Exception("critical data reading failure")
+        if stat != TNG_SUCCESS:
+            printf("critical data reading failure in tng_gen_data_vector_get \n")
             return TNG_CRITICAL
 
         stat = tng_data_block_num_values_per_frame_get(
             self._traj, block_id, n_values_per_frame)
         if stat == TNG_CRITICAL:
-            #raise Exception("critical data reading failure")
+            printf("critical data reading failure in tng_data_block_num_values_per_frame_get \n")
             return TNG_CRITICAL
 
         # this is done in duplicate for now

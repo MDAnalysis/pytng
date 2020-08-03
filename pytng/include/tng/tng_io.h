@@ -4819,6 +4819,13 @@ tng_data_block_num_values_per_frame_get(struct tng_trajectory *tng_data,
                                         const int64_t block_id,
                                         int64_t *n_values_per_frame);
 
+tng_function_status tng_gen_data_vector_interval_get(
+    struct tng_trajectory *tng_data, const int64_t block_id,
+    const tng_bool is_particle_data, const int64_t start_frame_nr,
+    const int64_t end_frame_nr, const char hash_mode, void **values,
+    int64_t *n_particles, int64_t *stride_length, int64_t *n_values_per_frame,
+    char *type);
+
 #ifdef __cplusplus
 } /* end extern "C" */
 #endif
