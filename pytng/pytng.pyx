@@ -480,6 +480,9 @@ cdef class TrajectoryWrapper:
         # _ptr.b = 0
         return TrajectoryWrapper.from_ptr(_ptr, owner=True)
 
+ 
+
+
 cdef class TNGFileIterator:
     """File handle object for TNG files
 
@@ -503,7 +506,7 @@ cdef class TNGFileIterator:
     cdef int64_t _current_frame
     cdef int64_t _current_frame_set
     cdef dict   _frame_strides
-
+    cdef dict   _n_data_frames
 
     def __cinit__(self, fname, mode='r'):
 
@@ -516,6 +519,7 @@ cdef class TNGFileIterator:
         self._current_frame = -1
         self._current_frame_set = -1
         self._frame_strides = {}
+        self._n_data_frames = {}
         
         self._open(self.fname, mode)
 
@@ -595,11 +599,12 @@ cdef class TNGFileIterator:
     
     def read_frame_indicies(self):
         self._get_frame_indicies()
+    
+    def read_frame(self, frame):
+        for block in self._n_data_frames.keys():
+            self._read_single_frame(frame, block)
 
     cdef _get_frame_indicies(self): #NOTE here we assume that the first TFS has all the blocks that are present in the whole traj
-
-
-
         cdef int64_t step, n_blocks, stride_length
         cdef int64_t nframe = 0
         cdef int64_t block_counter = 0
@@ -615,7 +620,20 @@ cdef class TNGFileIterator:
                 raise Exception("cannot get stride lengths of block")
             printf("stride length %ld \n\n", stride_length)
             self._frame_strides[block_ids[i]] = stride_length
+            self._n_data_frames[block_ids[i]] = self._n_frames / stride_length + 1 #check this
         print(self._frame_strides)
+        print(self._n_data_frames)
+        
+
+    cdef _read_single_frame(self, frame, block_id):
+        print("READING BLOCK %s \n".format(frame))
+        cdef int64_t _frame = frame
+        cdef int64_t _block_id = block_id
+        cdef int64_t block_step = self._frame_strides[block_id]*_frame #DOESNT YET SEEK TO RIGHT FRAME
+        cdef block = TNGDataBlock(self._traj, debug=False)
+
+        block.block_read(block_id)
+        print(block.values)
 
     cdef _spool(self):
         # outer decl
@@ -635,25 +653,15 @@ cdef class TNGFileIterator:
                 block_counter += 1
                 block.block_read(block_ids[i])
                 printf("block_count %ld \n", block_counter)
-                print(block.values)
+                #print(block.values)
 
             nframe += 1
             read_stat = tng_util_trajectory_next_frame_present_data_blocks_find(self._traj._ptr, step, 0, NULL, & step, & n_blocks, & block_ids)
             printf("loop status %d \n", read_stat)
             printf("nframe  %ld \n\n", nframe)
 
-    cdef _block_interpret(self):
-        pass
-        # logic to interpret the block types heretng_data_get_stride_length
+        
 
-    cdef _block_numpy_cast(self):
-        pass
-        # logic to cast data blocks to numpy arrays here.
-
-    cdef seek(self):
-        pass
-        # logic to move the file handle pointers here
-        # must be done at both python and C level ?
 
 
 cdef class TNGDataBlock:
