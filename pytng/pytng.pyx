@@ -482,7 +482,7 @@ cdef class TrajectoryWrapper:
     @staticmethod
     cdef TrajectoryWrapper new_struct():
         """Factory function to create WrapperClass objects with
-        newly allocated my_c_struct"""
+        newly allocated tng_trajectory"""
         cdef tng_trajectory * _ptr = <tng_trajectory * >malloc(sizeof(tng_trajectory))
         if _ptr is NULL:
             raise MemoryError
@@ -610,7 +610,7 @@ cdef class TNGFileIterator:
     def read_frame(self, frame):
         for block, stride in self._frame_strides.items():
             if frame % stride != 0:
-                raise IOError("frame to read must be a multiple of the frame stride for this data block") 
+                raise IOError("Frame to read must be a multiple of the frame stride for this data block") 
             self._read_single_frame(frame, block)
 
     cdef tng_function_status _get_frame_indicies(self):     # NOTE here we assume that the first frame has all the blocks that are present in the whole traj
@@ -635,13 +635,12 @@ cdef class TNGFileIterator:
         return TNG_SUCCESS
 
     cdef _read_single_frame(self, frame, block_id):
-        print("READING BLOCK {}  \n".format(frame))
+        print("READING FRAME {}  \n".format(frame))
         cdef int64_t _frame = frame
         cdef int64_t _block_id = block_id
         cdef int64_t block_step = self._frame_strides[block_id]*_frame
-        cdef block = TNGDataBlock(self._traj, _frame, debug=False)
+        cdef block = TNGDataBlock(self._traj, _frame, debug=True)
         block.block_read(block_id)
-        print(block.values)
 
 
     # def read_all_frames(self):
@@ -714,8 +713,11 @@ cdef class TNGDataBlock:
         self._close()
 
     def block_read(self, id):  # NOTE does this have to be python 
+        cdef tng_function_status stat
         self._refresh()
-        self._block_read(id)
+        stat = self._block_read(id)
+        if stat != TNG_SUCCESS:
+            raise IOError("Critical failure: block cannot be read")
         self._block_2d_numpy_cast(self.n_values_per_frame, self.n_atoms)
         self.block_is_read = True
 
@@ -726,7 +728,6 @@ cdef class TNGDataBlock:
         self.precision = -1
         self.n_values_per_frame = -1
         self.n_atoms = -1
-        self.block_name = <char*> malloc(TNG_MAX_STR_LEN * sizeof(char))
         self._values = NULL
         self.block_is_read = False
         self._wrapper = MemoryWrapper(1) # alloc a single byte, this can be changed if the signature of MemoryWrapper is changed
@@ -748,7 +749,7 @@ cdef class TNGDataBlock:
         if self.debug:
             printf("CREATING NUMPY_ARRAY \n")
         if n_values_per_frame == -1 or n_atoms == -1:
-            raise ValueError("array dimensions are not correct")
+            raise ValueError("Array dimensions for numpy block casting are not set correctly")
         cdef int nd = 2
         cdef int err
         cdef npy_intp dims[2]
@@ -759,13 +760,13 @@ cdef class TNGDataBlock:
         Py_INCREF(self._wrapper)
         err = PyArray_SetBaseObject(self.values, self._wrapper)
         if err:
-            raise ValueError("failed to create value array")
+            raise ValueError("Array object cannot be created")
         if self.debug:
             print(self.values)
 
-    cdef void _block_read(self, int64_t id):
+    cdef tng_function_status  _block_read(self, int64_t id):
         self.block_id = id
-        read_stat = self._get_data_next_frame(self.block_id, & self._values, & self.step, & self.frame_time, & self.n_values_per_frame, & self.n_atoms, & self.precision, self.block_name, self.debug)
+        cdef tng_function_status read_stat = self._get_data_next_frame(self.block_id, & self._values, & self.step, & self.frame_time, & self.n_values_per_frame, & self.n_atoms, & self.precision, self.block_name, self.debug)
 
         if self.debug:
             printf("block id %ld \n", self.block_id)
@@ -774,6 +775,7 @@ cdef class TNGDataBlock:
             printf("n_atoms  %ld \n", self.n_atoms)
             # for j in range(self.n_values_per_frame * self.n_atoms):
             #     printf(" %f ", self._values[j])
+        return read_stat
 
     cdef tng_function_status _get_data_next_frame(self, int64_t block_id, double ** values, int64_t * step, double * frame_time, int64_t * n_values_per_frame, int64_t * n_atoms, double * prec, char * block_name, bint debug):
 
