@@ -407,6 +407,8 @@ cdef extern from "tng/tng_io.h":
 
     tng_function_status  tng_util_frame_current_compression_get(tng_trajectory * tng_data, int64_t block_id, int64_t * codec_id, double * factor)
 
+    tng_function_status tng_data_get_stride_length(tng_trajectory* tng_data, int64_t block_id, int64_t frame, int64_t *stride_length)
+
 TNGFrame = namedtuple("TNGFrame", "positions velocities forces time step box ")
 
 
@@ -500,6 +502,8 @@ cdef class TNGFileIterator:
 
     cdef int64_t _current_frame
     cdef int64_t _current_frame_set
+    cdef dict   _frame_strides
+
 
     def __cinit__(self, fname, mode='r'):
 
@@ -511,12 +515,13 @@ cdef class TNGFileIterator:
         self._distance_scale = 0.0
         self._current_frame = -1
         self._current_frame_set = -1
-
+        self._frame_strides = {}
+        
         self._open(self.fname, mode)
 
     def __dealloc__(self):
         self._close()
-
+    
     def _open(self, fname, mode):
         """Open a file handle
 
@@ -587,6 +592,30 @@ cdef class TNGFileIterator:
 
     def read_all_frames(self):
         self._spool()
+    
+    def read_frame_indicies(self):
+        self._get_frame_indicies()
+
+    cdef _get_frame_indicies(self): #NOTE here we assume that the first TFS has all the blocks that are present in the whole traj
+
+
+
+        cdef int64_t step, n_blocks, stride_length
+        cdef int64_t nframe = 0
+        cdef int64_t block_counter = 0
+        cdef int64_t * block_ids = NULL
+
+        cdef tng_function_status read_stat = tng_util_trajectory_next_frame_present_data_blocks_find(self._traj._ptr, -1, 0, NULL, & step, & n_blocks, & block_ids)
+           
+        for i in range(n_blocks):
+            block_counter += 1
+            printf("block id %ld \n", block_ids[i])
+            read_stat = tng_data_get_stride_length(self._traj._ptr, block_ids[i], -1, &stride_length)
+            if read_stat != TNG_SUCCESS:
+                raise Exception("cannot get stride lengths of block")
+            printf("stride length %ld \n\n", stride_length)
+            self._frame_strides[block_ids[i]] = stride_length
+        print(self._frame_strides)
 
     cdef _spool(self):
         # outer decl
