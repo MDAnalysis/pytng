@@ -502,6 +502,7 @@ cdef class TNGFileIterator:
     cdef TrajectoryWrapper _traj
     cdef readonly fname
     cdef str mode
+    cdef bint debug
     cdef int is_open
     cdef int reached_eof
     cdef int64_t step
@@ -516,10 +517,11 @@ cdef class TNGFileIterator:
     cdef dict   _frame_strides
     cdef dict   _n_data_frames
 
-    def __cinit__(self, fname, mode='r'):
+    def __cinit__(self, fname, mode='r', debug=False):
 
         self._traj = TrajectoryWrapper.from_ptr(self._traj_p, owner=True)
         self.fname = fname
+        self.debug = debug
         self._n_frames = -1
         self._n_particles = -1
         self._n_frame_sets = -1
@@ -608,10 +610,17 @@ cdef class TNGFileIterator:
 
 
     def read_frame(self, frame):
+        cdef int64_t n_blocks_per_frame = len(self._frame_strides)
+        cdef  block_holder = TNGDataBlockHolder(n_blocks_per_frame, debug=self.debug) 
         for block, stride in self._frame_strides.items():
             if frame % stride != 0:
                 raise IOError("Frame to read must be a multiple of the frame stride for this data block") 
-            self._read_single_frame(frame, block)
+            self._read_single_frame(frame, block, block_holder)
+        if self.debug:
+            print(block_holder.block_set)
+            for k,v in block_holder.block_set.items():
+                print(k)
+                print(v.values)
 
     cdef tng_function_status _get_frame_indicies(self):     # NOTE here we assume that the first frame has all the blocks that are present in the whole traj
         
@@ -634,13 +643,14 @@ cdef class TNGFileIterator:
         
         return TNG_SUCCESS
 
-    cdef _read_single_frame(self, frame, block_id):
+    cdef _read_single_frame(self, int64_t frame, int64_t block_id, TNGDataBlockHolder block_holder):
         print("READING FRAME {}  \n".format(frame))
         cdef int64_t _frame = frame
         cdef int64_t _block_id = block_id
         cdef int64_t block_step = self._frame_strides[block_id]*_frame
-        cdef block = TNGDataBlock(self._traj, _frame, debug=True)
+        cdef block = TNGDataBlock(self._traj, _frame, debug=self.debug)
         block.block_read(block_id)
+        block_holder.add_block(block_id, block)
 
 
     # def read_all_frames(self):
@@ -670,6 +680,25 @@ cdef class TNGFileIterator:
     #         read_stat = tng_util_trajectory_next_frame_present_data_blocks_find(self._traj._ptr, step, 0, NULL, & step, & n_blocks, & block_ids)
     #         printf("loop status %d \n", read_stat)
     #         printf("nframe  %ld \n\n", nframe)
+
+cdef class TNGDataBlockHolder:
+    
+    cdef bint debug
+    cdef int64_t _n_blocks
+    cdef dict blocks # should we use a fixed size container
+
+    def __cinit__(self, int64_t n_blocks, bint debug=False):
+        self._n_blocks = n_blocks
+        self.debug = debug
+        self.blocks = {}
+
+    cdef add_block(self, int64_t block_id, TNGDataBlock block):
+        self.blocks[block_id] = block
+    
+    @property
+    def block_set(self):
+        return self.blocks
+
 
 
 cdef class TNGDataBlock:
