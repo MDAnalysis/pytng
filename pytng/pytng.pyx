@@ -517,6 +517,8 @@ cdef class TNGFileIterator:
     cdef dict   _frame_strides
     cdef dict   _n_data_frames
 
+    cdef TNGDataBlockHolder block_holder
+
     def __cinit__(self, fname, mode='r', debug=False):
 
         self._traj = TrajectoryWrapper.from_ptr(self._traj_p, owner=True)
@@ -609,16 +611,25 @@ cdef class TNGFileIterator:
             self._n_frames = -1
 
 
+    @property
+    def block_set(self):
+        return self.block_holder.block_set
+    
+    @property
+    def block_ids(self):
+        return self.block_holder.block_set.keys()
+
+
     def read_frame(self, frame):
         cdef int64_t n_blocks_per_frame = len(self._frame_strides)
-        cdef  block_holder = TNGDataBlockHolder(n_blocks_per_frame, debug=self.debug) 
+        self.block_holder = TNGDataBlockHolder(n_blocks_per_frame, debug=self.debug) 
         for block, stride in self._frame_strides.items():
             if frame % stride != 0:
                 raise IOError("Frame to read must be a multiple of the frame stride for this data block") 
-            self._read_single_frame(frame, block, block_holder)
+            self._read_single_frame(frame, block, self.block_holder)
         if self.debug:
-            print(block_holder.block_set)
-            for k,v in block_holder.block_set.items():
+            print(self.block_holder.block_set)
+            for k,v in self.block_holder.block_set.items():
                 print(k)
                 print(v.values)
 
