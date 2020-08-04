@@ -738,7 +738,7 @@ cdef class TNGDataBlock:
         self.block_is_read = True
 
     cdef _refresh(self): 
-        """Refreshes the TngDataBlock instance so that we can read different blocks into the same instance""""
+        """Refreshes the TngDataBlock instance so that we can read different blocks into the same instance"""
         self.block_id = -1
         self.step = -1
         self.frame_time = -1
