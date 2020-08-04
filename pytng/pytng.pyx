@@ -699,7 +699,6 @@ cdef class TNGDataBlock:
     cdef double precision
     cdef int64_t n_values_per_frame, n_atoms
     cdef char * block_name
-    cdef double * _values
     cdef MemoryWrapper _wrapper # manages the numpy array lifetime
     cdef tng_function_status read_stat
     cdef np.ndarray values # the final values as a numpy array
@@ -719,7 +718,6 @@ cdef class TNGDataBlock:
         self.n_values_per_frame = -1
         self.n_atoms = -1
         self.block_name = <char*> malloc(TNG_MAX_STR_LEN * sizeof(char))
-        self._values = NULL
         self.block_is_read = False # ensures block is read before values can be exposed
 
         self._wrapper = MemoryWrapper(1) #TODO alloc a single byte, this can be changed if the signature of MemoryWrapper is changed
@@ -745,7 +743,6 @@ cdef class TNGDataBlock:
         self.precision = -1
         self.n_values_per_frame = -1
         self.n_atoms = -1
-        self._values = NULL
         self.block_is_read = False
         self._wrapper = MemoryWrapper(1) #TODO alloc a single byte, this can be changed if the signature of MemoryWrapper is changed
 
@@ -758,8 +755,6 @@ cdef class TNGDataBlock:
         return self.values
 
     cdef _close(self):
-        if self._values != NULL:
-            free(self._values)
         free(self.block_name)
 
     cdef void _block_2d_numpy_cast(self, int64_t n_values_per_frame, int64_t n_atoms):
@@ -785,18 +780,17 @@ cdef class TNGDataBlock:
     cdef tng_function_status  _block_read(self, int64_t id):
         """Does the actual block reading"""
         self.block_id = id
-        cdef tng_function_status read_stat = self._get_data_next_frame(self.block_id, & self._values, & self.step, & self.frame_time, & self.n_values_per_frame, & self.n_atoms, & self.precision, self.block_name, self.debug)
+        cdef tng_function_status read_stat = self._get_data_next_frame(self.block_id,  & self.step, & self.frame_time, & self.n_values_per_frame, & self.n_atoms, & self.precision, self.block_name, self.debug)
 
         if self.debug:
             printf("block id %ld \n", self.block_id)
             printf("data block name %s \n", self.block_name)
             printf("n_values_per_frame %ld \n", self.n_values_per_frame)
             printf("n_atoms  %ld \n", self.n_atoms)
-            # for j in range(self.n_values_per_frame * self.n_atoms): NOTE uncomment this if you want the values dumped at the C level
-            #     printf(" %f ", self._values[j])
+
         return read_stat
 
-    cdef tng_function_status _get_data_next_frame(self, int64_t block_id, double ** values, int64_t * step, double * frame_time, int64_t * n_values_per_frame, int64_t * n_atoms, double * prec, char * block_name, bint debug):
+    cdef tng_function_status _get_data_next_frame(self, int64_t block_id,  int64_t * step, double * frame_time, int64_t * n_values_per_frame, int64_t * n_atoms, double * prec, char * block_name, bint debug):
         """Gets the frame data off disk and into C level arrays"""
         cdef tng_function_status stat
         cdef char                datatype = -1
@@ -842,21 +836,14 @@ cdef class TNGDataBlock:
             printf("WARNING: critical data reading failure in tng_data_block_num_values_per_frame_get \n")
             return TNG_CRITICAL
 
-        # this is done in duplicate for now
         self._wrapper.renew(
             sizeof(double) * n_values_per_frame[0] * n_atoms[0])
         _wrapped_values = <double*> self._wrapper.ptr # renew the MemoryWrapper instance to have the right size to hold the data that has come off disk and will be cast to doubles*
-
-        # renew to be right size
-        values[0] = <double*> realloc(values[0], sizeof(double) * n_values_per_frame[0] * n_atoms[0])
 
         if self.debug:
             printf("realloc values array to be %ld  doubles and %ld bits long \n",
                    n_values_per_frame[0] * n_atoms[0], n_values_per_frame[0] * n_atoms[0]*sizeof(double))
 
-        # this is done in duplicate for now
-        self.convert_to_double_arr(
-            data, values[0], n_atoms[0], n_values_per_frame[0], datatype, debug) 
         self.convert_to_double_arr(
             data, _wrapped_values, n_atoms[0], n_values_per_frame[0], datatype, debug) # convert the data that was read off disk into an array of doubles
 
