@@ -1,0 +1,31 @@
+# TNG Example
+made by tng testing code
+* directly from API
+* 15 particles
+* number of steps = 10, stride = 1, number of data frames = 11  
+* Positions 
+
+# Argon NPT
+argon_npt_compressed.tng system derived from gmx physical validation tests
+* run on GMX 2020.2 
+* directly from mdrun
+* 1000 particles 
+* number of steps = 500000, stride = 5000, number of data frames = 101
+* Positions, Box Data
+
+
+# Water NPT Trjconv
+water_npt_compressed_trjconv.tng system derived from gmx physical validation tests
+* run on GMX 2020.2 
+* from mdrun then passed through trjconv
+* 2700 particles 
+* number of steps = 500000, stride = 5000, number of data frames = 101 
+* Positions, Box Data
+
+# Water NPT Forces Vels
+water_npt_uncompressed_vels_forces.tng system derived from gmx physical validation tests
+* run on GMX 2020.2 
+* directly from mdrun
+* 2700 particles 
+* number of steps = 500000, stride = 5000, number of data frames = 101 
+* Positions, Box Data, Forces and Velocities
