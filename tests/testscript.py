@@ -5,4 +5,4 @@ file_iterator.read_frame(0)
 file_iterator.read_frame(10000)
 print(file_iterator.block_set)
 print(file_iterator.block_ids)
-print(file_iterator.block_set[268435457].values)
+print(file_iterator.block_set[268435457].values) #268435457 is the positions block id

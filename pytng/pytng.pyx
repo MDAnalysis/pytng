@@ -517,7 +517,7 @@ cdef class TNGFileIterator:
     cdef dict   _frame_strides
     cdef dict   _n_data_frames
 
-    cdef TNGDataBlockHolder block_holder
+    cdef TNGDataBlockHolder block_holder # holds the current blocks at a trajectory timestep
 
     def __cinit__(self, fname, mode='r', debug=False):
 
@@ -613,20 +613,23 @@ cdef class TNGFileIterator:
 
     @property
     def block_set(self):
+        """Dictionary where keys are available block id and values are TngDataBlock instance"""
         return self.block_holder.block_set
     
     @property
     def block_ids(self):
-        return self.block_holder.block_set.keys()
+        """List of block ids available at the current frame""" 
+        return list(self.block_holder.block_set.keys())
 
 
     def read_frame(self, frame):
-        cdef int64_t n_blocks_per_frame = len(self._frame_strides)
-        self.block_holder = TNGDataBlockHolder(n_blocks_per_frame, debug=self.debug) 
-        for block, stride in self._frame_strides.items():
+        """Read a frame (integrator step) from the file, modifies the state of self.block_holder to contain the current blocks"""
+        self.block_holder = TNGDataBlockHolder(debug=self.debug) 
+        for block, stride in self._frame_strides.items(): #TODO fix this to whatever kind of iteration we want and remove requiremnt for all frames to have same step
             if frame % stride != 0:
                 raise IOError("Frame to read must be a multiple of the frame stride for this data block") 
-            self._read_single_frame(frame, block, self.block_holder)
+            self._read_single_frame(frame, block, self.block_holder) 
+
         if self.debug:
             print(self.block_holder.block_set)
             for k,v in self.block_holder.block_set.items():
@@ -634,7 +637,7 @@ cdef class TNGFileIterator:
                 print(v.values)
 
     cdef tng_function_status _get_frame_indicies(self):     # NOTE here we assume that the first frame has all the blocks that are present in the whole traj
-        
+        """Gets the ids, strides and number of frames with actual data from the trajectory"""
         cdef int64_t step, n_blocks
         cdef int64_t nframes, stride_length
         cdef int64_t block_counter = 0
@@ -649,70 +652,42 @@ cdef class TNGFileIterator:
             read_stat = tng_util_num_frames_with_data_of_block_id_get(self._traj._ptr, block_ids[i], & nframes)
             if read_stat != TNG_SUCCESS:
                 return TNG_CRITICAL
-            self._frame_strides[block_ids[i]] = stride_length
-            self._n_data_frames[block_ids[i]] = nframes
+            self._frame_strides[block_ids[i]] = stride_length # stride length for the block 
+            self._n_data_frames[block_ids[i]] = nframes # number of actual data frames for the block
         
         return TNG_SUCCESS
 
     cdef _read_single_frame(self, int64_t frame, int64_t block_id, TNGDataBlockHolder block_holder):
-        print("READING FRAME {}  \n".format(frame))
-        cdef int64_t _frame = frame
-        cdef int64_t _block_id = block_id
-        cdef int64_t block_step = self._frame_strides[block_id]*_frame
-        cdef block = TNGDataBlock(self._traj, _frame, debug=self.debug)
-        block.block_read(block_id)
-        block_holder.add_block(block_id, block)
+        """Read the current block of a given block id into a TNGDataBlock instance and pops that instance to the block holder"""
+        if self.debug:
+            print("READING FRAME {}  \n".format(frame))
+        cdef block = TNGDataBlock(self._traj, frame, debug=self.debug)
+        block.block_read(block_id) # read the actual block
+        block_holder.add_block(block_id, block) # add the block to the block holder
 
-
-    # def read_all_frames(self):
-    #     self._spool()
-    
-    # cdef _spool(self):
-    #     # outer decl
-    #     cdef int64_t step, n_blocks
-    #     cdef int64_t nframe = 0
-    #     cdef int64_t * block_ids = NULL
-    #     cdef tng_function_status stat = tng_util_trajectory_next_frame_present_data_blocks_find(self._traj._ptr, -1, 0, NULL, & step, & n_blocks, & block_ids)
-    #     if stat != TNG_SUCCESS:
-    #         raise Exception("cannot find the number of blocks")
-
-    #     cdef int64_t block_counter = 0
-    #     cdef tng_function_status read_stat = TNG_SUCCESS
-    #     cdef block = TNGDataBlock(self._traj, debug=False)
-
-    #     while (read_stat == TNG_SUCCESS):
-    #         for i in range(n_blocks):
-    #             block_counter += 1
-    #             block.block_read(block_ids[i])
-    #             printf("block_count %ld \n", block_counter)
-    #             # print(block.values)
-
-    #         nframe += 1
-    #         read_stat = tng_util_trajectory_next_frame_present_data_blocks_find(self._traj._ptr, step, 0, NULL, & step, & n_blocks, & block_ids)
-    #         printf("loop status %d \n", read_stat)
-    #         printf("nframe  %ld \n\n", nframe)
 
 cdef class TNGDataBlockHolder:
+    """Holds data blocks at the curent trajectory step"""
     
     cdef bint debug
     cdef int64_t _n_blocks
-    cdef dict blocks # should we use a fixed size container
+    cdef dict blocks # should we use a fixed size container given speed is crucial
 
-    def __cinit__(self, int64_t n_blocks, bint debug=False):
-        self._n_blocks = n_blocks
+    def __cinit__(self, bint debug=False):
         self.debug = debug
         self.blocks = {}
 
     cdef add_block(self, int64_t block_id, TNGDataBlock block):
-        self.blocks[block_id] = block
+        self.blocks[block_id] = block # add the block to the block dictionary
     
     @property
-    def block_set(self):
-        return self.blocks
+    def block_set(self): 
+        return self.blocks # expose blocks to python layer
 
 
 
 cdef class TNGDataBlock:
+    """Contains the actual data in a tng_data_block and exposes it as a Numpy array"""
 
     cdef tng_trajectory * _traj
     cdef int64_t _frame
@@ -725,9 +700,9 @@ cdef class TNGDataBlock:
     cdef int64_t n_values_per_frame, n_atoms
     cdef char * block_name
     cdef double * _values
-    cdef MemoryWrapper _wrapper
+    cdef MemoryWrapper _wrapper # manages the numpy array lifetime
     cdef tng_function_status read_stat
-    cdef np.ndarray values
+    cdef np.ndarray values # the final values as a numpy array
 
     cdef bint block_is_read
 
@@ -745,14 +720,15 @@ cdef class TNGDataBlock:
         self.n_atoms = -1
         self.block_name = <char*> malloc(TNG_MAX_STR_LEN * sizeof(char))
         self._values = NULL
-        self.block_is_read = False
+        self.block_is_read = False # ensures block is read before values can be exposed
 
-        self._wrapper = MemoryWrapper(1) # alloc a single byte, this can be changed if the signature of MemoryWrapper is changed
+        self._wrapper = MemoryWrapper(1) #TODO alloc a single byte, this can be changed if the signature of MemoryWrapper is changed
 
     def __dealloc__(self):
         self._close()
 
-    def block_read(self, id):  # NOTE does this have to be python 
+    def block_read(self, id):  # TODO does this have to be python
+        """Reads the block off file"""
         cdef tng_function_status stat
         self._refresh()
         stat = self._block_read(id)
@@ -761,7 +737,8 @@ cdef class TNGDataBlock:
         self._block_2d_numpy_cast(self.n_values_per_frame, self.n_atoms)
         self.block_is_read = True
 
-    cdef _refresh(self): #need to refresh these values and should not call constructor again
+    cdef _refresh(self): 
+        """Refreshes the TngDataBlock instance so that we can read different blocks into the same instance""""
         self.block_id = -1
         self.step = -1
         self.frame_time = -1
@@ -770,11 +747,11 @@ cdef class TNGDataBlock:
         self.n_atoms = -1
         self._values = NULL
         self.block_is_read = False
-        self._wrapper = MemoryWrapper(1) # alloc a single byte, this can be changed if the signature of MemoryWrapper is changed
+        self._wrapper = MemoryWrapper(1) #TODO alloc a single byte, this can be changed if the signature of MemoryWrapper is changed
 
     @property
     def values(self):
-        "the values of the block"
+        """the values of the block"""
         if not self.block_is_read:
             raise IOError(
                 'Block values are not available until the block_read() method has been called')
@@ -786,6 +763,7 @@ cdef class TNGDataBlock:
         free(self.block_name)
 
     cdef void _block_2d_numpy_cast(self, int64_t n_values_per_frame, int64_t n_atoms):
+        """Casts the block to a 2D Numpy array whose lifetime is managed by an associated MemoryWrapper instance"""
         if self.debug:
             printf("CREATING NUMPY_ARRAY \n")
         if n_values_per_frame == -1 or n_atoms == -1:
@@ -805,6 +783,7 @@ cdef class TNGDataBlock:
             print(self.values)
 
     cdef tng_function_status  _block_read(self, int64_t id):
+        """Does the actual block reading"""
         self.block_id = id
         cdef tng_function_status read_stat = self._get_data_next_frame(self.block_id, & self._values, & self.step, & self.frame_time, & self.n_values_per_frame, & self.n_atoms, & self.precision, self.block_name, self.debug)
 
@@ -813,12 +792,12 @@ cdef class TNGDataBlock:
             printf("data block name %s \n", self.block_name)
             printf("n_values_per_frame %ld \n", self.n_values_per_frame)
             printf("n_atoms  %ld \n", self.n_atoms)
-            # for j in range(self.n_values_per_frame * self.n_atoms):
+            # for j in range(self.n_values_per_frame * self.n_atoms): NOTE uncomment this if you want the values dumped at the C level
             #     printf(" %f ", self._values[j])
         return read_stat
 
     cdef tng_function_status _get_data_next_frame(self, int64_t block_id, double ** values, int64_t * step, double * frame_time, int64_t * n_values_per_frame, int64_t * n_atoms, double * prec, char * block_name, bint debug):
-
+        """Gets the frame data off disk and into C level arrays"""
         cdef tng_function_status stat
         cdef char                datatype = -1
         cdef int64_t             codec_id
@@ -838,36 +817,35 @@ cdef class TNGDataBlock:
         if stat != TNG_SUCCESS:
             raise Exception("cannot get block_name")
 
-        stat = tng_data_block_dependency_get(self._traj, block_id, & block_dependency)
+        stat = tng_data_block_dependency_get(self._traj, block_id, & block_dependency) # is this a particle dependent block?
         if stat != TNG_SUCCESS:
             raise Exception("cannot get block_dependency")
 
-        # bitwise & due to enum defs
-        if block_dependency.__and__(TNG_PARTICLE_DEPENDENT):
+        if block_dependency.__and__(TNG_PARTICLE_DEPENDENT): # bitwise & due to enum defs
             if debug:
                 printf("reading particle data \n")
             tng_num_particles_get(self._traj, n_atoms)
-            stat = tng_gen_data_vector_interval_get(self._traj, block_id, TNG_TRUE, self._frame, self._frame , TNG_USE_HASH,  & data, & n_particles, & stride_length, n_values_per_frame, & datatype)
+            stat = tng_gen_data_vector_interval_get(self._traj, block_id, TNG_TRUE, self._frame, self._frame , TNG_USE_HASH,  & data, & n_particles, & stride_length, n_values_per_frame, & datatype) # read particle data off disk with hash checking
         else:
             if debug:
                 printf("reading NON particle data \n")
             n_atoms[0] = 1  # still used for some allocs
-            stat = tng_gen_data_vector_interval_get(self._traj, block_id, TNG_FALSE, self._frame, self._frame, TNG_USE_HASH,  & data, NULL, & stride_length, n_values_per_frame, & datatype)
+            stat = tng_gen_data_vector_interval_get(self._traj, block_id, TNG_FALSE, self._frame, self._frame, TNG_USE_HASH,  & data, NULL, & stride_length, n_values_per_frame, & datatype) # read non particle data off disk with hash checking
 
         if stat != TNG_SUCCESS:
-            printf("critical data reading failure in tng_gen_data_vector_get \n")
+            printf("WARNING: critical data reading failure in tng_gen_data_vector_get \n") 
             return TNG_CRITICAL
 
         stat = tng_data_block_num_values_per_frame_get(
             self._traj, block_id, n_values_per_frame)
         if stat == TNG_CRITICAL:
-            printf("critical data reading failure in tng_data_block_num_values_per_frame_get \n")
+            printf("WARNING: critical data reading failure in tng_data_block_num_values_per_frame_get \n")
             return TNG_CRITICAL
 
         # this is done in duplicate for now
         self._wrapper.renew(
             sizeof(double) * n_values_per_frame[0] * n_atoms[0])
-        _wrapped_values = <double*> self._wrapper.ptr
+        _wrapped_values = <double*> self._wrapper.ptr # renew the MemoryWrapper instance to have the right size to hold the data that has come off disk and will be cast to doubles*
 
         # renew to be right size
         values[0] = <double*> realloc(values[0], sizeof(double) * n_values_per_frame[0] * n_atoms[0])
@@ -878,14 +856,16 @@ cdef class TNGDataBlock:
 
         # this is done in duplicate for now
         self.convert_to_double_arr(
-            data, values[0], n_atoms[0], n_values_per_frame[0], datatype, debug)
+            data, values[0], n_atoms[0], n_values_per_frame[0], datatype, debug) 
         self.convert_to_double_arr(
-            data, _wrapped_values, n_atoms[0], n_values_per_frame[0], datatype, debug)
+            data, _wrapped_values, n_atoms[0], n_values_per_frame[0], datatype, debug) # convert the data that was read off disk into an array of doubles
 
-        tng_util_frame_current_compression_get(self._traj, block_id, & codec_id, & local_prec)
+        stat = tng_util_frame_current_compression_get(self._traj, block_id, & codec_id, & local_prec) # get the compression of the current frame
+        if stat == TNG_CRITICAL:
+            printf("WARNING: critical data reading failure in tng_util_frame_current_compression_get \n")
+            return TNG_CRITICAL
 
         if codec_id != TNG_TNG_COMPRESSION:
-
             prec[0] = -1.0
         else:
             prec[0] = local_prec
@@ -895,14 +875,20 @@ cdef class TNGDataBlock:
         return TNG_SUCCESS
 
     cdef void convert_to_double_arr(self, void * source, double * to, const int n_atoms, const int n_vals, const char datatype, bint debug):
-        # do we need to account for changes in the decl of double etc ie is this likely to be portable?.
-        # a lot of this is a bit redundant but could be used to differntiate casts to numpy arrays etc in the future
+        """ Convert a void array that was just read off disk into an array of doubles
+
+            NOTES:
+            - this should use memcpy but doesn't yet
+            - do we need to account for changes in the decl of double etc ie is this likely to be portable?.
+            - a lot of this is a bit redundant but could be used to differntiate casts to numpy arrays etc in the future.
+        
+        """
         cdef int i, j
 
         if datatype == TNG_FLOAT_DATA:
             for i in range(n_atoms):
                 for j in range(n_vals):
-                    to[i*n_vals + j ] = (< float*>source)[i * n_vals + j] #NOTE do we explicitly need to use reinterpret_cast ??
+                    to[i*n_vals + j ] = (< float*>source)[i * n_vals + j]  # redundant but could be changed later
             #memcpy(to,  source, n_vals * sizeof(float) * n_atoms)
 
         elif datatype == TNG_INT_DATA:
@@ -914,15 +900,14 @@ cdef class TNGDataBlock:
         elif datatype == TNG_DOUBLE_DATA:
             for i in range(n_atoms):
                 for j in range(n_vals):
-                    to[i*n_vals + j ] = (< double*>source)[i * n_vals + j] # should probs use memcpy
+                    to[i*n_vals + j ] = (< double*>source)[i * n_vals + j] 
             #memcpy(to, source, n_vals * sizeof(double) * n_atoms)
 
         elif datatype == TNG_CHAR_DATA:
-            raise NotImplementedError("char data reading is not implemented")
+            printf("WARNING: char data reading is not implemented \n") #NOTE not implemented in TNG library either
 
-        else:  # the default is meant to be double
-            # TODO currently non particle block data isnt working
-            printf(" WARNING type %d not understood \n", datatype)
+        else:
+            printf("WARNING: block data type %d not understood \n", datatype)
 
 
 cdef class TNGFile:
