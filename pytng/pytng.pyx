@@ -810,10 +810,8 @@ cdef class TNGFileIterator:
         """Read a frame (integrator step) from the file, modifies the state of self.block_holder to contain the current blocks"""
         self.block_holder = TNGDataBlockHolder(debug=self.debug) 
         for block, stride in self._frame_strides.items(): #TODO fix this to whatever kind of iteration we want and remove requiremnt for all frames to have same step
-            if frame % stride != 0:
-                pass #raise IOError("Frame to read must be a multiple of the frame stride for this data block")
-            else: 
-                self._read_single_frame(frame, block, self.block_holder) 
+            if frame % stride == 0:
+                self._read_single_frame(frame, block, self.block_holder)  # read the frame if we are on stride
 
         if self.debug:
             print(self.block_holder.block_set)
