@@ -811,8 +811,9 @@ cdef class TNGFileIterator:
         self.block_holder = TNGDataBlockHolder(debug=self.debug) 
         for block, stride in self._frame_strides.items(): #TODO fix this to whatever kind of iteration we want and remove requiremnt for all frames to have same step
             if frame % stride != 0:
-                raise IOError("Frame to read must be a multiple of the frame stride for this data block") 
-            self._read_single_frame(frame, block, self.block_holder) 
+                pass #raise IOError("Frame to read must be a multiple of the frame stride for this data block")
+            else: 
+                self._read_single_frame(frame, block, self.block_holder) 
 
         if self.debug:
             print(self.block_holder.block_set)
@@ -839,9 +840,9 @@ cdef class TNGFileIterator:
             self._frame_strides[block_ids[i]] = stride_length # stride length for the block 
             self._n_data_frames[block_ids[i]] = nframes # number of actual data frames for the block
         
-        self._gcd = gcd_list(list(self._frame_strides.values()))
+        self._gcd = gcd_list(list(self._frame_strides.values())) #TODO we will use this if we want to instead iterate over the greatest common divisor of the data strides
         if self.debug:
-            printf("greatest common divisor of strides %ld \n", self._gcd)
+            printf("greatest common divisor of strides %ld \n", self._gcd) 
 
         return TNG_SUCCESS
 
