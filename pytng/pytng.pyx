@@ -647,6 +647,8 @@ cdef class TNGFileIterator:
 
     cdef int64_t _current_frame
     cdef int64_t _current_frame_set
+    cdef int64_t _gcd # greatest common divisor of data strides
+
     cdef dict   _frame_strides
     cdef dict   _n_data_frames
 
@@ -664,6 +666,7 @@ cdef class TNGFileIterator:
         self._distance_scale = 0.0
         self._current_frame = -1
         self._current_frame_set = -1
+        self._gcd = -1
         self._frame_strides = {}
         self._n_data_frames = {}
 
@@ -836,6 +839,10 @@ cdef class TNGFileIterator:
             self._frame_strides[block_ids[i]] = stride_length # stride length for the block 
             self._n_data_frames[block_ids[i]] = nframes # number of actual data frames for the block
         
+        self._gcd = gcd_list(list(self._frame_strides.values()))
+        if self.debug:
+            printf("greatest common divisor of strides %ld \n", self._gcd)
+
         return TNG_SUCCESS
 
     cdef _read_single_frame(self, int64_t frame, int64_t block_id, TNGDataBlockHolder block_holder):
