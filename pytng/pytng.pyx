@@ -651,6 +651,7 @@ cdef class TNGFileIterator:
     cdef dict   _n_data_frames
 
     cdef TNGDataBlockHolder block_holder # holds the current blocks at a trajectory timestep
+    cdef TNGBlockTypes BLOCK_TYPES
 
     def __cinit__(self, fname, mode='r', debug=False):
 
@@ -665,6 +666,8 @@ cdef class TNGFileIterator:
         self._current_frame_set = -1
         self._frame_strides = {}
         self._n_data_frames = {}
+
+        self.BLOCK_TYPES = TNGBlockTypes() # the mappings of block ids to block names and vice versa
 
         self._open(self.fname, mode)
 
@@ -744,16 +747,56 @@ cdef class TNGFileIterator:
             self._n_frames = -1
 
 
+    # @property
+    # def block_set(self): #NOTE perhaps we should not expose this
+    #     """Dictionary where keys are available block id and values are TngDataBlock instance"""
+    #     return self.block_holder.block_set
+    
+    # @property
+    # def block_ids(self): #NOTE perhaps we should not expose this
+    #     """List of block ids available at the current frame""" 
+    #     return list(self.block_holder.block_set.keys())
+    
+    @property 
+    def block_names(self):
+        """List of block names available at the current frame (unordered)"""
+        block_ids = list(self.block_holder.block_set.keys())
+        return [self.BLOCK_TYPES.block_dictionary[id] for id in block_ids]
+    
+    def get_block_by_name(self, name):
+        if self.block_holder.block_set.get(self.BLOCK_TYPES.block_id_dictionary[name]) == None:
+            return None 
+        else:
+            return self.block_holder.block_set.get(self.BLOCK_TYPES.block_id_dictionary[name]).values
+
+        
     @property
-    def block_set(self):
-        """Dictionary where keys are available block id and values are TngDataBlock instance"""
-        return self.block_holder.block_set
+    def pos(self):
+        if self.block_holder.block_set.get(TNG_TRAJ_POSITIONS) == None:
+            return None
+        else:
+            return self.block_holder.block_set.get(TNG_TRAJ_POSITIONS).values
+
+    @property
+    def vel(self):
+        if self.block_holder.block_set.get(TNG_TRAJ_VELOCITIES) == None:
+            return None
+        else:
+            return self.block_holder.block_set.get(TNG_TRAJ_VELOCITIES).values
+
+    @property
+    def frc(self):
+        if self.block_holder.block_set.get(TNG_TRAJ_FORCES) == None:
+            return None
+        else:
+            return self.block_holder.block_set.get(TNG_TRAJ_FORCES).values
     
     @property
-    def block_ids(self):
-        """List of block ids available at the current frame""" 
-        return list(self.block_holder.block_set.keys())
-
+    def box(self):
+        if self.block_holder.block_set.get(TNG_TRAJ_BOX_SHAPE) == None:
+            return None
+        else:
+            return self.block_holder.block_set.get(TNG_TRAJ_BOX_SHAPE).values
 
     def read_frame(self, frame):
         """Read a frame (integrator step) from the file, modifies the state of self.block_holder to contain the current blocks"""
@@ -1144,6 +1187,15 @@ cdef class TNGBlockTypes:
 
         # reverse the mapping
         self.block_id_dictionary = {v:k for k,v in self.block_dictionary.items()}
+    
+
+    @property
+    def block_dictionary(self):
+        return self.block_dictionary
+    
+    @property
+    def block_id_dictionary(self):
+        return self.block_id_dictionary
 
 
 
