@@ -767,8 +767,13 @@ cdef class TNGFileIterator:
         if self.block_holder.block_set.get(self.BLOCK_TYPES.block_id_dictionary[name]) == None:
             return None 
         else:
+            return self.block_holder.block_set.get(self.BLOCK_TYPES.block_id_dictionary[name])
+    
+    def get_block_values_by_name(self, name):
+        if self.block_holder.block_set.get(self.BLOCK_TYPES.block_id_dictionary[name]) == None:
+            return None 
+        else:
             return self.block_holder.block_set.get(self.BLOCK_TYPES.block_id_dictionary[name]).values
-
         
     @property
     def pos(self):
