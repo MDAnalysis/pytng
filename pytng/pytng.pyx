@@ -747,15 +747,15 @@ cdef class TNGFileIterator:
             self._n_frames = -1
 
 
-    # @property
-    # def block_set(self): #NOTE perhaps we should not expose this
-    #     """Dictionary where keys are available block id and values are TngDataBlock instance"""
-    #     return self.block_holder.block_set
+    @property
+    def block_set(self): #NOTE perhaps we should not expose this
+        """Dictionary where keys are available block id and values are TngDataBlock instance"""
+        return self.block_holder.block_set
     
-    # @property
-    # def block_ids(self): #NOTE perhaps we should not expose this
-    #     """List of block ids available at the current frame""" 
-    #     return list(self.block_holder.block_set.keys())
+    @property
+    def block_ids(self): #NOTE perhaps we should not expose this
+        """List of block ids available at the current frame""" 
+        return list(self.block_holder.block_set.keys())
     
     @property 
     def block_names(self):
