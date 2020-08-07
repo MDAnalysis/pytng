@@ -885,7 +885,7 @@ cdef class TNGDataBlock:
     cdef double frame_time
     cdef double precision
     cdef int64_t n_values_per_frame, n_atoms
-    cdef char * block_name
+    cdef char[TNG_MAX_STR_LEN] block_name
     cdef MemoryWrapper _wrapper # manages the numpy array lifetime
     cdef tng_function_status read_stat
     cdef np.ndarray values # the final values as a numpy array
@@ -904,7 +904,6 @@ cdef class TNGDataBlock:
         self.precision = -1
         self.n_values_per_frame = -1
         self.n_atoms = -1
-        self.block_name = <char*> malloc(TNG_MAX_STR_LEN * sizeof(char))
         self.block_is_read = False # ensures block is read before values can be exposed
 
         self._wrapper = MemoryWrapper(1) #TODO alloc a single byte, this can be changed if the signature of MemoryWrapper is changed
@@ -942,8 +941,8 @@ cdef class TNGDataBlock:
         return self.values
 
     cdef _close(self):
-        free(self.block_name)
-
+        pass
+        
     cdef void _block_2d_numpy_cast(self, int64_t n_values_per_frame, int64_t n_atoms):
         """Casts the block to a 2D Numpy array whose lifetime is managed by an associated MemoryWrapper instance"""
         if self.debug:
