@@ -981,7 +981,7 @@ cdef class TNGDataBlock:
         cdef tng_function_status stat
         cdef char                datatype = -1
         cdef int64_t             codec_id
-        cdef int                 block_dependency
+        cdef int             block_dependency
         cdef void * data = NULL
         cdef double              local_prec
         cdef int64_t             n_particles
@@ -1001,7 +1001,10 @@ cdef class TNGDataBlock:
         if stat != TNG_SUCCESS:
             return TNG_CRITICAL
 
-        if block_dependency.__and__(TNG_PARTICLE_DEPENDENT): # bitwise & due to enum defs
+        if debug:
+            printf("BLOCK DEPS %d \n", block_dependency)
+
+        if block_dependency&TNG_PARTICLE_DEPENDENT: # bitwise & due to enum defs
             if debug:
                 printf("reading particle data \n")
             tng_num_particles_get(self._traj, n_atoms)
