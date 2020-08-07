@@ -991,64 +991,60 @@ cdef class TNGDataBlock:
         cdef int TNG_FRAME_DEPENDENT = 1
         # Flag to indicate particle dependent data.
         cdef int  TNG_PARTICLE_DEPENDENT = 2
+        with nogil: # GIL should be released for IO
+            stat = tng_data_block_name_get(
+                self._traj, block_id, block_name, TNG_MAX_STR_LEN)
+            if stat != TNG_SUCCESS:
+                return TNG_CRITICAL
 
-        stat = tng_data_block_name_get(
-            self._traj, block_id, block_name, TNG_MAX_STR_LEN)
-        if stat != TNG_SUCCESS:
-            return TNG_CRITICAL
-
-        stat = tng_data_block_dependency_get(self._traj, block_id, & block_dependency) # is this a particle dependent block?
-        if stat != TNG_SUCCESS:
-            return TNG_CRITICAL
-
-        if debug:
-            printf("BLOCK DEPS %d \n", block_dependency)
-
-        if block_dependency&TNG_PARTICLE_DEPENDENT: # bitwise & due to enum defs
+            stat = tng_data_block_dependency_get(self._traj, block_id, & block_dependency) # is this a particle dependent block?
+            if stat != TNG_SUCCESS:
+                return TNG_CRITICAL
             if debug:
-                printf("reading particle data \n")
-            tng_num_particles_get(self._traj, n_atoms)
-            stat = tng_gen_data_vector_interval_get(self._traj, block_id, TNG_TRUE, self._frame, self._frame , TNG_USE_HASH,  & data, & n_particles, & stride_length, n_values_per_frame, & datatype) # read particle data off disk with hash checking
-        else:
-            if debug:
-                printf("reading NON particle data \n")
-            n_atoms[0] = 1  # still used for some allocs
-            stat = tng_gen_data_vector_interval_get(self._traj, block_id, TNG_FALSE, self._frame, self._frame, TNG_USE_HASH,  & data, NULL, & stride_length, n_values_per_frame, & datatype) # read non particle data off disk with hash checking
+                printf("BLOCK DEPS %d \n", block_dependency)
 
-        if stat != TNG_SUCCESS:
-            #printf("WARNING: critical data reading failure in tng_gen_data_vector_get \n") 
-            return TNG_CRITICAL
+            if block_dependency&TNG_PARTICLE_DEPENDENT: # bitwise & due to enum defs
+                if debug:
+                    printf("reading particle data \n")
+                tng_num_particles_get(self._traj, n_atoms)
+                stat = tng_gen_data_vector_interval_get(self._traj, block_id, TNG_TRUE, self._frame, self._frame , TNG_USE_HASH,  & data, & n_particles, & stride_length, n_values_per_frame, & datatype) # read particle data off disk with hash checking
+            else:
+                if debug:
+                    printf("reading NON particle data \n")
+                n_atoms[0] = 1  # still used for some allocs
+                stat = tng_gen_data_vector_interval_get(self._traj, block_id, TNG_FALSE, self._frame, self._frame, TNG_USE_HASH,  & data, NULL, & stride_length, n_values_per_frame, & datatype) # read non particle data off disk with hash checking
 
-        stat = tng_data_block_num_values_per_frame_get(
-            self._traj, block_id, n_values_per_frame)
-        if stat == TNG_CRITICAL:
-            printf("WARNING: critical data reading failure in tng_data_block_num_values_per_frame_get \n")
-            return TNG_CRITICAL
+            if stat != TNG_SUCCESS:
+                printf("WARNING: critical data reading failure in tng_gen_data_vector_get \n") 
+                return TNG_CRITICAL
 
-        self._wrapper.renew(
-            sizeof(double) * n_values_per_frame[0] * n_atoms[0])
+            stat = tng_data_block_num_values_per_frame_get(self._traj, block_id, n_values_per_frame)
+            if stat == TNG_CRITICAL:
+                printf("WARNING: critical data reading failure in tng_data_block_num_values_per_frame_get \n")
+                return TNG_CRITICAL
+
+        self._wrapper.renew(sizeof(double) * n_values_per_frame[0] * n_atoms[0]) #TODO can this be moved NOGIL
         _wrapped_values = <double*> self._wrapper.ptr # renew the MemoryWrapper instance to have the right size to hold the data that has come off disk and will be cast to doubles*
 
         if self.debug:
             printf("realloc values array to be %ld  doubles and %ld bits long \n",
                    n_values_per_frame[0] * n_atoms[0], n_values_per_frame[0] * n_atoms[0]*sizeof(double))
+        with nogil:
+            self.convert_to_double_arr(
+                data, _wrapped_values, n_atoms[0], n_values_per_frame[0], datatype, debug) # convert the data that was read off disk into an array of doubles
+            stat = tng_util_frame_current_compression_get(self._traj, block_id, & codec_id, & local_prec) # get the compression of the current frame
+            if stat == TNG_CRITICAL:
+                printf("WARNING: critical data reading failure in tng_util_frame_current_compression_get \n")
+                return TNG_CRITICAL
 
-        self.convert_to_double_arr(
-            data, _wrapped_values, n_atoms[0], n_values_per_frame[0], datatype, debug) # convert the data that was read off disk into an array of doubles
+            if codec_id != TNG_TNG_COMPRESSION:
+                prec[0] = -1.0
+            else:
+                prec[0] = local_prec
 
-        stat = tng_util_frame_current_compression_get(self._traj, block_id, & codec_id, & local_prec) # get the compression of the current frame
-        if stat == TNG_CRITICAL:
-            printf("WARNING: critical data reading failure in tng_util_frame_current_compression_get \n")
-            return TNG_CRITICAL
-
-        if codec_id != TNG_TNG_COMPRESSION:
-            prec[0] = -1.0
-        else:
-            prec[0] = local_prec
-
-        # free local data
-        free(data)
-        return TNG_SUCCESS
+            # free local data
+            free(data)
+            return TNG_SUCCESS
 
     cdef void convert_to_double_arr(self, void * source, double * to, const int n_atoms, const int n_vals, const char datatype, bint debug) nogil:
         """ Convert a void array that was just read off disk into an array of doubles
