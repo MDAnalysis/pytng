@@ -421,75 +421,75 @@ cdef extern from "tng/tng_io.h":
     tng_function_status tng_util_trajectory_open(
         const char * filename,
         const char mode,
-        tng_trajectory * * tng_data_p)
+        tng_trajectory * * tng_data_p) nogil
 
     tng_function_status tng_util_trajectory_close(
-        tng_trajectory * * tng_data_p)
+        tng_trajectory * * tng_data_p) nogil
 
     tng_function_status tng_num_frames_get(
         const tng_trajectory * tng_data,
-        int64_t * n)
+        int64_t * n) nogil
 
     tng_function_status tng_num_particles_get(
         const tng_trajectory * tng_data,
-        int64_t * n)
+        int64_t * n) nogil
 
     tng_function_status tng_distance_unit_exponential_get(
         const tng_trajectory * tng_data,
-        int64_t * exp)
+        int64_t * exp) nogil
 
     tng_function_status tng_util_pos_read_range(
         const tng_trajectory * tng_data,
         const int64_t first_frame,
         const int64_t last_frame,
         float ** positions,
-        int64_t * stride_length)
+        int64_t * stride_length) nogil
 
     tng_function_status tng_util_box_shape_read_range(
         const tng_trajectory * tng_data,
         const int64_t first_frame,
         const int64_t last_frame,
         float ** box_shape,
-        int64_t * stride_length)
+        int64_t * stride_length) nogil
 
     tng_function_status tng_util_vel_read_range(
         const tng_trajectory * tng_data,
         const int64_t first_frame,
         const int64_t last_frame,
         float ** velocities,
-        int64_t * stride_length)
+        int64_t * stride_length) nogil
 
     tng_function_status tng_util_force_read_range(
         const tng_trajectory * tng_data,
         const int64_t first_frame,
         const int64_t last_frame,
         float ** forces,
-        int64_t * stride_length)
+        int64_t * stride_length) nogil
 
     tng_function_status tng_util_pos_read(
         const tng_trajectory * tng_data,
         float ** positions,
-        int64_t * stride_length)
+        int64_t * stride_length) nogil
 
     tng_function_status tng_util_box_shape_read(
         const tng_trajectory * tng_data,
         float ** box_shape,
-        int64_t * stride_length)
+        int64_t * stride_length) nogil
 
     tng_function_status tng_util_vel_read(
         const tng_trajectory * tng_data,
         float ** velocities,
-        int64_t * stride_length)
+        int64_t * stride_length) nogil
 
     tng_function_status tng_util_force_read(
         const tng_trajectory * tng_data,
         float ** forces,
-        int64_t * stride_length)
+        int64_t * stride_length) nogil
 
     tng_function_status tng_util_time_of_frame_get(
         const tng_trajectory * tng_data,
         const int64_t frame_nr,
-        double * time)
+        double * time) nogil
 
     tng_function_status tng_data_vector_interval_get(
         const tng_trajectory * tng_data,
@@ -500,41 +500,41 @@ cdef extern from "tng/tng_io.h":
         void ** values,
         int64_t * stride_length,
         int64_t * n_values_per_frame,
-        char * type)
+        char * type) nogil
 
     tng_function_status  tng_block_read_next(tng_trajectory * tng_data,
                                              tng_gen_block * block_data,
-                                             char             hash_mode)
+                                             char             hash_mode) nogil
 
-    tng_function_status tng_block_init(tng_gen_block ** block_p)
+    tng_function_status tng_block_init(tng_gen_block ** block_p) nogil
 
-    tng_function_status tng_block_header_read(tng_trajectory * tng_data, tng_gen_block * block)
+    tng_function_status tng_block_header_read(tng_trajectory * tng_data, tng_gen_block * block) nogil
 
-    tng_function_status tng_num_frame_sets_get(tng_trajectory * tng_data, int64_t * n)
+    tng_function_status tng_num_frame_sets_get(tng_trajectory * tng_data, int64_t * n) nogil
 
-    tng_function_status tng_block_destroy(tng_gen_block ** block_p)
+    tng_function_status tng_block_destroy(tng_gen_block ** block_p) nogil
 
-    tng_function_status tng_data_get_stride_length(tng_trajectory * tng_data, int64_t block_id, int64_t frame, int64_t * stride_length)
+    tng_function_status tng_data_get_stride_length(tng_trajectory * tng_data, int64_t block_id, int64_t frame, int64_t * stride_length) nogil
 
-    tng_function_status tng_util_trajectory_next_frame_present_data_blocks_find(tng_trajectory * tng_data, int64_t current_frame, int64_t n_requested_data_block_ids, int64_t * requested_data_block_ids, int64_t * next_frame, int64_t * n_data_blocks_in_next_frame, int64_t ** data_block_ids_in_next_frame)
+    tng_function_status tng_util_trajectory_next_frame_present_data_blocks_find(tng_trajectory * tng_data, int64_t current_frame, int64_t n_requested_data_block_ids, int64_t * requested_data_block_ids, int64_t * next_frame, int64_t * n_data_blocks_in_next_frame, int64_t ** data_block_ids_in_next_frame) nogil
 
-    tng_function_status tng_data_block_name_get(tng_trajectory * tng_data, const int64_t block_id, char * name, const int   max_len)
+    tng_function_status tng_data_block_name_get(tng_trajectory * tng_data, const int64_t block_id, char * name, const int   max_len) nogil
 
-    tng_function_status tng_data_block_dependency_get(tng_trajectory * tng_data, const int64_t block_id, int * block_dependency)
+    tng_function_status tng_data_block_dependency_get(tng_trajectory * tng_data, const int64_t block_id, int * block_dependency) nogil
 
-    tng_function_status tng_util_particle_data_next_frame_read(tng_trajectory * tng_data, const int64_t block_id, void ** values, char * data_type, int64_t * retrieved_frame_number, double * retrieved_time)
+    tng_function_status tng_util_particle_data_next_frame_read(tng_trajectory * tng_data, const int64_t block_id, void ** values, char * data_type, int64_t * retrieved_frame_number, double * retrieved_time) nogil
 
-    tng_function_status tng_util_non_particle_data_next_frame_read(tng_trajectory * tng_data, const int64_t block_id, void ** values, char * data_type, int64_t * retrieved_frame_number, double * retrieved_time)
+    tng_function_status tng_util_non_particle_data_next_frame_read(tng_trajectory * tng_data, const int64_t block_id, void ** values, char * data_type, int64_t * retrieved_frame_number, double * retrieved_time) nogil
 
-    tng_function_status tng_data_block_num_values_per_frame_get(tng_trajectory * tng_data,  int64_t block_id, int64_t * n_values_per_frame)
+    tng_function_status tng_data_block_num_values_per_frame_get(tng_trajectory * tng_data,  int64_t block_id, int64_t * n_values_per_frame) nogil
 
-    tng_function_status tng_util_frame_current_compression_get(tng_trajectory * tng_data, int64_t block_id, int64_t * codec_id, double * factor)
+    tng_function_status tng_util_frame_current_compression_get(tng_trajectory * tng_data, int64_t block_id, int64_t * codec_id, double * factor) nogil
 
-    tng_function_status tng_data_get_stride_length(tng_trajectory * tng_data, int64_t block_id, int64_t frame, int64_t * stride_length)
+    tng_function_status tng_data_get_stride_length(tng_trajectory * tng_data, int64_t block_id, int64_t frame, int64_t * stride_length) nogil
 
-    tng_function_status tng_util_num_frames_with_data_of_block_id_get(tng_trajectory * tng_data,  int64_t block_id,  int64_t * n_frames)
+    tng_function_status tng_util_num_frames_with_data_of_block_id_get(tng_trajectory * tng_data,  int64_t block_id,  int64_t * n_frames) nogil
 
-    tng_function_status tng_gen_data_vector_interval_get(tng_trajectory * tng_data, const int64_t  block_id, const tng_bool is_particle_data, const int64_t  start_frame_nr, const int64_t end_frame_nr, const char  hash_mode, void ** values, int64_t * n_particles, int64_t * stride_length, int64_t * n_values_per_frame, char * type)
+    tng_function_status tng_gen_data_vector_interval_get(tng_trajectory * tng_data, const int64_t  block_id, const tng_bool is_particle_data, const int64_t  start_frame_nr, const int64_t end_frame_nr, const char  hash_mode, void ** values, int64_t * n_particles, int64_t * stride_length, int64_t * n_values_per_frame, char * type) nogil
 
 TNGFrame = namedtuple("TNGFrame", "positions velocities forces time step box ")
 
@@ -942,7 +942,7 @@ cdef class TNGDataBlock:
 
     cdef _close(self):
         pass
-        
+
     cdef void _block_2d_numpy_cast(self, int64_t n_values_per_frame, int64_t n_atoms):
         """Casts the block to a 2D Numpy array whose lifetime is managed by an associated MemoryWrapper instance"""
         if self.debug:
@@ -995,11 +995,11 @@ cdef class TNGDataBlock:
         stat = tng_data_block_name_get(
             self._traj, block_id, block_name, TNG_MAX_STR_LEN)
         if stat != TNG_SUCCESS:
-            raise Exception("cannot get block_name")
+            return TNG_CRITICAL
 
         stat = tng_data_block_dependency_get(self._traj, block_id, & block_dependency) # is this a particle dependent block?
         if stat != TNG_SUCCESS:
-            raise Exception("cannot get block_dependency")
+            return TNG_CRITICAL
 
         if block_dependency.__and__(TNG_PARTICLE_DEPENDENT): # bitwise & due to enum defs
             if debug:
@@ -1013,7 +1013,7 @@ cdef class TNGDataBlock:
             stat = tng_gen_data_vector_interval_get(self._traj, block_id, TNG_FALSE, self._frame, self._frame, TNG_USE_HASH,  & data, NULL, & stride_length, n_values_per_frame, & datatype) # read non particle data off disk with hash checking
 
         if stat != TNG_SUCCESS:
-            printf("WARNING: critical data reading failure in tng_gen_data_vector_get \n") 
+            #printf("WARNING: critical data reading failure in tng_gen_data_vector_get \n") 
             return TNG_CRITICAL
 
         stat = tng_data_block_num_values_per_frame_get(
@@ -1047,7 +1047,7 @@ cdef class TNGDataBlock:
         free(data)
         return TNG_SUCCESS
 
-    cdef void convert_to_double_arr(self, void * source, double * to, const int n_atoms, const int n_vals, const char datatype, bint debug):
+    cdef void convert_to_double_arr(self, void * source, double * to, const int n_atoms, const int n_vals, const char datatype, bint debug) nogil:
         """ Convert a void array that was just read off disk into an array of doubles
 
             NOTES:
@@ -1063,18 +1063,24 @@ cdef class TNGDataBlock:
                 for j in range(n_vals):
                     to[i*n_vals + j ] = (< float*>source)[i * n_vals + j]  # redundant but could be changed later
             #memcpy(to,  source, n_vals * sizeof(float) * n_atoms)
+            if debug:
+                printf("TNG_FLOAT \n")
 
         elif datatype == TNG_INT_DATA:
             for i in range(n_atoms):
                 for j in range(n_vals):
                     to[i*n_vals + j ] = (< int64_t*>source)[i * n_vals + j] # redundant but could be changed later
             #memcpy(to, source, n_vals * sizeof(int64_t) * n_atoms)
+            if debug:
+                printf("TNG_INT \n")
 
         elif datatype == TNG_DOUBLE_DATA:
             for i in range(n_atoms):
                 for j in range(n_vals):
                     to[i*n_vals + j ] = (< double*>source)[i * n_vals + j] 
             #memcpy(to, source, n_vals * sizeof(double) * n_atoms)
+            if debug:
+                printf("TNG_DOUBLE\n")
 
         elif datatype == TNG_CHAR_DATA:
             printf("WARNING: char data reading is not implemented \n") #NOTE not implemented in TNG library either
