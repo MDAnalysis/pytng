@@ -2,7 +2,7 @@
 # cython: embedsignature=True
 # cython: profile=True
 # distutils: define_macros=CYTHON_TRACE=1
-from cython.operator cimport dereference
+cimport cython
 from numpy cimport(PyArray_SimpleNewFromData,
                    PyArray_SetBaseObject,
                    NPY_FLOAT,
@@ -555,6 +555,7 @@ cdef int64_t gcd_list(list a):
         result = gcd(result, a[i])
     return result
 
+@cython.final
 cdef class MemoryWrapper:
     # holds a pointer to C allocated memory, deals with malloc&free based on:
     # https://gist.github.com/GaelVaroquaux/
@@ -567,7 +568,7 @@ cdef class MemoryWrapper:
         if self.ptr is NULL:
             raise MemoryError
 
-    cdef renew(MemoryWrapper self, int size):
+    cdef void renew(self, int size) nogil:
         self.ptr = realloc(self.ptr, size)
 
     def __dealloc__(MemoryWrapper self):
@@ -1023,13 +1024,13 @@ cdef class TNGDataBlock:
                 printf("WARNING: critical data reading failure in tng_data_block_num_values_per_frame_get \n")
                 return TNG_CRITICAL
 
-        self._wrapper.renew(sizeof(double) * n_values_per_frame[0] * n_atoms[0]) #TODO can this be moved NOGIL
-        _wrapped_values = <double*> self._wrapper.ptr # renew the MemoryWrapper instance to have the right size to hold the data that has come off disk and will be cast to doubles*
+            self._wrapper.renew(sizeof(double) * n_values_per_frame[0] * n_atoms[0]) #TODO can this be moved NOGIL
+            _wrapped_values = <double*> self._wrapper.ptr # renew the MemoryWrapper instance to have the right size to hold the data that has come off disk and will be cast to doubles*
 
-        if self.debug:
-            printf("realloc values array to be %ld  doubles and %ld bits long \n",
+            if self.debug:
+                printf("realloc values array to be %ld  doubles and %ld bits long \n",
                    n_values_per_frame[0] * n_atoms[0], n_values_per_frame[0] * n_atoms[0]*sizeof(double))
-        with nogil:
+
             self.convert_to_double_arr(
                 data, _wrapped_values, n_atoms[0], n_values_per_frame[0], datatype, debug) # convert the data that was read off disk into an array of doubles
             stat = tng_util_frame_current_compression_get(self._traj, block_id, & codec_id, & local_prec) # get the compression of the current frame
