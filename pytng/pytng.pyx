@@ -567,7 +567,7 @@ cdef class MemoryWrapper:
         if self.ptr is NULL:
             raise MemoryError
 
-    def renew(MemoryWrapper self, int size):
+    cdef renew(MemoryWrapper self, int size):
         self.ptr = realloc(self.ptr, size)
 
     def __dealloc__(MemoryWrapper self):
