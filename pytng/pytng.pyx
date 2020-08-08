@@ -1,7 +1,8 @@
 # cython: linetrace=True
 # cython: embedsignature=True
 # cython: profile=True
-# distutils: define_macros=CYTHON_TRACE=1
+# distutils: define_macros=CYTHON_TRACE_NOGIL=1
+
 cimport cython
 from numpy cimport(PyArray_SimpleNewFromData,
                    PyArray_SetBaseObject,
@@ -568,7 +569,7 @@ cdef class MemoryWrapper:
         if self.ptr is NULL:
             raise MemoryError
 
-    cdef void renew(self, int size) nogil:
+    cdef inline void renew(self, int size) nogil:
         self.ptr = realloc(self.ptr, size)
 
     def __dealloc__(MemoryWrapper self):
@@ -845,7 +846,7 @@ cdef class TNGFileIterator:
 
         return TNG_SUCCESS
 
-    cdef _read_single_frame(self, int64_t frame, int64_t block_id, TNGDataBlockHolder block_holder):
+    cdef void _read_single_frame(self, int64_t frame, int64_t block_id, TNGDataBlockHolder block_holder):
         """Read the current block of a given block id into a TNGDataBlock instance and pops that instance to the block holder"""
         if self.debug:
             print("READING FRAME {}  \n".format(frame))
@@ -865,7 +866,7 @@ cdef class TNGDataBlockHolder:
         self.debug = debug
         self.blocks = {}
 
-    cdef add_block(self, int64_t block_id, TNGDataBlock block):
+    cdef inline void add_block(self, int64_t block_id, TNGDataBlock block):
         self.blocks[block_id] = block # add the block to the block dictionary
     
     @property
@@ -910,7 +911,7 @@ cdef class TNGDataBlock:
         self._wrapper = MemoryWrapper(1) #TODO alloc a single byte, this can be changed if the signature of MemoryWrapper is changed
 
     def __dealloc__(self):
-        self._close()
+        pass
 
     def block_read(self, id):  # TODO does this have to be python
         """Reads the block off file"""
@@ -922,7 +923,7 @@ cdef class TNGDataBlock:
         self._block_2d_numpy_cast(self.n_values_per_frame, self.n_atoms)
         self.block_is_read = True
 
-    cdef _refresh(self): 
+    cdef void _refresh(self): 
         """Refreshes the TngDataBlock instance so that we can read different blocks into the same instance"""
         self.block_id = -1
         self.step = -1
@@ -941,8 +942,6 @@ cdef class TNGDataBlock:
                 'Block values are not available until the block_read() method has been called')
         return self.values
 
-    cdef _close(self):
-        pass
 
     cdef void _block_2d_numpy_cast(self, int64_t n_values_per_frame, int64_t n_atoms):
         """Casts the block to a 2D Numpy array whose lifetime is managed by an associated MemoryWrapper instance"""
@@ -967,7 +966,9 @@ cdef class TNGDataBlock:
     cdef tng_function_status  _block_read(self, int64_t id):
         """Does the actual block reading"""
         self.block_id = id
-        cdef tng_function_status read_stat = self._get_data_next_frame(self.block_id,  & self.step, & self.frame_time, & self.n_values_per_frame, & self.n_atoms, & self.precision, self.block_name, self.debug)
+        cdef tng_function_status read_stat
+        with nogil:
+            read_stat = self._get_data_next_frame(self.block_id,  & self.step, & self.frame_time, & self.n_values_per_frame, & self.n_atoms, & self.precision, self.block_name, self.debug)
 
         if self.debug:
             printf("block id %ld \n", self.block_id)
@@ -976,8 +977,11 @@ cdef class TNGDataBlock:
             printf("n_atoms  %ld \n", self.n_atoms)
 
         return read_stat
-
-    cdef tng_function_status _get_data_next_frame(self, int64_t block_id,  int64_t * step, double * frame_time, int64_t * n_values_per_frame, int64_t * n_atoms, double * prec, char * block_name, bint debug):
+    
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    @cython.profile(True)
+    cdef tng_function_status _get_data_next_frame(self, int64_t block_id,  int64_t * step, double * frame_time, int64_t * n_values_per_frame, int64_t * n_atoms, double * prec, char * block_name, bint debug) nogil:
         """Gets the frame data off disk and into C level arrays"""
         cdef tng_function_status stat
         cdef char                datatype = -1
@@ -992,61 +996,63 @@ cdef class TNGDataBlock:
         cdef int TNG_FRAME_DEPENDENT = 1
         # Flag to indicate particle dependent data.
         cdef int  TNG_PARTICLE_DEPENDENT = 2
-        with nogil: # GIL should be released for IO
-            stat = tng_data_block_name_get(
-                self._traj, block_id, block_name, TNG_MAX_STR_LEN)
-            if stat != TNG_SUCCESS:
-                return TNG_CRITICAL
+        stat = tng_data_block_name_get(
+            self._traj, block_id, block_name, TNG_MAX_STR_LEN)
+        if stat != TNG_SUCCESS:
+            return TNG_CRITICAL
 
-            stat = tng_data_block_dependency_get(self._traj, block_id, & block_dependency) # is this a particle dependent block?
-            if stat != TNG_SUCCESS:
-                return TNG_CRITICAL
+        stat = tng_data_block_dependency_get(self._traj, block_id, & block_dependency) # is this a particle dependent block?
+        if stat != TNG_SUCCESS:
+            return TNG_CRITICAL
+        if debug:
+            printf("BLOCK DEPS %d \n", block_dependency)
+
+        if block_dependency&TNG_PARTICLE_DEPENDENT: # bitwise & due to enum defs
             if debug:
-                printf("BLOCK DEPS %d \n", block_dependency)
+                printf("reading particle data \n")
+            tng_num_particles_get(self._traj, n_atoms)
+            stat = tng_gen_data_vector_interval_get(self._traj, block_id, TNG_TRUE, self._frame, self._frame , TNG_USE_HASH,  & data, & n_particles, & stride_length, n_values_per_frame, & datatype) # read particle data off disk with hash checking
+        else:
+            if debug:
+                printf("reading NON particle data \n")
+            n_atoms[0] = 1  # still used for some allocs
+            stat = tng_gen_data_vector_interval_get(self._traj, block_id, TNG_FALSE, self._frame, self._frame, TNG_USE_HASH,  & data, NULL, & stride_length, n_values_per_frame, & datatype) # read non particle data off disk with hash checking
 
-            if block_dependency&TNG_PARTICLE_DEPENDENT: # bitwise & due to enum defs
-                if debug:
-                    printf("reading particle data \n")
-                tng_num_particles_get(self._traj, n_atoms)
-                stat = tng_gen_data_vector_interval_get(self._traj, block_id, TNG_TRUE, self._frame, self._frame , TNG_USE_HASH,  & data, & n_particles, & stride_length, n_values_per_frame, & datatype) # read particle data off disk with hash checking
-            else:
-                if debug:
-                    printf("reading NON particle data \n")
-                n_atoms[0] = 1  # still used for some allocs
-                stat = tng_gen_data_vector_interval_get(self._traj, block_id, TNG_FALSE, self._frame, self._frame, TNG_USE_HASH,  & data, NULL, & stride_length, n_values_per_frame, & datatype) # read non particle data off disk with hash checking
+        if stat != TNG_SUCCESS:
+            printf("WARNING: critical data reading failure in tng_gen_data_vector_get \n") 
+            return TNG_CRITICAL
 
-            if stat != TNG_SUCCESS:
-                printf("WARNING: critical data reading failure in tng_gen_data_vector_get \n") 
-                return TNG_CRITICAL
+        stat = tng_data_block_num_values_per_frame_get(self._traj, block_id, n_values_per_frame)
+        if stat == TNG_CRITICAL:
+            printf("WARNING: critical data reading failure in tng_data_block_num_values_per_frame_get \n")
+            return TNG_CRITICAL
 
-            stat = tng_data_block_num_values_per_frame_get(self._traj, block_id, n_values_per_frame)
-            if stat == TNG_CRITICAL:
-                printf("WARNING: critical data reading failure in tng_data_block_num_values_per_frame_get \n")
-                return TNG_CRITICAL
+        self._wrapper.renew(sizeof(double) * n_values_per_frame[0] * n_atoms[0]) #TODO can this be moved NOGIL
+        _wrapped_values = <double*> self._wrapper.ptr # renew the MemoryWrapper instance to have the right size to hold the data that has come off disk and will be cast to doubles*
 
-            self._wrapper.renew(sizeof(double) * n_values_per_frame[0] * n_atoms[0]) #TODO can this be moved NOGIL
-            _wrapped_values = <double*> self._wrapper.ptr # renew the MemoryWrapper instance to have the right size to hold the data that has come off disk and will be cast to doubles*
+        if self.debug:
+            printf("realloc values array to be %ld  doubles and %ld bits long \n",
+               n_values_per_frame[0] * n_atoms[0], n_values_per_frame[0] * n_atoms[0]*sizeof(double))
 
-            if self.debug:
-                printf("realloc values array to be %ld  doubles and %ld bits long \n",
-                   n_values_per_frame[0] * n_atoms[0], n_values_per_frame[0] * n_atoms[0]*sizeof(double))
+        self.convert_to_double_arr(
+            data, _wrapped_values, n_atoms[0], n_values_per_frame[0], datatype, debug) # convert the data that was read off disk into an array of doubles
+        stat = tng_util_frame_current_compression_get(self._traj, block_id, & codec_id, & local_prec) # get the compression of the current frame
+        if stat == TNG_CRITICAL:
+            printf("WARNING: critical data reading failure in tng_util_frame_current_compression_get \n")
+            return TNG_CRITICAL
 
-            self.convert_to_double_arr(
-                data, _wrapped_values, n_atoms[0], n_values_per_frame[0], datatype, debug) # convert the data that was read off disk into an array of doubles
-            stat = tng_util_frame_current_compression_get(self._traj, block_id, & codec_id, & local_prec) # get the compression of the current frame
-            if stat == TNG_CRITICAL:
-                printf("WARNING: critical data reading failure in tng_util_frame_current_compression_get \n")
-                return TNG_CRITICAL
+        if codec_id != TNG_TNG_COMPRESSION:
+            prec[0] = -1.0
+        else:
+            prec[0] = local_prec
 
-            if codec_id != TNG_TNG_COMPRESSION:
-                prec[0] = -1.0
-            else:
-                prec[0] = local_prec
+        # free local data
+        free(data)
+        return TNG_SUCCESS
 
-            # free local data
-            free(data)
-            return TNG_SUCCESS
-
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    @cython.profile(True)
     cdef void convert_to_double_arr(self, void * source, double * to, const int n_atoms, const int n_vals, const char datatype, bint debug) nogil:
         """ Convert a void array that was just read off disk into an array of doubles
 
@@ -1100,7 +1106,7 @@ cdef class TNGBlockTypes:
         self.block_dictionary = {}
         self._open()
         
-    cdef _open(self):
+    cdef void _open(self):
             # group 1
             self.block_dictionary[TNG_GENERAL_INFO] = "TNG_GENERAL_INFO"
             self.block_dictionary[TNG_MOLECULES] = "TNG_MOLECULES"
