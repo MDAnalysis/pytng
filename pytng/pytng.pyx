@@ -1,7 +1,8 @@
 # cython: linetrace=True
 # cython: embedsignature=True
 # cython: profile=True
-# distutils: define_macros=CYTHON_TRACE_NOGIL=1
+# cython: binding=True
+# distutils: define_macros=[CYTHON_TRACE=1, CYTHON_TRACE_NOGIL=1] 
 
 cimport cython
 from numpy cimport(PyArray_SimpleNewFromData,
@@ -19,7 +20,6 @@ from libc.stdlib cimport malloc, free, realloc
 from libc.stdio cimport printf, FILE, SEEK_SET, SEEK_CUR, SEEK_END
 from libc.string cimport memcpy
 
-# from libcpp.cast cimport reinterpret_cast
 
 from posix.types cimport off_t
 
