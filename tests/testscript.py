@@ -2,11 +2,17 @@ import pytng
 
 file_iterator = pytng.TNGFileIterator("./reference_files/argon_npt_compressed.tng", mode="r", debug=False)
 file_iterator[0]
-print(file_iterator.pos)
+print(file_iterator.block_strides)
 file_iterator[5000]
-print(file_iterator.pos)
-file_iterator[10000]
-print(file_iterator.pos)
+
+l = [0,1,2,3]
+
+for ts in file_iterator[l]:
+    print(file_iterator.pos)
+
+# for ts in file_iterator[0:100000:5000]:
+#     print(file_iterator.pos)
+
 
 # file_iterator.read_frame(10000) # this integrator timestep has data
 # print(file_iterator.block_names)

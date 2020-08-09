@@ -779,7 +779,11 @@ cdef class TNGFileIterator:
             return None 
         else:
             return self.block_holder.block_set.get(self.BLOCK_TYPES.block_id_dictionary[name]).values
-        
+    
+    @property
+    def block_strides(self):
+        return  [(self.BLOCK_TYPES.block_dictionary[k] , v) for k, v in self._frame_strides.items()]
+
     @property
     def pos(self):
         if self.block_holder.block_set.get(TNG_TRAJ_POSITIONS) == None:
@@ -854,15 +858,18 @@ cdef class TNGFileIterator:
         block.block_read(block_id) # read the actual block
         block_holder.add_block(block_id, block) # add the block to the block holder
     
-    def __iter__(self):
-        self.close()
-        self.open(self.fname, self.mode)
-        return self
+    def __len__(self):
+        return self._n_frames
 
-    def __next__(self):
-        if self.reached_eof:
-            raise StopIteration
-        return self.read()
+    # def __iter__(self):
+    #     self.close()
+    #     self.open(self.fname, self.mode)
+    #     return self
+
+    # def __next__(self):
+    #     if self.reached_eof:
+    #         raise StopIteration
+    #     # return self 
 
     def __getitem__(self, frame):
         cdef int64_t start, stop, step, i
