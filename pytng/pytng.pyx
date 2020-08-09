@@ -888,7 +888,7 @@ cdef class TNGFileIterator:
                 for f in frames:
                     if not isinstance(f, numbers.Integral):
                         raise TypeError("Frames indices must be integers")
-                    yield self.read_frame(frame)
+                    yield self.read_frame(f)
             return listiter(frame)
         elif isinstance(frame, slice):
             start = frame.start if frame.start is not None else 0
