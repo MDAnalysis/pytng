@@ -853,6 +853,41 @@ cdef class TNGFileIterator:
         cdef block = TNGDataBlock(self._traj, frame, debug=self.debug)
         block.block_read(block_id) # read the actual block
         block_holder.add_block(block_id, block) # add the block to the block holder
+        
+    def __getitem__(self, frame):
+        cdef int64_t start, stop, step, i
+
+        if isinstance(frame, numbers.Integral):
+            return self.read_frame(frame)
+        elif isinstance(frame, (list, np.ndarray)):
+            if isinstance(frame[0], (bool, np.bool_)):
+                if not (len(frame) == len(self)):
+                    raise TypeError(
+                        "Boolean index must match length of trajectory")
+
+                # Avoid having list of bools
+                frame = np.asarray(frame, dtype=np.bool)
+                # Convert bool array to int array
+                frame = np.arange(len(self))[frame]
+
+            def listiter(frames):
+                for f in frames:
+                    if not isinstance(f, numbers.Integral):
+                        raise TypeError("Frames indices must be integers")
+                    yield self.read_frame(frame)
+            return listiter(frame)
+        elif isinstance(frame, slice):
+            start = frame.start if frame.start is not None else 0
+            stop = frame.stop if frame.stop is not None else self.n_frames
+            step = frame.step if frame.step is not None else 1
+
+            def sliceiter(start, stop, step):
+                for i in range(start, stop, step):
+                    yield self.read_frame(i)
+            return sliceiter(start, stop, step)
+        else:
+            raise TypeError("Trajectories must be an indexed using an integer,"
+                            " slice or list of indices")
 
 
 cdef class TNGDataBlockHolder:
