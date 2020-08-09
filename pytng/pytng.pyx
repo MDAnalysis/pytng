@@ -853,13 +853,27 @@ cdef class TNGFileIterator:
         cdef block = TNGDataBlock(self._traj, frame, debug=self.debug)
         block.block_read(block_id) # read the actual block
         block_holder.add_block(block_id, block) # add the block to the block holder
-        
+    
+    def __iter__(self):
+        self.close()
+        self.open(self.fname, self.mode)
+        return self
+
+    def __next__(self):
+        if self.reached_eof:
+            raise StopIteration
+        return self.read()
+
     def __getitem__(self, frame):
         cdef int64_t start, stop, step, i
 
         if isinstance(frame, numbers.Integral):
+            if self.debug:
+                print("slice is a number")
             return self.read_frame(frame)
         elif isinstance(frame, (list, np.ndarray)):
+            if self.debug:
+                print("slice is a list or array")
             if isinstance(frame[0], (bool, np.bool_)):
                 if not (len(frame) == len(self)):
                     raise TypeError(
@@ -878,7 +892,7 @@ cdef class TNGFileIterator:
             return listiter(frame)
         elif isinstance(frame, slice):
             start = frame.start if frame.start is not None else 0
-            stop = frame.stop if frame.stop is not None else self.n_frames
+            stop = frame.stop if frame.stop is not None else self._n_frames
             step = frame.step if frame.step is not None else 1
 
             def sliceiter(start, stop, step):
