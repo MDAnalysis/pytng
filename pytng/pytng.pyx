@@ -861,15 +861,15 @@ cdef class TNGFileIterator:
     def __len__(self):
         return self._n_frames
 
-    # def __iter__(self):
-    #     self.close()
-    #     self.open(self.fname, self.mode)
-    #     return self
+    def __iter__(self):
+        self.close()
+        self.open(self.fname, self.mode)
+        return self
 
-    # def __next__(self):
-    #     if self.reached_eof:
-    #         raise StopIteration
-    #     # return self 
+    def __next__(self):
+        if self.reached_eof:
+            raise StopIteration
+        # return self 
 
     def __getitem__(self, frame):
         cdef int64_t start, stop, step, i
