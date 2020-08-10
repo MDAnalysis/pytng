@@ -1,14 +1,15 @@
 import pytng
 
-file_iterator = pytng.TNGFileIterator("./reference_files/argon_npt_compressed.tng", mode="r", debug=False)
-file_iterator[0]
-print(file_iterator.block_strides)
-file_iterator[5000]
+with pytng.TNGFileIterator("./reference_files/argon_npt_compressed.tng", mode="r", debug=False) as tng:
 
-l = [0,1,2,3]
+    tng[0]
+    print(tng.block_strides)
+    tng[5000]
 
-for ts in file_iterator[l]:
-    print(file_iterator.pos)
+    l = [0, 1, 2, 3]
+
+    for ts in tng[l]:
+        print(tng.pos)
 
 # for ts in file_iterator[0:100000:5000]:
 #     print(file_iterator.pos)

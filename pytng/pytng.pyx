@@ -948,6 +948,16 @@ cdef class TNGFileIterator:
         block.block_read(block_id)  # read the actual block
         # add the block to the block holder
         block_holder.add_block(block_id, block)
+    
+    def __enter__(self):
+        # Support context manager
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._close()
+        # always propagate exceptions forward
+        return False
+
 
     def __len__(self):
         return self._n_frames
