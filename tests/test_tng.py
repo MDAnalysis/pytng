@@ -43,8 +43,8 @@ def test_tng_example_iter(TNG_EXAMPLE):
     with pytng.TNGFileIterator(TNG_EXAMPLE) as tng:
         for i, ts in enumerate(tng):
             print(i)
-            print(ts.step)
-            assert i == ts.step
+            print(tng)
+            assert i == ts
 
 
 @pytest.mark.parametrize(
@@ -83,15 +83,13 @@ def test_tng_example_getitem_multipl_ints(
         for ref_step, ts in zip(indices[slx], tng[slx]):
             assert ref_step == ts.step
 
-@pytest.mark.skip(reason="FAILING")
-@pytest.mark.parametrize("idx", [0, 4, 9, -1, -2])
+@pytest.mark.parametrize("idx", [0, 4, 9])
 def test_tng_example_getitem_int(idx, TNG_EXAMPLE, TNG_EXAMPLE_DATA):
     indices = np.arange(TNG_EXAMPLE_DATA.length)
     with pytng.TNGFileIterator(TNG_EXAMPLE) as tng:
         ts = tng[idx]
         assert ts.step == indices[idx]
 
-@pytest.mark.skip(reason="FAILING")
 @pytest.mark.parametrize("idx", ["a", "invalid", (0, 1), lambda x: x])
 def test_tng_example_getitem_single_invalid(idx, TNG_EXAMPLE):
     with pytng.TNGFileIterator(TNG_EXAMPLE) as tng:
@@ -103,7 +101,6 @@ def test_tng_example_getitem_single_invalid(idx, TNG_EXAMPLE):
     )
     assert message in str(excinfo.value)
 
-@pytest.mark.skip(reason="FAILING")
 @pytest.mark.parametrize(
     "arr", ([T] * 10, [F] * 10, [T, F, T, F, T, F, T, F, T, F])
 )
@@ -116,7 +113,6 @@ def test_tng_example_getitem_bool(arr, cls, TNG_EXAMPLE, TNG_EXAMPLE_DATA):
         for ref_ts, ts in zip(ref, tng[slx]):
             assert ref_ts == ts.step
 
-@pytest.mark.skip(reason="FAILING")
 @pytest.mark.parametrize("cls", [list, np.array])
 def test_tng_example_getitem_bool_TypeError(cls, TNG_EXAMPLE):
     slx = cls([True, False, True])
@@ -130,26 +126,25 @@ def test_tng_example_natoms(TNG_EXAMPLE_DATA, TNG_EXAMPLE):
     with pytng.TNGFileIterator(TNG_EXAMPLE) as tng:
         assert TNG_EXAMPLE_DATA.natoms == tng.n_atoms
 
-@pytest.mark.skip(reason="FAILING")
 def test_tng_example_tng_example_first_positions(
     TNG_EXAMPLE_DATA, TNG_EXAMPLE
 ):
     with pytng.TNGFileIterator(TNG_EXAMPLE) as tng:
-        first_frame = tng.read().positions
+        print(tng.block_strides)
+        first_frame = tng[0].pos
         assert np.array_equal(TNG_EXAMPLE_DATA.first_frame, first_frame)
 
-@pytest.mark.skip(reason="FAILING")
 def test_tng_example_tng_example_last_positions(TNG_EXAMPLE_DATA, TNG_EXAMPLE):
     with pytng.TNGFileIterator(TNG_EXAMPLE) as tng:
         
-        last_frame = tng.read().positions
+        last_frame = tng[-1].pos
         assert np.array_equal(TNG_EXAMPLE_DATA.last_frame, last_frame)
 
 @pytest.mark.skip(reason="FAILING")
 @pytest.mark.parametrize("idx", [-11, -12, 10, 11])
 def test_tng_example_seek_IndexError(idx, TNG_EXAMPLE):
     with pytng.TNGFileIterator(TNG_EXAMPLE, "r") as tng:
-        with pytest.raises(IndexError):
+        with pytest.raises(ValueError):
             tng[idx]
 
 
