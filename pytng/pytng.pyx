@@ -726,6 +726,7 @@ cdef class TNGFileIterator:
         self._traj = TrajectoryWrapper.from_ptr(self._traj_p, owner=True)
         self.fname = fname
         self.debug = debug
+        self.step  = 0
         self._n_frames = -1
         self._n_particles = -1
         self._n_frame_sets = -1
@@ -805,7 +806,6 @@ cdef class TNGFileIterator:
 
         self._distance_scale = 10.0**(exponent+9)
         self.is_open = True
-        self.step = 0
         self.reached_eof = False
 
     def _close(self):
@@ -880,11 +880,20 @@ cdef class TNGFileIterator:
             return None
         else:
             return self.block_holder.block_set.get(TNG_TRAJ_BOX_SHAPE).values
+    
+    @property
+    def step(self):
+        return self.step
 
     def read_frame(self, frame):
         """Read a frame (integrator step) from the file,
            modifies the state of self.block_holder to contain
            the current blocks"""
+        
+        if frame > self._n_frames:
+            raise ValueError("""frame specified is greater than number of steps
+            in input file {}""".format(self._n_frames))
+        self.step = frame
         self.block_holder = TNGDataBlockHolder(debug=self.debug)
 
         # TODO fix this to whatever kind of iteration we want
@@ -963,14 +972,14 @@ cdef class TNGFileIterator:
         return self._n_frames
 
     def __iter__(self):
-        self.close()
-        self.open(self.fname, self.mode)
+        self._close()
+        self._open(self.fname, self.mode)
         return self
 
     def __next__(self):
         if self.reached_eof:
             raise StopIteration
-        # return self
+        return self
 
     def __getitem__(self, frame):
         cdef int64_t start, stop, step, i
@@ -996,7 +1005,8 @@ cdef class TNGFileIterator:
                 for f in frames:
                     if not isinstance(f, numbers.Integral):
                         raise TypeError("Frames indices must be integers")
-                    yield self.read_frame(f)
+                    self.read_frame(f)
+                    yield self
             return listiter(frame)
         elif isinstance(frame, slice):
             start = frame.start if frame.start is not None else 0
@@ -1005,7 +1015,8 @@ cdef class TNGFileIterator:
 
             def sliceiter(start, stop, step):
                 for i in range(start, stop, step):
-                    yield self.read_frame(i)
+                    self.read_frame(i)
+                    yield self
             return sliceiter(start, stop, step)
         else:
             raise TypeError("Trajectories must be an indexed using an integer,"
