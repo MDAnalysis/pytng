@@ -890,9 +890,11 @@ cdef class TNGFileIterator:
            modifies the state of self.block_holder to contain
            the current blocks"""
         
+
         if frame > self._n_frames:
             raise ValueError("""frame specified is greater than number of steps
             in input file {}""".format(self._n_frames))
+        
         self.step = frame
         self.block_holder = TNGDataBlockHolder(debug=self.debug)
 
@@ -974,13 +976,13 @@ cdef class TNGFileIterator:
     def __iter__(self):
         self._close()
         self._open(self.fname, self.mode)
-        self.read_frame(self.step)
         return self
 
     def __next__(self):
         if self.step == self._n_frames:
             raise StopIteration
-        self.read_frame(self.step + 1)
+        self.read_frame(self.step)
+        self.step += 1
         return self
 
     def __getitem__(self, frame):
