@@ -52,8 +52,8 @@ cdef extern from "string.h":
 
 cdef extern from "<stdio.h>" nogil:
     # Seek and tell with off_t
-    int fseeko(FILE * , off_t, int)
-    off_t ftello(FILE * )
+    int fseeko(FILE*, off_t, int)
+    off_t ftello(FILE*)
 
 
 # /** @defgroup def1 Standard non-trajectory blocks
@@ -834,7 +834,7 @@ cdef class TNGFileIterator:
 
     def get_block_by_name(self, name):
         if self.block_holder.block_set.get(
-                self.BLOCK_TYPES.block_id_dictionary[name]) == None:
+                self.BLOCK_TYPES.block_id_dictionary[name]) is None:
             return None
         else:
             return self.block_holder.block_set.get(
@@ -842,7 +842,7 @@ cdef class TNGFileIterator:
 
     def get_block_values_by_name(self, name):
         if self.block_holder.block_set.get(
-                self.BLOCK_TYPES.block_id_dictionary[name]) == None:
+                self.BLOCK_TYPES.block_id_dictionary[name]) is None:
             return None
         else:
             return self.block_holder.block_set.get(
@@ -855,28 +855,28 @@ cdef class TNGFileIterator:
 
     @property
     def pos(self):
-        if self.block_holder.block_set.get(TNG_TRAJ_POSITIONS) == None:
+        if self.block_holder.block_set.get(TNG_TRAJ_POSITIONS) is None:
             return None
         else:
             return self.block_holder.block_set.get(TNG_TRAJ_POSITIONS).values
 
     @property
     def vel(self):
-        if self.block_holder.block_set.get(TNG_TRAJ_VELOCITIES) == None:
+        if self.block_holder.block_set.get(TNG_TRAJ_VELOCITIES) is None:
             return None
         else:
             return self.block_holder.block_set.get(TNG_TRAJ_VELOCITIES).values
 
     @property
     def frc(self):
-        if self.block_holder.block_set.get(TNG_TRAJ_FORCES) == None:
+        if self.block_holder.block_set.get(TNG_TRAJ_FORCES) is None:
             return None
         else:
             return self.block_holder.block_set.get(TNG_TRAJ_FORCES).values
 
     @property
     def box(self):
-        if self.block_holder.block_set.get(TNG_TRAJ_BOX_SHAPE) == None:
+        if self.block_holder.block_set.get(TNG_TRAJ_BOX_SHAPE) is None:
             return None
         else:
             return self.block_holder.block_set.get(TNG_TRAJ_BOX_SHAPE).values
@@ -1286,24 +1286,24 @@ cdef class TNGDataBlock:
         if datatype == TNG_FLOAT_DATA:
             for i in range(n_atoms):
                 for j in range(n_vals):
-                    to[i*n_vals + j ] = ( < float*>source)[i * n_vals + j]  
-            #memcpy(to,  source, n_vals * sizeof(float) * n_atoms)
+                    to[i * n_vals + j] = (<float*>source)[i * n_vals + j]
+            # memcpy(to,  source, n_vals * sizeof(float) * n_atoms)
             if debug:
                 printf("TNG_FLOAT \n")
 
         elif datatype == TNG_INT_DATA:
             for i in range(n_atoms):
                 for j in range(n_vals):
-                    to[i*n_vals + j ] = ( < int64_t*>source)[i * n_vals + j] 
-            #memcpy(to, source, n_vals * sizeof(int64_t) * n_atoms)
+                    to[i * n_vals + j] = (<int64_t*>source)[i * n_vals + j]
+            # memcpy(to, source, n_vals * sizeof(int64_t) * n_atoms)
             if debug:
                 printf("TNG_INT \n")
 
         elif datatype == TNG_DOUBLE_DATA:
             for i in range(n_atoms):
                 for j in range(n_vals):
-                    to[i*n_vals + j ] = ( < double*>source)[i * n_vals + j] 
-            #memcpy(to, source, n_vals * sizeof(double) * n_atoms)
+                    to[i * n_vals + j] = (<double*>source)[i * n_vals + j]
+            # memcpy(to, source, n_vals * sizeof(double) * n_atoms)
             if debug:
                 printf("TNG_DOUBLE\n")
 
