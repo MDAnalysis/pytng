@@ -39,13 +39,14 @@ def test_tng_example_len(TNG_EXAMPLE):
     with pytng.TNGFileIterator(TNG_EXAMPLE) as tng:
         assert_equal(len(tng), 10)
 
-@pytest.mark.skip(reason="FAILIING")
 def test_tng_example_iter(TNG_EXAMPLE):
     with pytng.TNGFileIterator(TNG_EXAMPLE) as tng:
         for i, ts in enumerate(tng):
+            print(i)
+            print(ts.step)
             assert i == ts.step
 
-@pytest.mark.skip(reason="FAILING")
+
 @pytest.mark.parametrize(
     "slice_idx",
     [
@@ -67,9 +68,10 @@ def test_tng_example_sliced_iteration(slice_idx, TNG_EXAMPLE):
         for ref_ts, ts in zip(ref_steps, tng[start:stop:step]):
             assert ref_ts == ts.step
 
-@pytest.mark.skip(reason="FAILING")
+
 @pytest.mark.parametrize(
-    "slx", ([0, 1, 2], [5, 3, 1], [1, 1, 1], [0, -1, 0], [-2, -3, -4],)
+    "slx", ([[0, 1, 2], [5, 3, 1], [1, 1, 1], [0, 1, 0]])
+
 )
 @pytest.mark.parametrize("cls", [list, np.array])
 def test_tng_example_getitem_multipl_ints(

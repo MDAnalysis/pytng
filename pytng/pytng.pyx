@@ -982,7 +982,10 @@ cdef class TNGFileIterator:
         if self.step == self._n_frames:
             raise StopIteration
         self.read_frame(self.step)
-        self.step += 1
+        if self.step == 0:
+            pass
+        else:
+            self.step += 1
         return self
 
     def __getitem__(self, frame):
@@ -991,7 +994,12 @@ cdef class TNGFileIterator:
         if isinstance(frame, numbers.Integral):
             if self.debug:
                 print("slice is a number")
-            return self.read_frame(frame)
+            if frame >= 0:
+                self.read_frame(frame)
+            else:
+                raise ValueError("cannot supply negative indicies")
+            return self
+
         elif isinstance(frame, (list, np.ndarray)):
             if self.debug:
                 print("slice is a list or array")
@@ -1009,6 +1017,8 @@ cdef class TNGFileIterator:
                 for f in frames:
                     if not isinstance(f, numbers.Integral):
                         raise TypeError("Frames indices must be integers")
+                    if f < 0:
+                        raise ValueError("cannot supply negative indicies")
                     self.read_frame(f)
                     yield self
             return listiter(frame)
@@ -1164,8 +1174,8 @@ cdef class TNGDataBlock:
 
         return read_stat
 
-    @cython.boundscheck(False)
-    @cython.wraparound(False)
+    @cython.boundscheck(True)
+    @cython.wraparound(True)
     @cython.profile(True)
     cdef tng_function_status _get_data_next_frame(self, int64_t block_id,
                                                   int64_t * step,
@@ -1286,8 +1296,8 @@ cdef class TNGDataBlock:
         free(data)
         return TNG_SUCCESS
 
-    @cython.boundscheck(False)
-    @cython.wraparound(False)
+    @cython.boundscheck(True)
+    @cython.wraparound(True)
     @cython.profile(True)
     cdef void convert_to_double_arr(self,
                                     void * source,
