@@ -974,11 +974,13 @@ cdef class TNGFileIterator:
     def __iter__(self):
         self._close()
         self._open(self.fname, self.mode)
+        self.read_frame(self.step)
         return self
 
     def __next__(self):
-        if self.reached_eof:
+        if self.step == self._n_frames:
             raise StopIteration
+        self.read_frame(self.step + 1)
         return self
 
     def __getitem__(self, frame):
