@@ -719,7 +719,7 @@ cdef class TNGFileIterator:
 
     # holds the current blocks at a trajectory timestep
     cdef TNGCurrentIntegratorStep current_step
-    cdef TNGBlockTypes BLOCK_TYPES
+
 
     def __cinit__(self, fname, mode='r', debug=False):
 
@@ -738,7 +738,6 @@ cdef class TNGFileIterator:
         self._n_data_frames = {}
 
         # the mappings of block ids to block names and vice versa
-        self.BLOCK_TYPES = TNGBlockTypes()
         self._open(self.fname, mode)
 
     def __dealloc__(self):
@@ -837,27 +836,27 @@ cdef class TNGFileIterator:
     def block_names(self):
         """List of block names available at the current frame (unordered)"""
         block_ids = list(self.current_step.block_set.keys())
-        return [self.BLOCK_TYPES.block_dictionary[id] for id in block_ids]
+        return [block_dictionary[id] for id in block_ids]
 
     def get_block_by_name(self, name):
         if self.current_step.block_set.get(
-                self.BLOCK_TYPES.block_id_dictionary[name]) is None:
+                block_id_dictionary[name]) is None:
             return None
         else:
             return self.current_step.block_set.get(
-                self.BLOCK_TYPES.block_id_dictionary[name])
+                block_id_dictionary[name])
 
     def get_block_values_by_name(self, name):
         if self.current_step.block_set.get(
-                self.BLOCK_TYPES.block_id_dictionary[name]) is None:
+                block_id_dictionary[name]) is None:
             return None
         else:
             return self.current_step.block_set.get(
-                self.BLOCK_TYPES.block_id_dictionary[name]).values
+                block_id_dictionary[name]).values
 
     @property
     def block_strides(self):
-        return [(self.BLOCK_TYPES.block_dictionary[k], v)
+        return [(block_dictionary[k], v)
                 for k, v in self._frame_strides.items()]
 
     @property
@@ -1355,229 +1354,120 @@ cdef class TNGDataBlock:
             printf("WARNING: block data type %d not understood \n", datatype)
 
 
-cdef class TNGBlockTypes:
-    """Block type dictionary
 
-    """
-    # KEY = block_id (int64_t) # VAL = TNG_BLOCK_NAME (str)
-    cdef dict block_dictionary
-    # KEY = TNG_BLOCK_NAME (str)  # VAL = block_id (int64_t)
-    cdef dict block_id_dictionary
 
-    def __cinit__(self):
-        self.block_dictionary = {}
-        self._open()
+block_dictionary = {}
 
-    cdef void _open(self):
-        # group 1
-        self.block_dictionary[TNG_GENERAL_INFO] = \
-            "TNG_GENERAL_INFO"
-        self.block_dictionary[TNG_MOLECULES] = \
-            "TNG_MOLECULES"
-        self.block_dictionary[TNG_TRAJECTORY_FRAME_SET] = \
-            "TNG_TRAJECTORY_FRAME_SET"
-        self.block_dictionary[TNG_PARTICLE_MAPPING] = \
-            "TNG_PARTICLE_MAPPING"
+# group 1
+block_dictionary[TNG_GENERAL_INFO] = "TNG_GENERAL_INFO"
+block_dictionary[TNG_MOLECULES] = "TNG_MOLECULES"
+block_dictionary[TNG_TRAJECTORY_FRAME_SET] = "TNG_TRAJECTORY_FRAME_SET"
+block_dictionary[TNG_PARTICLE_MAPPING] = "TNG_PARTICLE_MAPPING"
 
-        # group 2
-        self.block_dictionary[TNG_TRAJ_BOX_SHAPE] = \
-            "TNG_TRAJ_BOX_SHAPE"
-        self.block_dictionary[TNG_TRAJ_POSITIONS] = \
-            "TNG_TRAJ_POSITIONS"
-        self.block_dictionary[TNG_TRAJ_VELOCITIES] = \
-            "TNG_TRAJ_VELOCITIES"
-        self.block_dictionary[TNG_TRAJ_FORCES] = \
-            "TNG_TRAJ_FORCES"
-        self.block_dictionary[TNG_TRAJ_PARTIAL_CHARGES] = \
-            "TNG_TRAJ_PARTIAL_CHARGES"
-        self.block_dictionary[TNG_TRAJ_FORMAL_CHARGES] = \
-            "TNG_TRAJ_FORMAL_CHARGES"
-        self.block_dictionary[TNG_TRAJ_B_FACTORS] = \
-            "TNG_TRAJ_B_FACTORS"
-        self.block_dictionary[TNG_TRAJ_ANISOTROPIC_B_FACTORS] = \
-            "TNG_TRAJ_ANISOTROPIC_B_FACTORS"
-        self.block_dictionary[TNG_TRAJ_OCCUPANCY] = \
-            "TNG_TRAJ_OCCUPANCY"
-        self.block_dictionary[TNG_TRAJ_GENERAL_COMMENTS] = \
-            "TNG_TRAJ_GENERAL_COMMENTS"
-        self.block_dictionary[TNG_TRAJ_MASSES] = \
-            "TNG_TRAJ_MASSES"
+# group 2
+block_dictionary[TNG_TRAJ_BOX_SHAPE] = "TNG_TRAJ_BOX_SHAPE"
+block_dictionary[TNG_TRAJ_POSITIONS] = "TNG_TRAJ_POSITIONS"
+block_dictionary[TNG_TRAJ_VELOCITIES] = "TNG_TRAJ_VELOCITIES"
+block_dictionary[TNG_TRAJ_FORCES] = "TNG_TRAJ_FORCES"
+block_dictionary[TNG_TRAJ_PARTIAL_CHARGES] = "TNG_TRAJ_PARTIAL_CHARGES"
+block_dictionary[TNG_TRAJ_FORMAL_CHARGES] = "TNG_TRAJ_FORMAL_CHARGES"
+block_dictionary[TNG_TRAJ_B_FACTORS] = "TNG_TRAJ_B_FACTORS"
+block_dictionary[TNG_TRAJ_ANISOTROPIC_B_FACTORS] = "TNG_TRAJ_ANISOTROPIC_B_FACTORS"
+block_dictionary[TNG_TRAJ_OCCUPANCY] = "TNG_TRAJ_OCCUPANCY"
+block_dictionary[TNG_TRAJ_GENERAL_COMMENTS] = "TNG_TRAJ_GENERAL_COMMENTS"
+block_dictionary[TNG_TRAJ_MASSES] = "TNG_TRAJ_MASSES"
 
-        # group 3
-        self.block_dictionary[TNG_GMX_LAMBDA] = \
-            "TNG_GMX_LAMBDA"
-        self.block_dictionary[TNG_GMX_ENERGY_ANGLE] = \
-            "TNG_GMX_ENERGY_ANGLE"
-        self.block_dictionary[TNG_GMX_ENERGY_RYCKAERT_BELL] = \
-            "TNG_GMX_ENERGY_RYCKAERT_BELL"
-        self.block_dictionary[TNG_GMX_ENERGY_LJ_14] = \
-            "TNG_GMX_ENERGY_LJ_14"
-        self.block_dictionary[TNG_GMX_ENERGY_COULOMB_14] = \
-            "TNG_GMX_ENERGY_COULOMB_14"
-        self.block_dictionary[TNG_GMX_ENERGY_LJ_SR] = \
-            "TNG_GMX_ENERGY_LJ_SR"
-        self.block_dictionary[TNG_GMX_ENERGY_COULOMB_SR] = \
-            "TNG_GMX_ENERGY_COULOMB_SR"
-        self.block_dictionary[TNG_GMX_ENERGY_COUL_RECIP] = \
-            "TNG_GMX_ENERGY_COUL_RECIP"
-        self.block_dictionary[TNG_GMX_ENERGY_POTENTIAL] = \
-            "TNG_GMX_ENERGY_POTENTIAL"
-        self.block_dictionary[TNG_GMX_ENERGY_KINETIC_EN] = \
-            "TNG_GMX_ENERGY_KINETIC_EN"
-        self.block_dictionary[TNG_GMX_ENERGY_TOTAL_ENERGY] = \
-            "TNG_GMX_ENERGY_TOTAL_ENERGY"
-        self.block_dictionary[TNG_GMX_ENERGY_TEMPERATURE] = \
-            "TNG_GMX_ENERGY_TEMPERATURE"
-        self.block_dictionary[TNG_GMX_ENERGY_PRESSURE] = \
-            "TNG_GMX_ENERGY_PRESSURE"
-        self.block_dictionary[TNG_GMX_ENERGY_CONSTR_RMSD] = \
-            "TNG_GMX_ENERGY_CONSTR_RMSD"
-        self.block_dictionary[TNG_GMX_ENERGY_CONSTR2_RMSD] = \
-            "TNG_GMX_ENERGY_CONSTR2_RMSD"
-        self.block_dictionary[TNG_GMX_ENERGY_BOX_X] = \
-            "TNG_GMX_ENERGY_BOX_X"
-        self.block_dictionary[TNG_GMX_ENERGY_BOX_Y] = \
-            "TNG_GMX_ENERGY_BOX_Y"
-        self.block_dictionary[TNG_GMX_ENERGY_BOX_Z] = \
-            "TNG_GMX_ENERGY_BOX_Z"
-        self.block_dictionary[TNG_GMX_ENERGY_BOXXX] = \
-            "TNG_GMX_ENERGY_BOXXX"
-        self.block_dictionary[TNG_GMX_ENERGY_BOXYY] = \
-            "TNG_GMX_ENERGY_BOXYY"
-        self.block_dictionary[TNG_GMX_ENERGY_BOXZZ] = \
-            "TNG_GMX_ENERGY_BOXZZ"
-        self.block_dictionary[TNG_GMX_ENERGY_BOXYX] = \
-            "TNG_GMX_ENERGY_BOXYX"
-        self.block_dictionary[TNG_GMX_ENERGY_BOXZX] = \
-            "TNG_GMX_ENERGY_BOXZX"
-        self.block_dictionary[TNG_GMX_ENERGY_BOXZY] = \
-            "TNG_GMX_ENERGY_BOXZY"
-        self.block_dictionary[TNG_GMX_ENERGY_BOXVELXX] = \
-            "TNG_GMX_ENERGY_BOXVELXX"
-        self.block_dictionary[TNG_GMX_ENERGY_BOXVELYY] = \
-            "TNG_GMX_ENERGY_BOXVELYY"
-        self.block_dictionary[TNG_GMX_ENERGY_BOXVELZZ] = \
-            "TNG_GMX_ENERGY_BOXVELZZ"
-        self.block_dictionary[TNG_GMX_ENERGY_BOXVELYX] = \
-            "TNG_GMX_ENERGY_BOXVELYX"
-        self.block_dictionary[TNG_GMX_ENERGY_BOXVELZX] = \
-            "TNG_GMX_ENERGY_BOXVELZX"
-        self.block_dictionary[TNG_GMX_ENERGY_BOXVELZY] = \
-            "TNG_GMX_ENERGY_BOXVELZY"
-        self.block_dictionary[TNG_GMX_ENERGY_VOLUME] = \
-            "TNG_GMX_ENERGY_VOLUME"
-        self.block_dictionary[TNG_GMX_ENERGY_DENSITY] = \
-            "TNG_GMX_ENERGY_DENSITY"
-        self.block_dictionary[TNG_GMX_ENERGY_PV] = \
-            "TNG_GMX_ENERGY_PV"
-        self.block_dictionary[TNG_GMX_ENERGY_ENTHALPY] = \
-            "TNG_GMX_ENERGY_ENTHALPY"
-        self.block_dictionary[TNG_GMX_ENERGY_VIR_XX] = \
-            "TNG_GMX_ENERGY_VIR_XX"
-        self.block_dictionary[TNG_GMX_ENERGY_VIR_XY] = \
-            "TNG_GMX_ENERGY_VIR_XY"
-        self.block_dictionary[TNG_GMX_ENERGY_VIR_XZ] = \
-            "TNG_GMX_ENERGY_VIR_XZ"
-        self.block_dictionary[TNG_GMX_ENERGY_VIR_YX] = \
-            "TNG_GMX_ENERGY_VIR_YX"
-        self.block_dictionary[TNG_GMX_ENERGY_VIR_YY] = \
-            "TNG_GMX_ENERGY_VIR_YY"
-        self.block_dictionary[TNG_GMX_ENERGY_VIR_YZ] = \
-            "TNG_GMX_ENERGY_VIR_YZ"
-        self.block_dictionary[TNG_GMX_ENERGY_VIR_ZX] = \
-            "TNG_GMX_ENERGY_VIR_ZX"
-        self.block_dictionary[TNG_GMX_ENERGY_VIR_ZY] = \
-            "TNG_GMX_ENERGY_VIR_ZY"
-        self.block_dictionary[TNG_GMX_ENERGY_VIR_ZZ] = \
-            "TNG_GMX_ENERGY_VIR_ZZ"
-        self.block_dictionary[TNG_GMX_ENERGY_SHAKEVIR_XX] = \
-            "TNG_GMX_ENERGY_SHAKEVIR_XX"
-        self.block_dictionary[TNG_GMX_ENERGY_SHAKEVIR_XY] = \
-            "TNG_GMX_ENERGY_SHAKEVIR_XY"
-        self.block_dictionary[TNG_GMX_ENERGY_SHAKEVIR_XZ] = \
-            "TNG_GMX_ENERGY_SHAKEVIR_XZ"
-        self.block_dictionary[TNG_GMX_ENERGY_SHAKEVIR_YX] = \
-            "TNG_GMX_ENERGY_SHAKEVIR_YX"
-        self.block_dictionary[TNG_GMX_ENERGY_SHAKEVIR_YY] = \
-            "TNG_GMX_ENERGY_SHAKEVIR_YY"
-        self.block_dictionary[TNG_GMX_ENERGY_SHAKEVIR_YZ] = \
-            "TNG_GMX_ENERGY_SHAKEVIR_YZ"
-        self.block_dictionary[TNG_GMX_ENERGY_SHAKEVIR_ZX] = \
-            "TNG_GMX_ENERGY_SHAKEVIR_ZX"
-        self.block_dictionary[TNG_GMX_ENERGY_SHAKEVIR_ZY] = \
-            "TNG_GMX_ENERGY_SHAKEVIR_ZY"
-        self.block_dictionary[TNG_GMX_ENERGY_SHAKEVIR_ZZ] = \
-            "TNG_GMX_ENERGY_SHAKEVIR_ZZ"
-        self.block_dictionary[TNG_GMX_ENERGY_FORCEVIR_XX] = \
-            "TNG_GMX_ENERGY_FORCEVIR_XX"
-        self.block_dictionary[TNG_GMX_ENERGY_FORCEVIR_XY] = \
-            "TNG_GMX_ENERGY_FORCEVIR_XY"
-        self.block_dictionary[TNG_GMX_ENERGY_FORCEVIR_XZ] = \
-            "TNG_GMX_ENERGY_FORCEVIR_XZ"
-        self.block_dictionary[TNG_GMX_ENERGY_FORCEVIR_YX] = \
-            "TNG_GMX_ENERGY_FORCEVIR_YX"
-        self.block_dictionary[TNG_GMX_ENERGY_FORCEVIR_YY] = \
-            "TNG_GMX_ENERGY_FORCEVIR_YY"
-        self.block_dictionary[TNG_GMX_ENERGY_FORCEVIR_YZ] = \
-            "TNG_GMX_ENERGY_FORCEVIR_YZ"
-        self.block_dictionary[TNG_GMX_ENERGY_FORCEVIR_ZX] = \
-            "TNG_GMX_ENERGY_FORCEVIR_ZX"
-        self.block_dictionary[TNG_GMX_ENERGY_FORCEVIR_ZY] = \
-            "TNG_GMX_ENERGY_FORCEVIR_ZY"
-        self.block_dictionary[TNG_GMX_ENERGY_FORCEVIR_ZZ] = \
-            "TNG_GMX_ENERGY_FORCEVIR_ZZ"
-        self.block_dictionary[TNG_GMX_ENERGY_PRES_XX] = \
-            "TNG_GMX_ENERGY_PRES_XX"
-        self.block_dictionary[TNG_GMX_ENERGY_PRES_XY] = \
-            "TNG_GMX_ENERGY_PRES_XY"
-        self.block_dictionary[TNG_GMX_ENERGY_PRES_XZ] = \
-            "TNG_GMX_ENERGY_PRES_XZ"
-        self.block_dictionary[TNG_GMX_ENERGY_PRES_YX] = \
-            "TNG_GMX_ENERGY_PRES_YX"
-        self.block_dictionary[TNG_GMX_ENERGY_PRES_YY] = \
-            "TNG_GMX_ENERGY_PRES_YY"
-        self.block_dictionary[TNG_GMX_ENERGY_PRES_YZ] = \
-            "TNG_GMX_ENERGY_PRES_YZ"
-        self.block_dictionary[TNG_GMX_ENERGY_PRES_ZX] = \
-            "TNG_GMX_ENERGY_PRES_ZX"
-        self.block_dictionary[TNG_GMX_ENERGY_PRES_ZY] = \
-            "TNG_GMX_ENERGY_PRES_ZY"
-        self.block_dictionary[TNG_GMX_ENERGY_PRES_ZZ] = \
-            "TNG_GMX_ENERGY_PRES_ZZ"
-        self.block_dictionary[TNG_GMX_ENERGY_SURFXSURFTEN] = \
-            "TNG_GMX_ENERGY_SURFXSURFTEN"
-        self.block_dictionary[TNG_GMX_ENERGY_MUX] = \
-            "TNG_GMX_ENERGY_MUX"
-        self.block_dictionary[TNG_GMX_ENERGY_MUY] = \
-            "TNG_GMX_ENERGY_MUY"
-        self.block_dictionary[TNG_GMX_ENERGY_MUZ] = \
-            "TNG_GMX_ENERGY_MUZ"
-        self.block_dictionary[TNG_GMX_ENERGY_VCOS] = \
-            "TNG_GMX_ENERGY_VCOS"
-        self.block_dictionary[TNG_GMX_ENERGY_VISC] = \
-            "TNG_GMX_ENERGY_VISC"
-        self.block_dictionary[TNG_GMX_ENERGY_BAROSTAT] = \
-            "TNG_GMX_ENERGY_BAROSTAT"
-        self.block_dictionary[TNG_GMX_ENERGY_T_SYSTEM] = \
-            "TNG_GMX_ENERGY_T_SYSTEM"
-        self.block_dictionary[TNG_GMX_ENERGY_LAMB_SYSTEM] = \
-            "TNG_GMX_ENERGY_LAMB_SYSTEM"
-        self.block_dictionary[TNG_GMX_SELECTION_GROUP_NAMES] = \
-            "TNG_GMX_SELECTION_GROUP_NAMES"
-        self.block_dictionary[TNG_GMX_ATOM_SELECTION_GROUP] = \
-            "TNG_GMX_ATOM_SELECTION_GROUP"
+#group 3
+block_dictionary[TNG_GMX_LAMBDA] = "TNG_GMX_LAMBDA"
+block_dictionary[TNG_GMX_ENERGY_ANGLE] = "TNG_GMX_ENERGY_ANGLE"
+block_dictionary[TNG_GMX_ENERGY_RYCKAERT_BELL] = "TNG_GMX_ENERGY_RYCKAERT_BELL"
+block_dictionary[TNG_GMX_ENERGY_LJ_14] = "TNG_GMX_ENERGY_LJ_14"
+block_dictionary[TNG_GMX_ENERGY_COULOMB_14] = "TNG_GMX_ENERGY_COULOMB_14"
+block_dictionary[TNG_GMX_ENERGY_LJ_SR] = "TNG_GMX_ENERGY_LJ_SR"
+block_dictionary[TNG_GMX_ENERGY_COULOMB_SR] = "TNG_GMX_ENERGY_COULOMB_SR"
+block_dictionary[TNG_GMX_ENERGY_COUL_RECIP] = "TNG_GMX_ENERGY_COUL_RECIP"
+block_dictionary[TNG_GMX_ENERGY_POTENTIAL] = "TNG_GMX_ENERGY_POTENTIAL"
+block_dictionary[TNG_GMX_ENERGY_KINETIC_EN] = "TNG_GMX_ENERGY_KINETIC_EN"
+block_dictionary[TNG_GMX_ENERGY_TOTAL_ENERGY] = "TNG_GMX_ENERGY_TOTAL_ENERGY"
+block_dictionary[TNG_GMX_ENERGY_TEMPERATURE] = "TNG_GMX_ENERGY_TEMPERATURE"
+block_dictionary[TNG_GMX_ENERGY_PRESSURE] = "TNG_GMX_ENERGY_PRESSURE"
+block_dictionary[TNG_GMX_ENERGY_CONSTR_RMSD] = "TNG_GMX_ENERGY_CONSTR_RMSD"
+block_dictionary[TNG_GMX_ENERGY_CONSTR2_RMSD] = "TNG_GMX_ENERGY_CONSTR2_RMSD"
+block_dictionary[TNG_GMX_ENERGY_BOX_X] = "TNG_GMX_ENERGY_BOX_X"
+block_dictionary[TNG_GMX_ENERGY_BOX_Y] = "TNG_GMX_ENERGY_BOX_Y"
+block_dictionary[TNG_GMX_ENERGY_BOX_Z] = "TNG_GMX_ENERGY_BOX_Z"
+block_dictionary[TNG_GMX_ENERGY_BOXXX] = "TNG_GMX_ENERGY_BOXXX"
+block_dictionary[TNG_GMX_ENERGY_BOXYY] = "TNG_GMX_ENERGY_BOXYY"
+block_dictionary[TNG_GMX_ENERGY_BOXZZ] = "TNG_GMX_ENERGY_BOXZZ"
+block_dictionary[TNG_GMX_ENERGY_BOXYX] = "TNG_GMX_ENERGY_BOXYX"
+block_dictionary[TNG_GMX_ENERGY_BOXZX] = "TNG_GMX_ENERGY_BOXZX"
+block_dictionary[TNG_GMX_ENERGY_BOXZY] = "TNG_GMX_ENERGY_BOXZY"
+block_dictionary[TNG_GMX_ENERGY_BOXVELXX] = "TNG_GMX_ENERGY_BOXVELXX"
+block_dictionary[TNG_GMX_ENERGY_BOXVELYY] = "TNG_GMX_ENERGY_BOXVELYY"
+block_dictionary[TNG_GMX_ENERGY_BOXVELZZ] = "TNG_GMX_ENERGY_BOXVELZZ"
+block_dictionary[TNG_GMX_ENERGY_BOXVELYX] = "TNG_GMX_ENERGY_BOXVELYX"
+block_dictionary[TNG_GMX_ENERGY_BOXVELZX] = "TNG_GMX_ENERGY_BOXVELZX"
+block_dictionary[TNG_GMX_ENERGY_BOXVELZY] = "TNG_GMX_ENERGY_BOXVELZY"
+block_dictionary[TNG_GMX_ENERGY_VOLUME] = "TNG_GMX_ENERGY_VOLUME"
+block_dictionary[TNG_GMX_ENERGY_DENSITY] = "TNG_GMX_ENERGY_DENSITY"
+block_dictionary[TNG_GMX_ENERGY_PV] = "TNG_GMX_ENERGY_PV"
+block_dictionary[TNG_GMX_ENERGY_ENTHALPY] = "TNG_GMX_ENERGY_ENTHALPY"
+block_dictionary[TNG_GMX_ENERGY_VIR_XX] = "TNG_GMX_ENERGY_VIR_XX"
+block_dictionary[TNG_GMX_ENERGY_VIR_XY] = "TNG_GMX_ENERGY_VIR_XY"
+block_dictionary[TNG_GMX_ENERGY_VIR_XZ] = "TNG_GMX_ENERGY_VIR_XZ"
+block_dictionary[TNG_GMX_ENERGY_VIR_YX] = "TNG_GMX_ENERGY_VIR_YX"
+block_dictionary[TNG_GMX_ENERGY_VIR_YY] = "TNG_GMX_ENERGY_VIR_YY"
+block_dictionary[TNG_GMX_ENERGY_VIR_YZ] = "TNG_GMX_ENERGY_VIR_YZ"
+block_dictionary[TNG_GMX_ENERGY_VIR_ZX] = "TNG_GMX_ENERGY_VIR_ZX"
+block_dictionary[TNG_GMX_ENERGY_VIR_ZY] = "TNG_GMX_ENERGY_VIR_ZY"
+block_dictionary[TNG_GMX_ENERGY_VIR_ZZ] = "TNG_GMX_ENERGY_VIR_ZZ"
+block_dictionary[TNG_GMX_ENERGY_SHAKEVIR_XX] = "TNG_GMX_ENERGY_SHAKEVIR_XX"
+block_dictionary[TNG_GMX_ENERGY_SHAKEVIR_XY] = "TNG_GMX_ENERGY_SHAKEVIR_XY"
+block_dictionary[TNG_GMX_ENERGY_SHAKEVIR_XZ] = "TNG_GMX_ENERGY_SHAKEVIR_XZ"
+block_dictionary[TNG_GMX_ENERGY_SHAKEVIR_YX] = "TNG_GMX_ENERGY_SHAKEVIR_YX"
+block_dictionary[TNG_GMX_ENERGY_SHAKEVIR_YY] = "TNG_GMX_ENERGY_SHAKEVIR_YY"
+block_dictionary[TNG_GMX_ENERGY_SHAKEVIR_YZ] = "TNG_GMX_ENERGY_SHAKEVIR_YZ"
+block_dictionary[TNG_GMX_ENERGY_SHAKEVIR_ZX] = "TNG_GMX_ENERGY_SHAKEVIR_ZX"
+block_dictionary[TNG_GMX_ENERGY_SHAKEVIR_ZY] = "TNG_GMX_ENERGY_SHAKEVIR_ZY"
+block_dictionary[TNG_GMX_ENERGY_SHAKEVIR_ZZ] = "TNG_GMX_ENERGY_SHAKEVIR_ZZ"
+block_dictionary[TNG_GMX_ENERGY_FORCEVIR_XX] = "TNG_GMX_ENERGY_FORCEVIR_XX"
+block_dictionary[TNG_GMX_ENERGY_FORCEVIR_XY] = "TNG_GMX_ENERGY_FORCEVIR_XY"
+block_dictionary[TNG_GMX_ENERGY_FORCEVIR_XZ] = "TNG_GMX_ENERGY_FORCEVIR_XZ"
+block_dictionary[TNG_GMX_ENERGY_FORCEVIR_YX] = "TNG_GMX_ENERGY_FORCEVIR_YX"
+block_dictionary[TNG_GMX_ENERGY_FORCEVIR_YY] = "TNG_GMX_ENERGY_FORCEVIR_YY"
+block_dictionary[TNG_GMX_ENERGY_FORCEVIR_YZ] = "TNG_GMX_ENERGY_FORCEVIR_YZ"
+block_dictionary[TNG_GMX_ENERGY_FORCEVIR_ZX] = "TNG_GMX_ENERGY_FORCEVIR_ZX"
+block_dictionary[TNG_GMX_ENERGY_FORCEVIR_ZY] = "TNG_GMX_ENERGY_FORCEVIR_ZY"
+block_dictionary[TNG_GMX_ENERGY_FORCEVIR_ZZ] = "TNG_GMX_ENERGY_FORCEVIR_ZZ"
+block_dictionary[TNG_GMX_ENERGY_PRES_XX] = "TNG_GMX_ENERGY_PRES_XX"
+block_dictionary[TNG_GMX_ENERGY_PRES_XY] = "TNG_GMX_ENERGY_PRES_XY"
+block_dictionary[TNG_GMX_ENERGY_PRES_XZ] = "TNG_GMX_ENERGY_PRES_XZ"
+block_dictionary[TNG_GMX_ENERGY_PRES_YX] = "TNG_GMX_ENERGY_PRES_YX"
+block_dictionary[TNG_GMX_ENERGY_PRES_YY] = "TNG_GMX_ENERGY_PRES_YY"
+block_dictionary[TNG_GMX_ENERGY_PRES_YZ] = "TNG_GMX_ENERGY_PRES_YZ"
+block_dictionary[TNG_GMX_ENERGY_PRES_ZX] = "TNG_GMX_ENERGY_PRES_ZX"
+block_dictionary[TNG_GMX_ENERGY_PRES_ZY] = "TNG_GMX_ENERGY_PRES_ZY"
+block_dictionary[TNG_GMX_ENERGY_PRES_ZZ] = "TNG_GMX_ENERGY_PRES_ZZ"
+block_dictionary[TNG_GMX_ENERGY_SURFXSURFTEN] = "TNG_GMX_ENERGY_SURFXSURFTEN"
+block_dictionary[TNG_GMX_ENERGY_MUX] = "TNG_GMX_ENERGY_MUX"
+block_dictionary[TNG_GMX_ENERGY_MUY] = "TNG_GMX_ENERGY_MUY"
+block_dictionary[TNG_GMX_ENERGY_MUZ] = "TNG_GMX_ENERGY_MUZ"
+block_dictionary[TNG_GMX_ENERGY_VCOS] = "TNG_GMX_ENERGY_VCOS"
+block_dictionary[TNG_GMX_ENERGY_VISC] = "TNG_GMX_ENERGY_VISC"
+block_dictionary[TNG_GMX_ENERGY_BAROSTAT] = "TNG_GMX_ENERGY_BAROSTAT"
+block_dictionary[TNG_GMX_ENERGY_T_SYSTEM] = "TNG_GMX_ENERGY_T_SYSTEM"
+block_dictionary[TNG_GMX_ENERGY_LAMB_SYSTEM] = "TNG_GMX_ENERGY_LAMB_SYSTEM"
+block_dictionary[TNG_GMX_SELECTION_GROUP_NAMES] = "TNG_GMX_SELECTION_GROUP_NAMES"
+block_dictionary[TNG_GMX_ATOM_SELECTION_GROUP] = "TNG_GMX_ATOM_SELECTION_GROUP"
 
-        # reverse the mapping
-        self.block_id_dictionary = {v: k for k,
-                                    v in self.block_dictionary.items()}
+# reverse the mapping
+block_id_dictionary = {v: k for k, v in block_dictionary.items()}
 
-    @property
-    def block_dictionary(self):
-        return self.block_dictionary
 
-    @property
-    def block_id_dictionary(self):
-        return self.block_id_dictionary
+
+
+
+
 
 
 cdef class TNGFile:
