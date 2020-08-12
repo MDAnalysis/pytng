@@ -223,61 +223,55 @@ def test_argon_npt_compressed_open(ARGON_NPT_COMPRESSED):
         pass
 
 
-@pytest.mark.skip(reason="FAILING")
+
 def test_argon_npt_compressed_len(ARGON_NPT_COMPRESSED):
     with pytng.TNGFileIterator(ARGON_NPT_COMPRESSED) as tng:
         assert tng.n_frames == 500001
         assert len(tng) == 500001
 
-@pytest.mark.skip(reason="FAILING")
 def test_argon_npt_compressed_n_particles(
     ARGON_NPT_COMPRESSED, ARGON_NPT_COMPRESSED_DATA
 ):
     with pytng.TNGFileIterator(ARGON_NPT_COMPRESSED) as tng:
         assert ARGON_NPT_COMPRESSED_DATA.natoms == tng.n_atoms
 
-@pytest.mark.skip(reason="FAILING")
 def test_argon_npt_compressed_first_positions(
     ARGON_NPT_COMPRESSED, ARGON_NPT_COMPRESSED_DATA
 ):
     with pytng.TNGFileIterator(ARGON_NPT_COMPRESSED) as tng:
-        first_frame_first_10_pos = tng.pos[:10, :]
+        first_frame_first_10_pos = tng[0].pos[:10, :]
         assert_array_almost_equal(
             ARGON_NPT_COMPRESSED_DATA.first_frame_first_10_pos,
             first_frame_first_10_pos,
         )
 
-@pytest.mark.skip(reason="FAILING")
 def test_argon_npt_compressed_last_positions(
     ARGON_NPT_COMPRESSED, ARGON_NPT_COMPRESSED_DATA
 ):
     with pytng.TNGFileIterator(ARGON_NPT_COMPRESSED) as tng:
-        last_frame = tng.pos
+        last_frame = tng[len(tng)-1].pos
         last_frame_last_10_pos = last_frame[990:1000, :]
         assert_array_almost_equal(
             ARGON_NPT_COMPRESSED_DATA.last_frame_last_10_pos,
             last_frame_last_10_pos,
         )
 
-@pytest.mark.skip(reason="FAILING")
 def test_argon_npt_compressed_first_box(
     ARGON_NPT_COMPRESSED, ARGON_NPT_COMPRESSED_DATA
 ):
     with pytng.TNGFileIterator(ARGON_NPT_COMPRESSED) as tng:
-        first_box = tng.box
+        first_box = tng[0].box.reshape((3,3))
         assert_array_almost_equal(
             ARGON_NPT_COMPRESSED_DATA.first_box, first_box
         )
 
-@pytest.mark.skip(reason="FAILING")
 def test_argon_npt_compressed_last_box(
     ARGON_NPT_COMPRESSED, ARGON_NPT_COMPRESSED_DATA
 ):
     with pytng.TNGFileIterator(ARGON_NPT_COMPRESSED) as tng:
-        last_box = tng.box
+        last_box = tng[len(tng)-1].box.reshape((3,3))
         assert_array_almost_equal(ARGON_NPT_COMPRESSED_DATA.last_box, last_box)
 
-@pytest.mark.skip(reason="FAILING")
 def test_water_npt_uncompressed_vels_forces_open(
     WATER_NPT_UNCOMPRESSED_VELS_FORCES,
 ):
@@ -285,48 +279,44 @@ def test_water_npt_uncompressed_vels_forces_open(
         pass
 
 
-@pytest.mark.skip(reason="FAILING")
 def test_water_npt_uncompressed_vels_forces_first_vels(
     WATER_NPT_UNCOMPRESSED_VELS_FORCES, WATER_NPT_UNCOMPRESSED_VELS_FORCES_DATA
 ):
     with pytng.TNGFileIterator(WATER_NPT_UNCOMPRESSED_VELS_FORCES) as tng:
-        first_frame_first_10_vels = tng.vel[:10, :]
+        first_frame_first_10_vels = tng[0].vel[:10, :]
         assert_array_almost_equal(
             WATER_NPT_UNCOMPRESSED_VELS_FORCES_DATA.first_frame_first_10_vels,
             first_frame_first_10_vels,
             decimal=2,
         )  # decimal = 2 really slack
 
-@pytest.mark.skip(reason="FAILING")
 def test_water_npt_uncompressed_vels_forces_last_vels(
     WATER_NPT_UNCOMPRESSED_VELS_FORCES, WATER_NPT_UNCOMPRESSED_VELS_FORCES_DATA
 ):
     with pytng.TNGFileIterator(WATER_NPT_UNCOMPRESSED_VELS_FORCES) as tng:
-        last_frame_last_10_vels = tng.vel[2690:2700, : ]
+        last_frame_last_10_vels = tng[len(tng)-1].vel[2690:2700, : ]
         assert_array_almost_equal(
             WATER_NPT_UNCOMPRESSED_VELS_FORCES_DATA.last_frame_last_10_vels,
             last_frame_last_10_vels,
             decimal=2,
         )  # decimal = 2 really slack
 
-@pytest.mark.skip(reason="FAILING")
 def test_water_npt_uncompressed_vels_forces_first_frc(
     WATER_NPT_UNCOMPRESSED_VELS_FORCES, WATER_NPT_UNCOMPRESSED_VELS_FORCES_DATA
 ):
     with pytng.TNGFileIterator(WATER_NPT_UNCOMPRESSED_VELS_FORCES) as tng:
-        first_frame_first_10_frc = tng.frc[:10, :]  # todo forces
+        first_frame_first_10_frc = tng[0].frc[:10, :]  # todo forces
         assert_array_almost_equal(
             WATER_NPT_UNCOMPRESSED_VELS_FORCES_DATA.first_frame_first_10_frc,
             first_frame_first_10_frc,
             decimal=2,
         )  # decimal = 2 really slack
 
-@pytest.mark.skip(reason="FAILING")
 def test_water_npt_uncompressed_vels_forces_last_frc(
     WATER_NPT_UNCOMPRESSED_VELS_FORCES, WATER_NPT_UNCOMPRESSED_VELS_FORCES_DATA
 ):
     with pytng.TNGFileIterator(WATER_NPT_UNCOMPRESSED_VELS_FORCES) as tng:
-        last_frame_last_10_frc = tng.frc[2690:2700, :]  # TODO forces
+        last_frame_last_10_frc = tng[len(tng) -1].frc[2690:2700, :]
         assert_array_almost_equal(
             WATER_NPT_UNCOMPRESSED_VELS_FORCES_DATA.last_frame_last_10_frc,
             last_frame_last_10_frc,

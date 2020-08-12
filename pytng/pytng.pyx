@@ -815,6 +815,14 @@ cdef class TNGFileIterator:
             self._n_frames = -1
 
     @property
+    def n_frames(self):
+        return self._n_frames
+    
+    @property
+    def n_atoms(self):
+        return self._n_particles
+
+    @property
     def block_set(self):  # NOTE perhaps we should not expose this
         """Dictionary where keys are available block id
         and values are TngDataBlock instance"""
