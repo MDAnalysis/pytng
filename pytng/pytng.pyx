@@ -1047,9 +1047,52 @@ cdef class TNGCurrentIntegratorStep:
     cdef int64_t _n_blocks
     cdef dict blocks  # TODO should we use a fixed size container?
 
-    def __cinit__(self, bint debug=False):
+    cdef tng_trajectory * _traj
+    cdef int64_t _frame
+    cdef int64_t block_id
+
+    cdef int64_t step
+    cdef double frame_time
+    cdef double precision
+    cdef int64_t n_values_per_frame, n_atoms
+    cdef char[TNG_MAX_STR_LEN] block_name
+    cdef MemoryWrapper _wrapper  # manages the numpy array lifetime
+    cdef tng_function_status read_stat
+
+    cdef bint block_is_read
+
+
+    def __cinit__(self, TrajectoryWrapper traj, int64_t frame, bint debug=False):
         self.debug = debug
         self.blocks = {}
+
+        self._traj = traj._ptr
+        self._frame = frame
+        self.block_id = -1
+
+        self.step = -1
+        self.frame_time = -1
+        self.precision = -1
+        self.n_values_per_frame = -1
+        self.n_atoms = -1
+        self.block_is_read = False
+
+    def __dealloc__(self):
+        pass
+
+    def get_pos(self, np.ndarray data):
+        pass
+    
+    def get_box(self, np.ndarray data):
+        pass
+
+    def get_vel(self, np.ndarray data):
+        pass
+
+    def _get_blockid(self, int64_t blockid, np.ndarray data):
+        pass
+
+
 
     cdef inline void add_block(self, int64_t block_id, TNGDataBlock block):
         self.blocks[block_id] = block  # add the block to the block dictionary
