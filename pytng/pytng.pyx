@@ -818,33 +818,33 @@ cdef class TNGFileIterator:
     def block_set(self):  # NOTE perhaps we should not expose this
         """Dictionary where keys are available block id
         and values are TngDataBlock instance"""
-        return self.current_frame.block_set
+        return self.current_step.block_set
 
     @property
     def block_ids(self):  # NOTE perhaps we should not expose this
         """List of block ids available at the current frame"""
-        return list(self.current_frame.block_set.keys())
+        return list(self.current_step.block_set.keys())
 
     @property
     def block_names(self):
         """List of block names available at the current frame (unordered)"""
-        block_ids = list(self.current_frame.block_set.keys())
+        block_ids = list(self.current_step.block_set.keys())
         return [self.BLOCK_TYPES.block_dictionary[id] for id in block_ids]
 
     def get_block_by_name(self, name):
-        if self.current_frame.block_set.get(
+        if self.current_step.block_set.get(
                 self.BLOCK_TYPES.block_id_dictionary[name]) is None:
             return None
         else:
-            return self.current_frame.block_set.get(
+            return self.current_step.block_set.get(
                 self.BLOCK_TYPES.block_id_dictionary[name])
 
     def get_block_values_by_name(self, name):
-        if self.current_frame.block_set.get(
+        if self.current_step.block_set.get(
                 self.BLOCK_TYPES.block_id_dictionary[name]) is None:
             return None
         else:
-            return self.current_frame.block_set.get(
+            return self.current_step.block_set.get(
                 self.BLOCK_TYPES.block_id_dictionary[name]).values
 
     @property
@@ -854,31 +854,31 @@ cdef class TNGFileIterator:
 
     @property
     def pos(self):
-        if self.current_frame.block_set.get(TNG_TRAJ_POSITIONS) is None:
+        if self.current_step.block_set.get(TNG_TRAJ_POSITIONS) is None:
             return None
         else:
-            return self.current_frame.block_set.get(TNG_TRAJ_POSITIONS).values
+            return self.current_step.block_set.get(TNG_TRAJ_POSITIONS).values
 
     @property
     def vel(self):
-        if self.current_frame.block_set.get(TNG_TRAJ_VELOCITIES) is None:
+        if self.current_step.block_set.get(TNG_TRAJ_VELOCITIES) is None:
             return None
         else:
-            return self.current_frame.block_set.get(TNG_TRAJ_VELOCITIES).values
+            return self.current_step.block_set.get(TNG_TRAJ_VELOCITIES).values
 
     @property
     def frc(self):
-        if self.current_frame.block_set.get(TNG_TRAJ_FORCES) is None:
+        if self.current_step.block_set.get(TNG_TRAJ_FORCES) is None:
             return None
         else:
-            return self.current_frame.block_set.get(TNG_TRAJ_FORCES).values
+            return self.current_step.block_set.get(TNG_TRAJ_FORCES).values
 
     @property
     def box(self):
-        if self.current_frame.block_set.get(TNG_TRAJ_BOX_SHAPE) is None:
+        if self.current_step.block_set.get(TNG_TRAJ_BOX_SHAPE) is None:
             return None
         else:
-            return self.current_frame.block_set.get(TNG_TRAJ_BOX_SHAPE).values
+            return self.current_step.block_set.get(TNG_TRAJ_BOX_SHAPE).values
     
     @property
     def step(self):
@@ -889,20 +889,19 @@ cdef class TNGFileIterator:
            modifies the state of self.block_holder to contain
            the current blocks"""
         
-
-        if frame > self._n_frames:
+        if frame >= self._n_frames:
             raise ValueError("""frame specified is greater than number of steps
             in input file {}""".format(self._n_frames))
         
         self.step = frame
-        self.current_frame = TNGCurrentIntegratorStep(debug=self.debug)
+        self.current_step = TNGCurrentIntegratorStep(debug=self.debug)
 
         # TODO fix this to whatever kind of iteration we want
 
         for block, stride in self._frame_strides.items():
             if frame % stride == 0:
                 # read the frame if we are on stride
-                self._read_single_frame(frame, block, self.current_frame)
+                self._read_single_frame(frame, block, self.current_step)
 
 
     # NOTE here we assume that the first frame has all the blocks
@@ -951,7 +950,7 @@ cdef class TNGFileIterator:
         if self.debug:
             print("READING FRAME {}  \n".format(frame))
         cdef block = TNGDataBlock(self._traj, frame, debug=self.debug)
-        current_frame.block_read(block_id)  # read the actual block
+        block.block_read(block_id)  # read the actual block
         # add the block to the block holder
         current_frame.add_block(block_id, block)
     
@@ -971,12 +970,12 @@ cdef class TNGFileIterator:
     def __iter__(self):
         self._close()
         self._open(self.fname, self.mode)
-        self.read_frame(self.frame)
+        self.read_frame(self.step)
 
         return self
 
     def __next__(self):
-        if self.step == self._n_frames:
+        if self.step == self._n_frames -1:
             raise StopIteration
         self.read_frame(self.step)
         prev = self.step
@@ -1024,6 +1023,8 @@ cdef class TNGFileIterator:
 
             def sliceiter(start, stop, step):
                 for i in range(start, stop, step):
+                    if i < 0:
+                        raise ValueError("cannot supply negative indicies")
                     self.read_frame(i)
                     yield self
             return sliceiter(start, stop, step)
@@ -1045,6 +1046,7 @@ cdef class TNGCurrentIntegratorStep:
 
     cdef inline void add_block(self, int64_t block_id, TNGDataBlock block):
         self.blocks[block_id] = block  # add the block to the block dictionary
+
 
     @property
     def block_set(self):
