@@ -942,7 +942,7 @@ cdef class TNGFileIterator:
         # over the greatest common divisor of the data strides
         self._gcd = gcd_list(list(self._frame_strides.values()))
         if self.debug:
-            printf("greatest common divisor of strides %ld \n", self._gcd)
+            printf("PYTNG INFO: gcd of strides %ld \n", self._gcd)
 
         return TNG_SUCCESS
 
@@ -1134,7 +1134,7 @@ cdef class TNGDataBlock:
            an associated MemoryWrapper instance"""
 
         if self.debug:
-            printf("CREATING NUMPY_ARRAY \n")
+            printf("PYTNG INFO: creating Numpy array \n")
         if n_values_per_frame == -1 or n_atoms == -1:
             raise ValueError(
                 "Array dimensions for block casting are not set correctly")
@@ -1166,10 +1166,10 @@ cdef class TNGDataBlock:
                                                   self.debug)
 
         if self.debug:
-            printf("block id %ld \n", self.block_id)
-            printf("data block name %s \n", self.block_name)
-            printf("n_values_per_frame %ld \n", self.n_values_per_frame)
-            printf("n_atoms  %ld \n", self.n_atoms)
+            printf("PYTNG INFO: block id %ld \n", self.block_id)
+            printf("PYTNG INFO: data block name %s \n", self.block_name)
+            printf("PYTNG INFO: n_values_per_frame %ld \n", self.n_values_per_frame)
+            printf("PYTNG INFO: n_atoms  %ld \n", self.n_atoms)
 
         return read_stat
 
@@ -1208,12 +1208,10 @@ cdef class TNGDataBlock:
                                              & block_dependency)
         if stat != TNG_SUCCESS:
             return TNG_CRITICAL
-        if debug:
-            printf("BLOCK DEPS %d \n", block_dependency)
 
         if block_dependency & TNG_PARTICLE_DEPENDENT:  # bitwise & due to enums
             if debug:
-                printf("reading particle data \n")
+                printf("PYTNG INFO: reading particle data \n")
             tng_num_particles_get(self._traj, n_atoms)
             # read particle data off disk with hash checking
             stat = tng_gen_data_vector_interval_get(self._traj,
@@ -1230,7 +1228,7 @@ cdef class TNGDataBlock:
 
         else:
             if debug:
-                printf("reading NON particle data \n")
+                printf("PYTNG INFO: reading non particle data \n")
             n_atoms[0] = 1  # still used for some allocs
             # read non particle data off disk with hash checking
             stat = tng_gen_data_vector_interval_get(self._traj,
@@ -1246,14 +1244,14 @@ cdef class TNGDataBlock:
                                                     & datatype)
 
         if stat != TNG_SUCCESS:
-            printf(
-                "WARNING: critical failure in tng_gen_data_vector_get \n")
+            printf("PYTNG WARNING: critical failure in"
+                   "tng_gen_data_vector_get \n")
             return TNG_CRITICAL
 
         stat = tng_data_block_num_values_per_frame_get(
             self._traj, block_id, n_values_per_frame)
         if stat == TNG_CRITICAL:
-            printf("WARNING: critical failure in"
+            printf("PYTNG WARNING: critical failure in"
                    "tng_data_block_num_values_per_frame_get \n")
             return TNG_CRITICAL
 
@@ -1265,7 +1263,8 @@ cdef class TNGDataBlock:
         _wrapped_values = <double*> self._wrapper.ptr
 
         if self.debug:
-            printf("realloc values array to %ld doubles and %ld bits long \n",
+            printf("PYTNG INFO: realloc values array to"
+                   " %ld doubles and %ld bits long \n",
                    n_values_per_frame[0] * n_atoms[0], n_values_per_frame[0]
                    * n_atoms[0]*sizeof(double))
 
@@ -1280,7 +1279,7 @@ cdef class TNGDataBlock:
                                                       & codec_id,
                                                       & local_prec)
         if stat == TNG_CRITICAL:
-            printf("WARNING: critical failure in"
+            printf("PYTNG WARNING: critical failure in"
                    "tng_util_frame_current_compression_get \n")
             return TNG_CRITICAL
 
@@ -1321,7 +1320,7 @@ cdef class TNGDataBlock:
                     to[i * n_vals + j] = ( < float*>source)[i * n_vals + j]
             # memcpy(to,  source, n_vals * sizeof(float) * n_atoms)
             if debug:
-                printf("TNG_FLOAT \n")
+                printf("PYTNG BLOCK INFO: TNG_FLOAT \n")
 
         elif datatype == TNG_INT_DATA:
             for i in range(n_atoms):
@@ -1329,7 +1328,7 @@ cdef class TNGDataBlock:
                     to[i * n_vals + j] = ( < int64_t*>source)[i * n_vals + j]
             # memcpy(to, source, n_vals * sizeof(int64_t) * n_atoms)
             if debug:
-                printf("TNG_INT \n")
+                printf("PYTNG BLOCK INFO: TNG_INT \n")
 
         elif datatype == TNG_DOUBLE_DATA:
             for i in range(n_atoms):
@@ -1337,14 +1336,14 @@ cdef class TNGDataBlock:
                     to[i * n_vals + j] = ( < double*>source)[i * n_vals + j]
             # memcpy(to, source, n_vals * sizeof(double) * n_atoms)
             if debug:
-                printf("TNG_DOUBLE\n")
+                printf("PYTNG BLOCK INFO: TNG_DOUBLE\n")
 
         elif datatype == TNG_CHAR_DATA:
             # NOTE not implemented in TNG library either
-            printf("WARNING: char data reading is not implemented \n")
+            printf("PYTNG WARNING: char data reading is not implemented \n")
 
         else:
-            printf("WARNING: block data type %d not understood \n", datatype)
+            printf("PYTNG WARNING: block data type %d not understood \n", datatype)
 
 
 block_dictionary = {}
