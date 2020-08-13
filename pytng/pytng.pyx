@@ -700,7 +700,6 @@ cdef class TNGFileIterator:
     Supports use as a context manager ("with" blocks).
 
     """
-
     cdef tng_trajectory * _traj_p
     cdef TrajectoryWrapper _traj
     cdef readonly fname
@@ -715,12 +714,11 @@ cdef class TNGFileIterator:
     cdef int64_t _n_frame_sets
     cdef float _distance_scale
 
-    cdef int64_t _current_frame
-    cdef int64_t _current_frame_set
-    cdef int64_t _gcd  # greatest common divisor of data strides
-
     cdef dict   _frame_strides
     cdef dict   _n_data_frames
+    cdef dict   _values_per_frame
+
+    cdef int64_t _gcd  # greatest common divisor of data strides
 
     # holds the current blocks at a trajectory timestep
     cdef TNGCurrentIntegratorStep current_step
@@ -731,17 +729,16 @@ cdef class TNGFileIterator:
         self.fname = fname
         self.debug = debug
         self.step = 0
+
         self._n_frames = -1
         self._n_particles = -1
-        self._n_frame_sets = -1
         self._distance_scale = 0.0
-        self._current_frame = -1
-        self._current_frame_set = -1
-        self._gcd = -1
+
         self._frame_strides = {}
         self._n_data_frames = {}
+        self._values_per_frame = {}
+        self._gcd = -1
 
-        # the mappings of block ids to block names and vice versa
         self._open(self.fname, mode)
 
     def __dealloc__(self):
@@ -835,6 +832,10 @@ cdef class TNGFileIterator:
     def block_ids(self):  # NOTE perhaps we should not expose this
         """List of block ids available at the current frame"""
         return list(self.current_step.block_set.keys())
+    
+    @property
+    def values_per_frame(self):
+        return self._values_per_frame
 
     @property
     def block_names(self):
@@ -921,7 +922,7 @@ cdef class TNGFileIterator:
         """Gets the ids, strides and number of frames with
            actual data from the trajectory"""
         cdef int64_t step, n_blocks
-        cdef int64_t nframes, stride_length
+        cdef int64_t nframes, stride_length, n_values_per_frame
         cdef int64_t block_counter = 0
         cdef int64_t * block_ids = NULL
 
@@ -938,10 +939,16 @@ cdef class TNGFileIterator:
                 self._traj._ptr, block_ids[i], & nframes)
             if read_stat != TNG_SUCCESS:
                 return TNG_CRITICAL
+            read_stat = tng_data_block_num_values_per_frame_get(
+            self._traj._ptr, block_ids[i], &n_values_per_frame)
+
             # stride length for the block
             self._frame_strides[block_ids[i]] = stride_length
             # number of actual data frames for the block
             self._n_data_frames[block_ids[i]] = nframes
+            # number of values per frame
+            self._values_per_frame[block_ids[i]] = n_values_per_frame
+
 
         # TODO we will use this if we want to instead iterate
         # over the greatest common divisor of the data strides
@@ -1185,6 +1192,7 @@ cdef class TNGCurrentIntegratorStep:
         pass
 
     def get_pos(self, np.ndarray data):
+
         pass
 
     def get_box(self, np.ndarray data):
@@ -1194,7 +1202,10 @@ cdef class TNGCurrentIntegratorStep:
         pass
 
     def get_blockid(self, int64_t blockid, np.ndarray data):
-        pass
+        shape = data.shape
+        dtype = data.dtype
+
+
 
     cdef inline void add_block(self, int64_t block_id, TNGDataBlock block):
         self.blocks[block_id] = block  # add the block to the block dictionary

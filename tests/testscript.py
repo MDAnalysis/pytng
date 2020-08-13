@@ -1,15 +1,7 @@
 import pytng
 
 with pytng.TNGFileIterator("./reference_files/argon_npt_compressed.tng", mode="r", debug=False) as tng:
-
-    tng[0]
-    print(tng.block_strides)
-    tng[5000]
-
-    l = [0, 1, 2, 3]
-
-    for ts in tng[l]:
-        print(tng.pos)
+    print(tng.values_per_frame)
 
 # for ts in file_iterator[0:100000:5000]:
 #     print(file_iterator.pos)
