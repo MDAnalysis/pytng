@@ -823,53 +823,43 @@ cdef class TNGFileIterator:
         return self._n_particles
 
     @property
-    def block_set(self):  # NOTE perhaps we should not expose this
-        """Dictionary where keys are available block id
-        and values are TngDataBlock instance"""
-        return self.current_step.block_set
-
-    @property
-    def block_ids(self):  # NOTE perhaps we should not expose this
-        """List of block ids available at the current frame"""
-        return list(self.current_step.block_set.keys())
+    def block_strides(self):
+        return [(block_dictionary[k], v)
+                for k, v in self._frame_strides.items()]
     
     @property
     def values_per_frame(self):
         return self._values_per_frame
 
     @property
-    def block_names(self):
-        """List of block names available at the current frame (unordered)"""
-        block_ids = list(self.current_step.block_set.keys())
-        return [block_dictionary[id] for id in block_ids]
-
-    @property
-    def block_strides(self):
-        return [(block_dictionary[k], v)
-                for k, v in self._frame_strides.items()]
-
-    @property
     def step(self):
         return self.step
 
-    def read_frame(self, frame):
+    # @property
+    # def block_ids(self):  # NOTE perhaps we should not expose this
+    #     """List of block ids available at the current frame"""
+    #     return list(self.current_step.block_set.keys())
+    
+
+    # @property
+    # def block_names(self):
+    #     """List of block names available at the current frame (unordered)"""
+    #     block_ids = list(self.current_step.block_set.keys())
+    #     return [block_dictionary[id] for id in block_ids]
+
+
+
+    def read_step(self, step):
         """Read a frame (integrator step) from the file,
            modifies the state of self.block_holder to contain
            the current blocks"""
 
-        if frame >= self._n_frames:
+        if step >= self._n_frames:
             raise ValueError("""frame specified is greater than number of steps
             in input file {}""".format(self._n_frames))
 
-        self.step = frame
-        self.current_step = TNGCurrentIntegratorStep(debug=self.debug)
-
-        # TODO fix this to whatever kind of iteration we want
-
-        for block, stride in self._frame_strides.items():
-            if frame % stride == 0:
-                # read the frame if we are on stride
-                self._read_single_frame(frame, block)
+        self.step=step
+        self.current_step = TNGCurrentIntegratorStep(step, debug=self.debug)
 
     # NOTE here we assume that the first frame has all the blocks
     #  that are present in the whole traj
@@ -914,12 +904,6 @@ cdef class TNGFileIterator:
 
         return TNG_SUCCESS
 
-    cdef void _read_single_frame(self, int64_t frame, int64_t block_id):
-        """Read the current block of a given block id into a
-           TNGDataBlock instance and pops that instance to the block holder"""
-
-        if self.debug:
-            print("READING FRAME {}  \n".format(frame))
        
 
     def __enter__(self):
