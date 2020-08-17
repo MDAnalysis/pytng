@@ -14,6 +14,7 @@ from libc.stdio cimport printf, FILE, SEEK_SET, SEEK_CUR, SEEK_END
 from libc.stdlib cimport malloc, free, realloc
 from libc.stdint cimport int64_t, uint64_t, int32_t, uint32_t
 from cpython.mem cimport PyMem_Malloc, PyMem_Realloc, PyMem_Free
+#TODO REMOVE
 from numpy cimport(PyArray_SimpleNewFromData,
                    PyArray_SetBaseObject,
                    NPY_FLOAT,
@@ -22,20 +23,23 @@ from numpy cimport(PyArray_SimpleNewFromData,
                    npy_intp,
                    )
 cimport cython
-
-
 cimport numpy as np
 np.import_array()
 
-
+# Marks operation success 
 ctypedef enum tng_function_status: TNG_SUCCESS, TNG_FAILURE, TNG_CRITICAL
+# Marks use of hash checking in file read
 ctypedef enum tng_hash_mode: TNG_SKIP_HASH, TNG_USE_HASH
+# Datatypes that can be read off disk
 ctypedef enum tng_datatypes: TNG_CHAR_DATA, TNG_INT_DATA, TNG_FLOAT_DATA, \
     TNG_DOUBLE_DATA
+# Marks particle or non-particle data
 ctypedef enum tng_particle_dependency: TNG_NON_PARTICLE_BLOCK_DATA, \
     TNG_PARTICLE_BLOCK_DATA
+# Indicates compression type
 ctypedef enum tng_compression: TNG_UNCOMPRESSED, TNG_XTC_COMPRESSION, \
     TNG_TNG_COMPRESSION, TNG_GZIP_COMPRESSION
+# TNG alias for T/F
 ctypedef enum tng_bool: TNG_FALSE, TNG_TRUE
 
 # Flag to indicate frame dependent data.
@@ -43,17 +47,8 @@ DEF TNG_FRAME_DEPENDENT = 1
 # Flag to indicate particle dependent data.
 DEF TNG_PARTICLE_DEPENDENT = 2
 
-cdef union data_values:
-    double d
-    float f
-    int64_t i
-    char * c
-
+#TODO REMOVE
 status_error_message = ['OK', 'Failure', 'Critical']
-
-
-cdef extern from "string.h":
-    size_t strlen(char * s)
 
 cdef extern from "<stdio.h>" nogil:
     # Seek and tell with off_t
@@ -61,21 +56,18 @@ cdef extern from "<stdio.h>" nogil:
     off_t ftello(FILE*)
 
 
-# /** @defgroup def1 Standard non-trajectory blocks
-#  *  Block IDs of standard non-trajectory blocks.
-#  * @{
-#  */
+# GROUP 1 Standard non-trajectory blocks
+# Block IDs of standard non-trajectory blocks.
+
 DEF TNG_GENERAL_INFO = 0x0000000000000000LL
 DEF TNG_MOLECULES = 0x0000000000000001LL
 DEF TNG_TRAJECTORY_FRAME_SET = 0x0000000000000002LL
 DEF TNG_PARTICLE_MAPPING = 0x0000000000000003LL
-# /** @} */
 
-# /** @defgroup def2 Standard trajectory blocks
-#  * Block IDs of standard trajectory blocks. Box shape and partial charges can
-#  * be either trajectory blocks or non-trajectory blocks
-#  * @{
-#  */
+# GROUP 2 Standard trajectory blocks
+# Block IDs of standard trajectory blocks. Box shape and partial charges can
+# be either trajectory blocks or non-trajectory blocks
+
 DEF TNG_TRAJ_BOX_SHAPE = 0x0000000010000000LL
 DEF TNG_TRAJ_POSITIONS = 0x0000000010000001LL
 DEF TNG_TRAJ_VELOCITIES = 0x0000000010000002LL
@@ -87,12 +79,10 @@ DEF TNG_TRAJ_ANISOTROPIC_B_FACTORS = 0x0000000010000007LL
 DEF TNG_TRAJ_OCCUPANCY = 0x0000000010000008LL
 DEF TNG_TRAJ_GENERAL_COMMENTS = 0x0000000010000009LL
 DEF TNG_TRAJ_MASSES = 0x0000000010000010LL
-# /** @} */
 
-# /** @defgroup def3 GROMACS data block IDs
-#  *  Block IDs of data blocks specific to GROMACS.
-#  * @{
-#  */
+# GROUP 3 GROMACS data block IDs
+# Block IDs of data blocks specific to GROMACS.
+
 DEF TNG_GMX_LAMBDA = 0x1000000010000000LL
 DEF TNG_GMX_ENERGY_ANGLE = 0x1000000010000001LL
 DEF TNG_GMX_ENERGY_RYCKAERT_BELL = 0x1000000010000002LL
@@ -602,6 +592,7 @@ cdef extern from "tng/tng_io.h":
         int64_t * n_values_per_frame,
         char * type) nogil
 
+#TODO REMOVE
 TNGFrame = namedtuple("TNGFrame", "positions velocities forces time step box")
 
 
@@ -621,7 +612,7 @@ cdef int64_t gcd_list(list a):
         result = gcd(result, a[i])
     return result
 
-
+#TODO REMOVE
 @cython.final
 cdef class MemoryWrapper:
     # holds a pointer to C allocated memory, deals with malloc&free based on:
@@ -700,27 +691,41 @@ cdef class TNGFileIterator:
     Supports use as a context manager ("with" blocks).
 
     """
+    # tng_trajectory pointer
     cdef tng_trajectory * _traj_p
+    # trajectory wrapper
     cdef TrajectoryWrapper _traj
+    # filename
     cdef readonly fname
+    # mode (r,w,a)
     cdef str mode
+    # enable/disable debug output
     cdef bint debug
+    # mark trajectory to be closed/open
     cdef int is_open
+    # have we reached the end of the file
     cdef int reached_eof
-    cdef int64_t step
 
+    # integrator timestep
+    cdef int64_t step
+    # number of integrator timesteps
     cdef int64_t _n_frames
+    # number of particles
     cdef int64_t _n_particles
-    cdef int64_t _n_frame_sets
+    # distance unit
     cdef float _distance_scale
 
+    # stride at which each block is written
     cdef dict   _frame_strides
+    # number of actual frames with data for each block
     cdef dict   _n_data_frames
+    # the number of values per frame for each data block
     cdef dict   _values_per_frame
 
-    cdef int64_t _gcd  # greatest common divisor of data strides
+    # greatest common divisor of data strides
+    cdef int64_t _gcd  
 
-    # holds the current blocks at a trajectory timestep
+    # holds data at the current trajectory timestep
     cdef TNGCurrentIntegratorStep current_step
 
     def __cinit__(self, fname, mode='r', debug=False):
@@ -777,28 +782,25 @@ cdef class TNGFileIterator:
         cdef tng_function_status stat
 
         fname_bytes = fname.encode('UTF-8')
+        # open the trajectory
         stat = tng_util_trajectory_open(fname_bytes, _mode, & self._traj._ptr)
         if stat != TNG_SUCCESS:
             raise IOError("File '{}' cannot be opened".format(fname))
 
-        # TODO propagate errmsg upwards in all the below calls
+        # get the number of integrator timesteps
         stat = tng_num_frames_get(self._traj._ptr, & self._n_frames)
         if stat != TNG_SUCCESS:
             raise IOError("Number of frames cannot be read")
-
+        # get the number of particles
         stat = tng_num_particles_get(self._traj._ptr, & self._n_particles)
         if stat != TNG_SUCCESS:
             raise IOError("Number of particles cannot be read")
-
-        stat = tng_num_frame_sets_get(self._traj._ptr, & self._n_frame_sets)
-        if stat != TNG_SUCCESS:
-            raise IOError("Number of trajectory frame sets cannot be read")
-
+        # get the unit scale
         cdef int64_t exponent
         stat = tng_distance_unit_exponential_get(self._traj._ptr, & exponent)
         if stat != TNG_SUCCESS:
             raise IOError("Distance exponent cannot be read")
-
+        # fill out dictionaries
         stat = self._get_frame_indicies()
         if stat != TNG_SUCCESS:
             raise IOError("Strides for each data block cannot be read")
@@ -807,6 +809,7 @@ cdef class TNGFileIterator:
         self.is_open = True
         self.reached_eof = False
 
+    # close the file 
     def _close(self):
         """Make sure the file handle is closed"""
         if self.is_open:
@@ -849,18 +852,8 @@ cdef class TNGFileIterator:
     def current_integrator_step(self):
         return self.current_step
 
-    # @property
-    # def block_ids(self):  # NOTE perhaps we should not expose this
-    #     """List of block ids available at the current frame"""
-    #     return list(self.current_step.block_set.keys())
 
-    # @property
-    # def block_names(self):
-    #     """List of block names available at the current frame (unordered)"""
-    #     block_ids = list(self.current_step.block_set.keys())
-    #     return [block_dictionary[id] for id in block_ids]
-
-    def read_step(self, step):
+    cpdef read_step(self, step):
         """Read a frame (integrator step) from the file,
            modifies the state of self.block_holder to contain
            the current blocks"""
@@ -994,35 +987,42 @@ cdef class TNGFileIterator:
 
 
 cdef class TNGCurrentIntegratorStep:
-    """Holds data blocks at the curent trajectory step"""
+    """Holds data at the curent trajectory step"""
 
     cdef bint debug
     cdef int64_t _n_blocks
-    cdef dict blocks  # TODO should we use a fixed size container?
 
     cdef tng_trajectory * _traj
     cdef int64_t step
     cdef double step_time
-    cdef bint step_is_read
 
     def __cinit__(self, TrajectoryWrapper traj, int64_t step, bint debug=False):
         self.debug = debug
-        self.blocks = {}
 
         self._traj = traj._ptr
         self.step = step
         self.step_time = -1
-        self.step_is_read = False
 
     def __dealloc__(self):
         pass
-    
+
     @property
     def time(self):
         return self.step_time
 
+    cpdef get_pos(self, np.ndarray data):
+        self.get_blockid(TNG_TRAJ_POSITIONS, data)
 
-    cpdef  get_blockid(self, int64_t block_id, np.ndarray data):
+    cpdef get_box(self, np.ndarray data):
+        self.get_blockid(TNG_TRAJ_BOX_SHAPE, data)
+
+    cpdef get_vel(self, np.ndarray data):
+        self.get_blockid(TNG_TRAJ_VELOCITIES, data)
+
+    cpdef get_frc(self, np.ndarray data):
+        self.get_blockid(TNG_TRAJ_FORCES, data)
+
+    cpdef get_blockid(self, int64_t block_id, np.ndarray data):
 
         shape = data.shape
         dtype = data.dtype
@@ -1043,13 +1043,12 @@ cdef class TNGCurrentIntegratorStep:
 
         with nogil:
             read_stat = self._get_data_next_frame(block_id, self.step, & values, & _step_time, & n_values_per_frame, & n_atoms, & precision, & datatype, self.debug)
-        
+
         if read_stat != TNG_SUCCESS:
             printf("PYTNG WARNING: data could not be read\n")
             return TNG_CRITICAL
-        
-        self.step_time = _step_time
 
+        self.step_time = _step_time
 
         if data.ndim > 2:
             raise IndexError("Numpy array must be 2 dimensional")
@@ -1117,7 +1116,7 @@ cdef class TNGCurrentIntegratorStep:
         if stat != TNG_SUCCESS:
             return TNG_CRITICAL
 
-        if block_dependency&TNG_PARTICLE_DEPENDENT:  # bitwise & due to enums
+        if block_dependency & TNG_PARTICLE_DEPENDENT:  # bitwise & due to enums
             tng_num_particles_get(self._traj, n_atoms)
             # read particle data off disk with hash checking
             stat = tng_gen_data_vector_interval_get(self._traj,
