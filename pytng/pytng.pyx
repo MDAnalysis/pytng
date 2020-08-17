@@ -810,7 +810,7 @@ cdef class TNGFileIterator:
     def _close(self):
         """Make sure the file handle is closed"""
         if self.is_open:
-            tng_util_trajectory_close( & self._traj._ptr)
+            tng_util_trajectory_close(& self._traj._ptr)
             self.is_open = False
             self._n_frames = -1
 
@@ -826,10 +826,16 @@ cdef class TNGFileIterator:
     def block_strides(self):
         return [(block_dictionary[k], v)
                 for k, v in self._frame_strides.items()]
-    
+
+    @property
+    def n_data_frames(self):
+        return [(block_dictionary[k], v)
+                for k, v in self._n_data_frames.items()]
+
     @property
     def values_per_frame(self):
-        return self._values_per_frame
+        return [(block_dictionary[k], v)
+                for k, v in self._values_per_frame.items()]
 
     @property
     def step(self):
@@ -839,15 +845,12 @@ cdef class TNGFileIterator:
     # def block_ids(self):  # NOTE perhaps we should not expose this
     #     """List of block ids available at the current frame"""
     #     return list(self.current_step.block_set.keys())
-    
 
     # @property
     # def block_names(self):
     #     """List of block names available at the current frame (unordered)"""
     #     block_ids = list(self.current_step.block_set.keys())
     #     return [block_dictionary[id] for id in block_ids]
-
-
 
     def read_step(self, step):
         """Read a frame (integrator step) from the file,
@@ -858,7 +861,7 @@ cdef class TNGFileIterator:
             raise ValueError("""frame specified is greater than number of steps
             in input file {}""".format(self._n_frames))
 
-        self.step=step
+        self.step = step
         self.current_step = TNGCurrentIntegratorStep(step, debug=self.debug)
 
     # NOTE here we assume that the first frame has all the blocks
@@ -886,7 +889,7 @@ cdef class TNGFileIterator:
             if read_stat != TNG_SUCCESS:
                 return TNG_CRITICAL
             read_stat = tng_data_block_num_values_per_frame_get(
-            self._traj._ptr, block_ids[i], &n_values_per_frame)
+                self._traj._ptr, block_ids[i], & n_values_per_frame)
 
             # stride length for the block
             self._frame_strides[block_ids[i]] = stride_length
@@ -895,7 +898,6 @@ cdef class TNGFileIterator:
             # number of values per frame
             self._values_per_frame[block_ids[i]] = n_values_per_frame
 
-
         # TODO we will use this if we want to instead iterate
         # over the greatest common divisor of the data strides
         self._gcd = gcd_list(list(self._frame_strides.values()))
@@ -903,8 +905,6 @@ cdef class TNGFileIterator:
             printf("greatest common divisor of strides %ld \n", self._gcd)
 
         return TNG_SUCCESS
-
-       
 
     def __enter__(self):
         # Support context manager
@@ -1008,13 +1008,12 @@ cdef class TNGCurrentIntegratorStep:
     def __dealloc__(self):
         pass
 
-
     def get_blockid(self, int64_t block_id, np.ndarray data):
-        
+
         shape = data.shape
         dtype = data.dtype
 
-        cdef void* values = NULL
+        cdef void * values = NULL
         cdef double frame_time = -1
         cdef int64_t n_values_per_frame = -1
         cdef int64_t n_atoms = -1
@@ -1023,17 +1022,16 @@ cdef class TNGCurrentIntegratorStep:
         cdef tng_function_status read_stat
 
         with nogil:
-            read_stat = self._get_data_next_frame(block_id, self.step, &values, &frame_time, &n_values_per_frame, &n_atoms, &precision, &datatype, self.debug)
-        
+            read_stat = self._get_data_next_frame(block_id, self.step, & values, & frame_time, & n_values_per_frame, & n_atoms, & precision, & datatype, self.debug)
 
     cdef tng_function_status _get_data_next_frame(self, int64_t block_id,
                                                   int64_t step,
-                                                  void** values,
+                                                  void ** values,
                                                   double * frame_time,
                                                   int64_t * n_values_per_frame,
                                                   int64_t * n_atoms,
                                                   double * prec,
-                                                  char * datatype, 
+                                                  char * datatype,
                                                   bint debug) nogil:
         """Gets the frame data off disk and into C level arrays"""
         cdef tng_function_status stat
@@ -1043,14 +1041,13 @@ cdef class TNGCurrentIntegratorStep:
         cdef double              local_prec
         cdef int64_t             stride_length
 
-
         # is this a particle dependent block?
         stat = tng_data_block_dependency_get(self._traj, block_id,
                                              & block_dependency)
         if stat != TNG_SUCCESS:
             return TNG_CRITICAL
 
-        if block_dependency&TNG_PARTICLE_DEPENDENT:  # bitwise & due to enums
+        if block_dependency & TNG_PARTICLE_DEPENDENT:  # bitwise & due to enums
             tng_num_particles_get(self._traj, n_atoms)
             # read particle data off disk with hash checking
             stat = tng_gen_data_vector_interval_get(self._traj,
@@ -1099,11 +1096,8 @@ cdef class TNGCurrentIntegratorStep:
         stat = tng_util_time_of_frame_get(self._traj, self.step, frame_time)
         if stat != TNG_SUCCESS:
             return TNG_CRITICAL
-        
 
         return TNG_SUCCESS
-
-
 
     @cython.boundscheck(True)
     @cython.wraparound(True)
@@ -1130,7 +1124,7 @@ cdef class TNGCurrentIntegratorStep:
         if datatype == TNG_FLOAT_DATA:
             for i in range(n_atoms):
                 for j in range(n_vals):
-                    to[i * n_vals + j] = ( < float*>source)[i * n_vals + j]
+                    to[i * n_vals + j] = (< float*>source)[i * n_vals + j]
             # memcpy(to,  source, n_vals * sizeof(float) * n_atoms)
             if debug:
                 printf("TNG_FLOAT \n")
@@ -1138,7 +1132,7 @@ cdef class TNGCurrentIntegratorStep:
         elif datatype == TNG_INT_DATA:
             for i in range(n_atoms):
                 for j in range(n_vals):
-                    to[i * n_vals + j] = ( < int64_t*>source)[i * n_vals + j]
+                    to[i * n_vals + j] = (< int64_t*>source)[i * n_vals + j]
             # memcpy(to, source, n_vals * sizeof(int64_t) * n_atoms)
             if debug:
                 printf("TNG_INT \n")
@@ -1146,7 +1140,7 @@ cdef class TNGCurrentIntegratorStep:
         elif datatype == TNG_DOUBLE_DATA:
             for i in range(n_atoms):
                 for j in range(n_vals):
-                    to[i * n_vals + j] = ( < double*>source)[i * n_vals + j]
+                    to[i * n_vals + j] = (< double*>source)[i * n_vals + j]
             # memcpy(to, source, n_vals * sizeof(double) * n_atoms)
             if debug:
                 printf("TNG_DOUBLE\n")
@@ -1399,7 +1393,7 @@ cdef class TNGFile:
     def close(self):
         """Make sure the file handle is closed"""
         if self.is_open:
-            tng_util_trajectory_close( & self._traj)
+            tng_util_trajectory_close(& self._traj)
             self.is_open = False
             self._n_frames = -1
 
@@ -1525,7 +1519,7 @@ cdef class TNGFile:
 
         # TODO this seem wasteful but can't cdef inside a conditional?
         cdef MemoryWrapper wrap_box
-        cdef np.ndarray[ndim = 2, dtype = np.float32_t, mode = 'c'] box = \
+        cdef np.ndarray[ndim= 2, dtype = np.float32_t, mode = 'c'] box = \
             np.empty((3, 3), dtype=np.float32)
 
         if self._box:

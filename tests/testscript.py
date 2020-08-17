@@ -3,6 +3,8 @@ import pytng
 with pytng.TNGFileIterator("./reference_files/argon_npt_compressed.tng", mode="r", debug=False) as tng:
     print(tng.n_frames)
     print(tng.n_atoms)
+    print(tng.n_data_frames)
+    print(tng.block_strides)
     print(tng.values_per_frame)
 
 
