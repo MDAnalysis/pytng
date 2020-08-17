@@ -1110,12 +1110,6 @@ cdef class TNGCurrentIntegratorStep:
         cdef void * data = NULL
         cdef double              local_prec
         cdef int64_t             stride_length
-        cdef char[1024]            block_name
-
-        stat = tng_data_block_name_get(
-            self._traj, block_id, block_name, TNG_MAX_STR_LEN)
-        if stat != TNG_SUCCESS:
-            return TNG_CRITICAL
 
         # is this a particle dependent block?
         stat = tng_data_block_dependency_get(self._traj, block_id,
