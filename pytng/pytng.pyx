@@ -1002,7 +1002,7 @@ cdef class TNGCurrentIntegratorStep:
 
     cdef tng_trajectory * _traj
     cdef int64_t step
-    cdef double frame_time
+    cdef double step_time
     cdef bint step_is_read
 
     def __cinit__(self, TrajectoryWrapper traj, int64_t step, bint debug=False):
@@ -1011,11 +1011,16 @@ cdef class TNGCurrentIntegratorStep:
 
         self._traj = traj._ptr
         self.step = step
-        self.frame_time = -1
+        self.step_time = -1
         self.step_is_read = False
 
     def __dealloc__(self):
         pass
+    
+    @property
+    def time(self):
+        return self.step_time
+
 
     def get_blockid(self, int64_t block_id, np.ndarray data):
 
@@ -1027,7 +1032,7 @@ cdef class TNGCurrentIntegratorStep:
             return TNG_CRITICAL
 
         cdef void * values = NULL
-        cdef double frame_time = -1
+        cdef double _step_time = -1
         cdef int64_t n_values_per_frame = -1
         cdef int64_t n_atoms = -1
         cdef double precision = -1
@@ -1037,11 +1042,14 @@ cdef class TNGCurrentIntegratorStep:
         cdef int i, j
 
         with nogil:
-            read_stat = self._get_data_next_frame(block_id, self.step, & values, & frame_time, & n_values_per_frame, & n_atoms, & precision, & datatype, self.debug)
+            read_stat = self._get_data_next_frame(block_id, self.step, & values, & _step_time, & n_values_per_frame, & n_atoms, & precision, & datatype, self.debug)
         
         if read_stat != TNG_SUCCESS:
             printf("PYTNG WARNING: data could not be read\n")
             return TNG_CRITICAL
+        
+        self.step_time = _step_time
+
 
         if data.ndim > 2:
             raise IndexError("Numpy array must be 2 dimensional")
