@@ -1022,7 +1022,7 @@ cdef class TNGCurrentIntegratorStep:
         return self.step_time
 
 
-    def get_blockid(self, int64_t block_id, np.ndarray data):
+    cpdef  get_blockid(self, int64_t block_id, np.ndarray data):
 
         shape = data.shape
         dtype = data.dtype
@@ -1110,6 +1110,12 @@ cdef class TNGCurrentIntegratorStep:
         cdef void * data = NULL
         cdef double              local_prec
         cdef int64_t             stride_length
+        cdef char[1024]            block_name
+
+        stat = tng_data_block_name_get(
+            self._traj, block_id, block_name, TNG_MAX_STR_LEN)
+        if stat != TNG_SUCCESS:
+            return TNG_CRITICAL
 
         # is this a particle dependent block?
         stat = tng_data_block_dependency_get(self._traj, block_id,
@@ -1117,7 +1123,7 @@ cdef class TNGCurrentIntegratorStep:
         if stat != TNG_SUCCESS:
             return TNG_CRITICAL
 
-        if block_dependency & TNG_PARTICLE_DEPENDENT:  # bitwise & due to enums
+        if block_dependency&TNG_PARTICLE_DEPENDENT:  # bitwise & due to enums
             tng_num_particles_get(self._traj, n_atoms)
             # read particle data off disk with hash checking
             stat = tng_gen_data_vector_interval_get(self._traj,

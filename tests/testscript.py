@@ -2,6 +2,7 @@ import pytng
 import numpy as np
 
 with pytng.TNGFileIterator("./reference_files/argon_npt_compressed.tng", mode="r", debug=False) as tng:
+    print(tng.block_ids)
     for i in range(0,500000,5000):
         tng.read_step(i)
         positions = np.zeros((1000,3), dtype= np.float32)
