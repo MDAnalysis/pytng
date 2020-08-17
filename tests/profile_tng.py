@@ -1,11 +1,13 @@
 import pstats, cProfile
-
+import numpy as np
 import pytng
 
 ctx = """
-file_iterator = pytng.TNGFileIterator("./reference_files/argon_npt_compressed.tng", mode="r", debug=False)
-for i in range(101):
-    file_iterator.read_frame(5000*i)
+with pytng.TNGFileIterator("./reference_files/argon_npt_compressed.tng", mode="r", debug=False) as tng:
+    for i in range(100):
+        tng.read_step(0)
+        positions = np.zeros((1000,3), dtype= np.float32)
+        tng.current_integrator_step.get_blockid(268435457, positions)
 """
 
 

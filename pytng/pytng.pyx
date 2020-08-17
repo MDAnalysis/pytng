@@ -810,7 +810,7 @@ cdef class TNGFileIterator:
     def _close(self):
         """Make sure the file handle is closed"""
         if self.is_open:
-            tng_util_trajectory_close( & self._traj._ptr)
+            tng_util_trajectory_close(& self._traj._ptr)
             self.is_open = False
             self._n_frames = -1
 
@@ -828,6 +828,10 @@ cdef class TNGFileIterator:
                 for k, v in self._frame_strides.items()]
 
     @property
+    def block_ids(self):
+        return [(k, block_dictionary[k]) for k in self._frame_strides.keys()]
+
+    @property
     def n_data_frames(self):
         return [(block_dictionary[k], v)
                 for k, v in self._n_data_frames.items()]
@@ -840,6 +844,10 @@ cdef class TNGFileIterator:
     @property
     def step(self):
         return self.step
+
+    @property
+    def current_integrator_step(self):
+        return self.current_step
 
     # @property
     # def block_ids(self):  # NOTE perhaps we should not expose this
@@ -862,7 +870,8 @@ cdef class TNGFileIterator:
             in input file {}""".format(self._n_frames))
 
         self.step = step
-        self.current_step = TNGCurrentIntegratorStep(step, debug=self.debug)
+        self.current_step = TNGCurrentIntegratorStep(
+            self._traj, step, debug=self.debug)
 
     # NOTE here we assume that the first frame has all the blocks
     #  that are present in the whole traj
@@ -1008,7 +1017,7 @@ cdef class TNGCurrentIntegratorStep:
     def __dealloc__(self):
         pass
 
-    def _get_blockid(self, int64_t block_id, np.ndarray data):
+    def get_blockid(self, int64_t block_id, np.ndarray data):
 
         shape = data.shape
         dtype = data.dtype
@@ -1025,54 +1034,57 @@ cdef class TNGCurrentIntegratorStep:
         cdef char datatype = -1
         cdef tng_function_status read_stat
 
-        cdef int i,j
+        cdef int i, j
 
-        read_stat = self._get_data_next_frame(block_id, self.step, & values, & frame_time, & n_values_per_frame, & n_atoms, & precision, & datatype, self.debug)
+        with nogil:
+            read_stat = self._get_data_next_frame(block_id, self.step, & values, & frame_time, & n_values_per_frame, & n_atoms, & precision, & datatype, self.debug)
+        
         if read_stat != TNG_SUCCESS:
             printf("PYTNG WARNING: data could not be read\n")
             return TNG_CRITICAL
-    
-        if len(shape) > 2:
+
+        if data.ndim > 2:
             raise IndexError("Numpy array must be 2 dimensional")
-        
+
         if shape[0] != n_atoms:
             raise IndexError("First axis of numpy array must be n_atoms long")
-        
+
         if shape[1] != n_values_per_frame:
-            raise IndexError("Second axis of numpy array must be n_values_per_frame long")
-        
+            raise IndexError(
+                "Second axis of numpy array must be n_values_per_frame long")
+
         if datatype == TNG_FLOAT_DATA:
             if dtype != np.float32:
-                printf("PYTNG WARNING: datatype of numpy array does not match underlying data\n")
+                printf(
+                    "PYTNG WARNING: datatype of numpy array does not match underlying data\n")
                 return TNG_CRITICAL
             for i in range(n_atoms):
                 for j in range(n_values_per_frame):
-                    data[i,j] = (<float*>values)[i * n_values_per_frame + j]
-
+                    data[i, j] = ( < float*>values)[i * n_values_per_frame + j]
 
         elif datatype == TNG_INT_DATA:
             if dtype != np.int64:
-                printf("PYTNG WARNING: datatype of numpy array does not match underlying data\n")
+                printf(
+                    "PYTNG WARNING: datatype of numpy array does not match underlying data\n")
                 return TNG_CRITICAL
             for i in range(n_atoms):
                 for j in range(n_values_per_frame):
-                    data[i,j] = (<int64_t*>values)[i * n_values_per_frame + j]
+                    data[i, j] = ( < int64_t*>values)[i * n_values_per_frame + j]
 
         elif datatype == TNG_DOUBLE_DATA:
             if dtype != np.float64:
-                printf("PYTNG WARNING: datatype of numpy array does not match underlying data\n")
+                printf(
+                    "PYTNG WARNING: datatype of numpy array does not match underlying data\n")
                 return TNG_CRITICAL
             for i in range(n_atoms):
                 for j in range(n_values_per_frame):
-                    data[i,j] = (<double*>values)[i * n_values_per_frame + j]
-        
-            
-        
+                    data[i, j] = ( < double*>values)[i * n_values_per_frame + j]
 
-        
-                return TNG_SUCCESS
+        else:
+            printf("PYTNG WARNING: block datatype not understood")
+            return TNG_CRITICAL
 
-
+        return TNG_SUCCESS
 
     cdef tng_function_status _get_data_next_frame(self, int64_t block_id,
                                                   int64_t step,
@@ -1149,59 +1161,9 @@ cdef class TNGCurrentIntegratorStep:
 
         return TNG_SUCCESS
 
-    @cython.boundscheck(True)
-    @cython.wraparound(True)
-    @cython.profile(True)
-    cdef void convert_to_double_arr(self,
-                                    void * source,
-                                    double * to,
-                                    const int n_atoms,
-                                    const int n_vals,
-                                    const char datatype,
-                                    bint debug) nogil:
 
-        """ Convert a void array to an array of doubles
-
-            NOTES:
-            - this should use memcpy but doesn't yet
-            - is this likely to be portable?.
-            - a lot of this is a bit redundant but could be used to
-              differntiate casts to numpy arrays etc in the future.
-
-        """
-        cdef int i, j
-
-        if datatype == TNG_FLOAT_DATA:
-            for i in range(n_atoms):
-                for j in range(n_vals):
-                    to[i * n_vals + j] = (< float*>source)[i * n_vals + j]
-            # memcpy(to,  source, n_vals * sizeof(float) * n_atoms)
-            if debug:
-                printf("TNG_FLOAT \n")
-
-        elif datatype == TNG_INT_DATA:
-            for i in range(n_atoms):
-                for j in range(n_vals):
-                    to[i * n_vals + j] = (< int64_t*>source)[i * n_vals + j]
-            # memcpy(to, source, n_vals * sizeof(int64_t) * n_atoms)
-            if debug:
-                printf("TNG_INT \n")
-
-        elif datatype == TNG_DOUBLE_DATA:
-            for i in range(n_atoms):
-                for j in range(n_vals):
-                    to[i * n_vals + j] = (< double*>source)[i * n_vals + j]
-            # memcpy(to, source, n_vals * sizeof(double) * n_atoms)
-            if debug:
-                printf("TNG_DOUBLE\n")
-
-        elif datatype == TNG_CHAR_DATA:
-            # NOTE not implemented in TNG library either
-            printf("WARNING: char data reading is not implemented \n")
-
-        else:
-            printf("WARNING: block data type %d not understood \n", datatype)
-
+global block_dictionary
+global block_id_dictionary
 
 block_dictionary = {}
 
@@ -1443,7 +1405,7 @@ cdef class TNGFile:
     def close(self):
         """Make sure the file handle is closed"""
         if self.is_open:
-            tng_util_trajectory_close(& self._traj)
+            tng_util_trajectory_close( & self._traj)
             self.is_open = False
             self._n_frames = -1
 
@@ -1569,7 +1531,7 @@ cdef class TNGFile:
 
         # TODO this seem wasteful but can't cdef inside a conditional?
         cdef MemoryWrapper wrap_box
-        cdef np.ndarray[ndim= 2, dtype = np.float32_t, mode = 'c'] box = \
+        cdef np.ndarray[ndim = 2, dtype = np.float32_t, mode = 'c'] box = \
             np.empty((3, 3), dtype=np.float32)
 
         if self._box:
