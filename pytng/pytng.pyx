@@ -810,7 +810,7 @@ cdef class TNGFileIterator:
     def _close(self):
         """Make sure the file handle is closed"""
         if self.is_open:
-            tng_util_trajectory_close(& self._traj._ptr)
+            tng_util_trajectory_close( & self._traj._ptr)
             self.is_open = False
             self._n_frames = -1
 
@@ -1008,10 +1008,14 @@ cdef class TNGCurrentIntegratorStep:
     def __dealloc__(self):
         pass
 
-    def get_blockid(self, int64_t block_id, np.ndarray data):
+    def _get_blockid(self, int64_t block_id, np.ndarray data):
 
         shape = data.shape
         dtype = data.dtype
+
+        if dtype not in [np.int64, np.float32, np.float64]:
+            printf("PYTNG WARNING: datatype of numpy array not supported\n")
+            return TNG_CRITICAL
 
         cdef void * values = NULL
         cdef double frame_time = -1
@@ -1021,8 +1025,54 @@ cdef class TNGCurrentIntegratorStep:
         cdef char datatype = -1
         cdef tng_function_status read_stat
 
-        with nogil:
-            read_stat = self._get_data_next_frame(block_id, self.step, & values, & frame_time, & n_values_per_frame, & n_atoms, & precision, & datatype, self.debug)
+        cdef int i,j
+
+        read_stat = self._get_data_next_frame(block_id, self.step, & values, & frame_time, & n_values_per_frame, & n_atoms, & precision, & datatype, self.debug)
+        if read_stat != TNG_SUCCESS:
+            printf("PYTNG WARNING: data could not be read\n")
+            return TNG_CRITICAL
+    
+        if len(shape) > 2:
+            raise IndexError("Numpy array must be 2 dimensional")
+        
+        if shape[0] != n_atoms:
+            raise IndexError("First axis of numpy array must be n_atoms long")
+        
+        if shape[1] != n_values_per_frame:
+            raise IndexError("Second axis of numpy array must be n_values_per_frame long")
+        
+        if datatype == TNG_FLOAT_DATA:
+            if dtype != np.float32:
+                printf("PYTNG WARNING: datatype of numpy array does not match underlying data\n")
+                return TNG_CRITICAL
+            for i in range(n_atoms):
+                for j in range(n_values_per_frame):
+                    data[i,j] = (<float*>values)[i * n_values_per_frame + j]
+
+
+        elif datatype == TNG_INT_DATA:
+            if dtype != np.int64:
+                printf("PYTNG WARNING: datatype of numpy array does not match underlying data\n")
+                return TNG_CRITICAL
+            for i in range(n_atoms):
+                for j in range(n_values_per_frame):
+                    data[i,j] = (<int64_t*>values)[i * n_values_per_frame + j]
+
+        elif datatype == TNG_DOUBLE_DATA:
+            if dtype != np.float64:
+                printf("PYTNG WARNING: datatype of numpy array does not match underlying data\n")
+                return TNG_CRITICAL
+            for i in range(n_atoms):
+                for j in range(n_values_per_frame):
+                    data[i,j] = (<double*>values)[i * n_values_per_frame + j]
+        
+            
+        
+
+        
+                return TNG_SUCCESS
+
+
 
     cdef tng_function_status _get_data_next_frame(self, int64_t block_id,
                                                   int64_t step,
