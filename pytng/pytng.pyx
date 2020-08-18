@@ -55,6 +55,9 @@ cdef extern from "<stdio.h>" nogil:
     int fseeko(FILE*, off_t, int)
     off_t ftello(FILE*)
 
+cdef extern from "numpy/arrayobject.h":
+    void PyArray_ENABLEFLAGS(np.ndarray arr, int flags)
+
 
 # GROUP 1 Standard non-trajectory blocks
 # Block IDs of standard non-trajectory blocks.
@@ -709,7 +712,7 @@ cdef class TNGFileIterator:
     # integrator timestep
     cdef int64_t step
     # number of integrator timesteps
-    cdef int64_t _n_frames
+    cdef int64_t _n_steps
     # number of particles
     cdef int64_t _n_particles
     # distance unit
@@ -735,7 +738,7 @@ cdef class TNGFileIterator:
         self.debug = debug
         self.step = 0
 
-        self._n_frames = -1
+        self._n_steps = -1
         self._n_particles = -1
         self._distance_scale = 0.0
 
@@ -788,7 +791,7 @@ cdef class TNGFileIterator:
             raise IOError("File '{}' cannot be opened".format(fname))
 
         # get the number of integrator timesteps
-        stat = tng_num_frames_get(self._traj._ptr, & self._n_frames)
+        stat = tng_num_frames_get(self._traj._ptr, & self._n_steps)
         if stat != TNG_SUCCESS:
             raise IOError("Number of frames cannot be read")
         # get the number of particles
@@ -815,11 +818,11 @@ cdef class TNGFileIterator:
         if self.is_open:
             tng_util_trajectory_close(& self._traj._ptr)
             self.is_open = False
-            self._n_frames = -1
+            self._n_steps = -1
 
     @property
-    def n_frames(self):
-        return self._n_frames
+    def n_steps(self):
+        return self._n_steps
 
     @property
     def n_atoms(self):
@@ -858,9 +861,9 @@ cdef class TNGFileIterator:
            modifies the state of self.block_holder to contain
            the current blocks"""
 
-        if step >= self._n_frames:
+        if step >= self._n_steps:
             raise ValueError("""frame specified is greater than number of steps
-            in input file {}""".format(self._n_frames))
+            in input file {}""".format(self._n_steps))
 
         self.step = step
         self.current_step = TNGCurrentIntegratorStep(
@@ -918,7 +921,7 @@ cdef class TNGFileIterator:
         return False
 
     def __len__(self):
-        return self._n_frames
+        return self._n_steps
 
     def __iter__(self):
         self._close()
@@ -928,7 +931,7 @@ cdef class TNGFileIterator:
         return self
 
     def __next__(self):
-        if self.step == self._n_frames - 1:
+        if self.step == self._n_steps - 1:
             raise StopIteration
         self.read_frame(self.step)
         prev = self.step
@@ -971,7 +974,7 @@ cdef class TNGFileIterator:
             return listiter(frame)
         elif isinstance(frame, slice):
             start = frame.start if frame.start is not None else 0
-            stop = frame.stop if frame.stop is not None else self._n_frames
+            stop = frame.stop if frame.stop is not None else self._n_steps
             step = frame.step if frame.step is not None else 1
 
             def sliceiter(start, stop, step):
