@@ -13,14 +13,14 @@ T, F = True, False
 def test_tng_example_load_bad_file(CORRUPT_FILEPATH):
     with pytest.raises(IOError):
         with pytng.TNGFileIterator(CORRUPT_FILEPATH) as tng:
-            tng.read_frame(0)
+            tng.read_step(0)
 
 
 
 def test_tng_example_open_missing_file_mode_r(MISSING_FILEPATH):
     with pytest.raises(IOError) as excinfo:
         with pytng.TNGFileIterator(MISSING_FILEPATH, mode="r") as tng:
-            tng.read_frame(0)
+            tng.read_step(0)
         assert "does not exist" in str(excinfo.value)
 
 
@@ -131,7 +131,7 @@ def test_tng_example_tng_example_first_positions(
 ):
     with pytng.TNGFileIterator(TNG_EXAMPLE) as tng:
         print(tng.block_strides)
-        first_frame = tng[0].pos
+        first_frame = tng[0].current_integrator_step.pos
         print(first_frame)
         print(TNG_EXAMPLE_DATA.first_frame)
         assert np.array_equal(TNG_EXAMPLE_DATA.first_frame, first_frame)
@@ -154,7 +154,7 @@ def test_tng_example_seek_IndexError(idx, TNG_EXAMPLE):
 def test_tng_example_seek_write(MISSING_FILEPATH):
     with pytng.TNGFileIterator(MISSING_FILEPATH, mode="w") as tng:
         with pytest.raises(IOError) as excinfo:
-            tng.seek(0)
+            tng.read_step(0)
         assert "seek not allowed in write mode" in str(excinfo.value)
 
 
@@ -188,7 +188,7 @@ def test_tng_example_read_not_open(TNG_EXAMPLE):
     with pytng.TNGFileIterator(TNG_EXAMPLE) as tng:
         pass
     with pytest.raises(IOError) as excinfo:
-        tng.read_frame(0)
+        tng.read_step(0)
     assert "No file opened" in str(excinfo.value)
 
 
@@ -196,7 +196,7 @@ def test_tng_example_read_not_open(TNG_EXAMPLE):
 def test_tng_example_read_not_mode_r(MISSING_FILEPATH):
     with pytest.raises(IOError) as excinfo:
         with pytng.TNGFileIterator(MISSING_FILEPATH, mode="w") as tng:
-            tng.read()
+            tng.read_step(0)
     assert 'Reading only allow in mode "r"' in str(excinfo.value)
 
 
@@ -239,7 +239,7 @@ def test_argon_npt_compressed_first_positions(
     ARGON_NPT_COMPRESSED, ARGON_NPT_COMPRESSED_DATA
 ):
     with pytng.TNGFileIterator(ARGON_NPT_COMPRESSED) as tng:
-        first_frame_first_10_pos = tng[0].pos[:10, :]
+        first_frame_first_10_pos = tng[0].current_integrator_step.pos[:10, :]
         assert_array_almost_equal(
             ARGON_NPT_COMPRESSED_DATA.first_frame_first_10_pos,
             first_frame_first_10_pos,
@@ -249,7 +249,7 @@ def test_argon_npt_compressed_last_positions(
     ARGON_NPT_COMPRESSED, ARGON_NPT_COMPRESSED_DATA
 ):
     with pytng.TNGFileIterator(ARGON_NPT_COMPRESSED) as tng:
-        last_frame = tng[len(tng)-1].pos
+        last_frame = tng[len(tng)-1].current_integrator_step.pos
         last_frame_last_10_pos = last_frame[990:1000, :]
         assert_array_almost_equal(
             ARGON_NPT_COMPRESSED_DATA.last_frame_last_10_pos,
@@ -260,7 +260,7 @@ def test_argon_npt_compressed_first_box(
     ARGON_NPT_COMPRESSED, ARGON_NPT_COMPRESSED_DATA
 ):
     with pytng.TNGFileIterator(ARGON_NPT_COMPRESSED) as tng:
-        first_box = tng[0].box.reshape((3,3))
+        first_box = tng[0].current_integrator_step.box.reshape((3,3))
         assert_array_almost_equal(
             ARGON_NPT_COMPRESSED_DATA.first_box, first_box
         )
@@ -269,7 +269,7 @@ def test_argon_npt_compressed_last_box(
     ARGON_NPT_COMPRESSED, ARGON_NPT_COMPRESSED_DATA
 ):
     with pytng.TNGFileIterator(ARGON_NPT_COMPRESSED) as tng:
-        last_box = tng[len(tng)-1].box.reshape((3,3))
+        last_box = tng[len(tng)-1].current_integrator_step.box.reshape((3,3))
         assert_array_almost_equal(ARGON_NPT_COMPRESSED_DATA.last_box, last_box)
 
 def test_water_npt_uncompressed_vels_forces_open(
@@ -283,7 +283,7 @@ def test_water_npt_uncompressed_vels_forces_first_vels(
     WATER_NPT_UNCOMPRESSED_VELS_FORCES, WATER_NPT_UNCOMPRESSED_VELS_FORCES_DATA
 ):
     with pytng.TNGFileIterator(WATER_NPT_UNCOMPRESSED_VELS_FORCES) as tng:
-        first_frame_first_10_vels = tng[0].vel[:10, :]
+        first_frame_first_10_vels = tng[0].current_integrator_step.vel[:10, :]
         assert_array_almost_equal(
             WATER_NPT_UNCOMPRESSED_VELS_FORCES_DATA.first_frame_first_10_vels,
             first_frame_first_10_vels,
@@ -294,7 +294,7 @@ def test_water_npt_uncompressed_vels_forces_last_vels(
     WATER_NPT_UNCOMPRESSED_VELS_FORCES, WATER_NPT_UNCOMPRESSED_VELS_FORCES_DATA
 ):
     with pytng.TNGFileIterator(WATER_NPT_UNCOMPRESSED_VELS_FORCES) as tng:
-        last_frame_last_10_vels = tng[len(tng)-1].vel[2690:2700, : ]
+        last_frame_last_10_vels = tng[len(tng)-1].current_integrator_step.vel[2690:2700, : ]
         assert_array_almost_equal(
             WATER_NPT_UNCOMPRESSED_VELS_FORCES_DATA.last_frame_last_10_vels,
             last_frame_last_10_vels,
@@ -305,7 +305,7 @@ def test_water_npt_uncompressed_vels_forces_first_frc(
     WATER_NPT_UNCOMPRESSED_VELS_FORCES, WATER_NPT_UNCOMPRESSED_VELS_FORCES_DATA
 ):
     with pytng.TNGFileIterator(WATER_NPT_UNCOMPRESSED_VELS_FORCES) as tng:
-        first_frame_first_10_frc = tng[0].frc[:10, :]  # todo forces
+        first_frame_first_10_frc = tng[0].current_integrator_step.frc[:10, :]  # todo forces
         assert_array_almost_equal(
             WATER_NPT_UNCOMPRESSED_VELS_FORCES_DATA.first_frame_first_10_frc,
             first_frame_first_10_frc,
@@ -316,7 +316,7 @@ def test_water_npt_uncompressed_vels_forces_last_frc(
     WATER_NPT_UNCOMPRESSED_VELS_FORCES, WATER_NPT_UNCOMPRESSED_VELS_FORCES_DATA
 ):
     with pytng.TNGFileIterator(WATER_NPT_UNCOMPRESSED_VELS_FORCES) as tng:
-        last_frame_last_10_frc = tng[len(tng) -1].frc[2690:2700, :]
+        last_frame_last_10_frc = tng[len(tng) -1].current_integrator_step.frc[2690:2700, :]
         assert_array_almost_equal(
             WATER_NPT_UNCOMPRESSED_VELS_FORCES_DATA.last_frame_last_10_frc,
             last_frame_last_10_frc,

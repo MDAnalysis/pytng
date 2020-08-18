@@ -926,14 +926,14 @@ cdef class TNGFileIterator:
     def __iter__(self):
         self._close()
         self._open(self.fname, self.mode)
-        self.read_frame(self.step)
+        self.read_step(self.step)
 
         return self
 
     def __next__(self):
         if self.step == self._n_steps - 1:
             raise StopIteration
-        self.read_frame(self.step)
+        self.read_step(self.step)
         prev = self.step
         self.step += 1
         return prev
@@ -945,7 +945,7 @@ cdef class TNGFileIterator:
             if self.debug:
                 print("slice is a number")
             if frame >= 0:
-                self.read_frame(frame)
+                self.read_step(frame)
             else:
                 raise ValueError("cannot supply negative indicies")
             return self
@@ -969,7 +969,7 @@ cdef class TNGFileIterator:
                         raise TypeError("Frames indices must be integers")
                     if f < 0:
                         raise ValueError("cannot supply negative indicies")
-                    self.read_frame(f)
+                    self.read_step(f)
                     yield self
             return listiter(frame)
         elif isinstance(frame, slice):
@@ -981,7 +981,7 @@ cdef class TNGFileIterator:
                 for i in range(start, stop, step):
                     if i < 0:
                         raise ValueError("cannot supply negative indicies")
-                    self.read_frame(i)
+                    self.read_step(i)
                     yield self
             return sliceiter(start, stop, step)
         else:
