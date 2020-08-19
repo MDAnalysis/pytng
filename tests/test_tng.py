@@ -41,7 +41,7 @@ def test_tng_example_len(TNG_EXAMPLE):
 
 def test_tng_example_iter(TNG_EXAMPLE):
     with pytng.TNGFileIterator(TNG_EXAMPLE) as tng:
-        for i, dummy in  enumerate(tng):
+        for i, dummy in enumerate(tng):
             tng.read_step(i)
 
 
@@ -128,12 +128,13 @@ def test_tng_example_natoms(TNG_EXAMPLE_DATA, TNG_EXAMPLE):
     with pytng.TNGFileIterator(TNG_EXAMPLE) as tng:
         assert TNG_EXAMPLE_DATA.natoms == tng.n_atoms
 
+
 def test_tng_example_tng_example_first_positions(
     TNG_EXAMPLE_DATA, TNG_EXAMPLE
 ):
     with pytng.TNGFileIterator(TNG_EXAMPLE) as tng:
         print(tng.block_ids)
-        pos = np.zeros((15,3), dtype=np.float32)
+        pos = np.zeros((15, 3), dtype=np.float32)
         tng[0].current_integrator_step.get_pos(pos)
         print(pos)
         assert np.array_equal(TNG_EXAMPLE_DATA.first_frame, pos)
@@ -141,7 +142,7 @@ def test_tng_example_tng_example_first_positions(
 
 def test_tng_example_tng_example_last_positions(TNG_EXAMPLE_DATA, TNG_EXAMPLE):
     with pytng.TNGFileIterator(TNG_EXAMPLE) as tng:
-        pos = np.zeros((15,3), dtype=np.float32)
+        pos = np.zeros((15, 3), dtype=np.float32)
         tng[9].current_integrator_step.get_pos(pos)
         assert np.array_equal(TNG_EXAMPLE_DATA.last_frame, pos)
 
