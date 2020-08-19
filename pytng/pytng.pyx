@@ -726,6 +726,8 @@ cdef class TNGFileIterator:
     cdef dict   _n_data_frames
     # the number of values per frame for each data block
     cdef dict   _values_per_frame
+    # particle dependencies for each data block
+    cdef dict _particle_dependencies
 
     # greatest common divisor of data strides
     cdef int64_t _gcd
@@ -747,6 +749,7 @@ cdef class TNGFileIterator:
         self._frame_strides = {}
         self._n_data_frames = {}
         self._values_per_frame = {}
+        self._particle_dependencies = {}
         self._gcd = -1
 
         self._open(self.fname, mode)
@@ -838,28 +841,34 @@ cdef class TNGFileIterator:
     def block_strides(self):
         if not self.is_open:
             raise IOError("File is not yet open")
-        return [(block_dictionary[k], v)
-                for k, v in self._frame_strides.items()]
+        return self._frame_strides
 
     @property
     def block_ids(self):
         if not self.is_open:
             raise IOError("File is not yet open")
-        return [(k, block_dictionary[k]) for k in self._frame_strides.keys()]
+        block_id_dict = {}
+        for k in self._frame_strides.keys():
+            block_id_dict[k] = block_id_dictionary[k]
+        return block_id_dict
 
     @property
     def n_data_frames(self):
         if not self.is_open:
             raise IOError("File is not yet open")
-        return [(block_dictionary[k], v)
-                for k, v in self._n_data_frames.items()]
+        return self._n_data_frames
 
     @property
     def values_per_frame(self):
         if not self.is_open:
             raise IOError("File is not yet open")
-        return [(block_dictionary[k], v)
-                for k, v in self._values_per_frame.items()]
+        return self._values_per_frame
+
+    @property
+    def particle_dependencies(self):
+        if not self.is_open:
+            raise IOError("File is not yet open")
+        return self._particle_dependencies
 
     @property
     def step(self):
@@ -898,6 +907,8 @@ cdef class TNGFileIterator:
         cdef int64_t nframes, stride_length, n_values_per_frame
         cdef int64_t block_counter = 0
         cdef int64_t * block_ids = NULL
+        cdef int     block_dependency
+        cdef bint particle_dependent
 
         cdef tng_function_status read_stat = \
             tng_util_trajectory_next_frame_present_data_blocks_find(
@@ -914,13 +925,24 @@ cdef class TNGFileIterator:
                 return TNG_CRITICAL
             read_stat = tng_data_block_num_values_per_frame_get(
                 self._traj._ptr, block_ids[i], & n_values_per_frame)
+            read_stat = tng_data_block_dependency_get(self._traj._ptr, block_ids[i], & block_dependency)
+            if read_stat != TNG_SUCCESS:
+                return TNG_CRITICAL
+            if block_dependency & TNG_PARTICLE_DEPENDENT:
+                particle_dependent = True
+            else:
+                particle_dependent = False
 
             # stride length for the block
-            self._frame_strides[block_ids[i]] = stride_length
+            self._frame_strides[block_dictionary[block_ids[i]]] = stride_length
             # number of actual data frames for the block
-            self._n_data_frames[block_ids[i]] = nframes
+            self._n_data_frames[block_dictionary[block_ids[i]]] = nframes
             # number of values per frame
-            self._values_per_frame[block_ids[i]] = n_values_per_frame
+            self._values_per_frame[block_dictionary[block_ids[i]]
+                                   ] = n_values_per_frame
+
+            self._particle_dependencies[block_dictionary[block_ids[i]]
+                                        ] = particle_dependent
 
         # TODO we will use this if we want to instead iterate
         # over the greatest common divisor of the data strides

@@ -8,6 +8,10 @@ lmbda = np.zeros((1, 1), dtype=np.float32)
 
 with pytng.TNGFileIterator("./reference_files/argon_npt_compressed.tng", mode="r", debug=False) as tng:
     print(tng.block_ids)
+    print(tng.block_strides)
+    print(tng.n_data_frames)
+    print(tng.values_per_frame)
+    print(tng.particle_dependencies)
     for i in range(0, len(tng), 5000):
         tng.read_step(i)
         tng.current_integrator_step.get_pos(positions)
