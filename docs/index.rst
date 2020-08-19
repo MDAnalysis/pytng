@@ -10,33 +10,51 @@
 .. include:: ../README.rst
 
 
-Usage example for TNGFile
-=========================
+Usage example for TNGFileIterator
+=================================
 
-TNG files can be read using the TNGFile class as a file handle,
+TNG files can be read using the TNGFileIterator class as a file handle,
 which supports use as a context manager.
-The TNGFile returns one frame at a time, which each frame being returned as a
-namedtuple with the following attributes:
 
-============== ======== =======================================
-attribute      type     description
-============== ======== =======================================
-``positions``  float32  coordinates for each atom in the frame
-``time``       float    current system time
-``step``       int      frame index
-``box``        float32  3x3 matrix of the system volume
-============== ======== =======================================
+The TNGFileIterator has attributes related to the trajectory metadata, such as
+the number of integrator steps, the number of steps with data, the block_ids 
+available at each step, and the stride at which each block is written.
 
-For example, the coordinate information can be accessed via the `.positions` 
-attribute of the returned object.
+The TNGFileIterator returns one frame at a time, which is accessed from the
+`.current_integrator_step` attribute. A NumPy array of the right size must
+be provided to a getter attribute for the data to be read into.
+
+An example of how to read positions from a TNG file is shown below.
+
 
 .. code-block:: python
 
-  import pytng
+   import pytng
+   import numpy as np
 
-  with pytng.TNGFile('traj.tng', 'r') as f:
-      for ts in f:
-          ts.positions
+  with pytng.TNGFileIterator("tng.tng", 'r') as tng:
+
+      # are the positions particle dependent data? (yes)
+      pd = tng.particle_dependencies["TNG_TRAJ_POSITIONS"]
+      if pd:
+         ax0 = tng.n_atoms # is particle dependent
+      else:
+         ax0 = 1 # not particle dependent
+  
+      # how many values are there per frame
+      ax1 = tng.values_per_frame["TNG_TRAJ_POSITIONS"]
+
+      # make an n_atoms * n_values_per_frame NumPy array
+      positions = np.zeros((ax0, ax1), dtype=np.float32)
+      
+      # stride over the whole trajectory for the frames that have data
+      for ts in range(0, len(tng), tng.block_strides["TNG_TRAJ_POSITIONS"]):
+         # read the integrator timestep
+         tng.read_step(ts)
+         # get the data from the requested block
+         tng.current_integrator_step.get_pos(positions)
+
+           
 
 It is also possible to slice and index the file object to select particular
 frames
@@ -44,17 +62,18 @@ frames
 .. code-block:: python
 
   import pytng
+  import numpy as np
 
-  with pytng.TNGFile('traj.tng', 'r') as f:
-      first_frame = f[0]
-      last_frame = f[-1]
+   # figure out the right array size for your numpy array
 
-      every_other_frame = [ts for ts in f[::2]]
+  with pytng.TNGFileIterator('traj.tng', 'r') as tng:
+      tng[0].current_integrator_step.get_pos(positions)
+      tng[0,100,10].get_pos(positions)
 
 
 API for the TNGFile class
 =========================
 
-.. autoclass:: pytng.pytng.TNGFile
+.. autoclass:: pytng.pytng.TNGFileIterator
   :members:
 

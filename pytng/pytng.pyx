@@ -883,9 +883,14 @@ cdef class TNGFileIterator:
         return self.current_step
 
     cpdef read_step(self, step):
-        """Read a step (integrator step) from the file,
-           modifies the state of self.block_holder to contain
-           the current blocks"""
+        """Read a step (integrator step) from the file
+        
+        Parameters
+        ----------
+        step : int
+           step to read from the file
+           
+        """
         if not self.is_open:
             raise IOError('File is not yet open')
 
@@ -975,7 +980,9 @@ cdef class TNGFileIterator:
         if self.step == self._n_steps - 1:
             raise StopIteration
         self.read_step(self.step)
+        prev = self.step
         self.step += 1
+        return prev
 
     def __getitem__(self, frame):
         cdef int64_t start, stop, step, i
@@ -1089,7 +1096,8 @@ cdef class TNGCurrentIntegratorStep:
             read_stat = self._get_data_current_step(block_id, self.step, & values,  & n_values_per_frame, & n_atoms, & precision, & datatype, self.debug)
 
         if read_stat != TNG_SUCCESS:
-            return
+            data = None
+            return 
 
         if data.ndim > 2:
             raise IndexError("PYTNG ERROR: Numpy array must be 2 dimensional")
