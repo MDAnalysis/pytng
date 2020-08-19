@@ -128,7 +128,6 @@ def test_tng_example_natoms(TNG_EXAMPLE_DATA, TNG_EXAMPLE):
     with pytng.TNGFileIterator(TNG_EXAMPLE) as tng:
         assert TNG_EXAMPLE_DATA.natoms == tng.n_atoms
 
-@pytest.mark.skip(reason="FAILING")
 def test_tng_example_tng_example_first_positions(
     TNG_EXAMPLE_DATA, TNG_EXAMPLE
 ):
@@ -140,7 +139,6 @@ def test_tng_example_tng_example_first_positions(
         assert np.array_equal(TNG_EXAMPLE_DATA.first_frame, pos)
 
 
-@pytest.mark.skip(reason="FAILING")
 def test_tng_example_tng_example_last_positions(TNG_EXAMPLE_DATA, TNG_EXAMPLE):
     with pytng.TNGFileIterator(TNG_EXAMPLE) as tng:
         pos = np.zeros((15,3), dtype=np.float32)
@@ -164,7 +162,6 @@ def test_tng_example_seek_write(MISSING_FILEPATH):
         assert "seek not allowed in write mode" in str(excinfo.value)
 
 
-@pytest.mark.skip(reason="FAILING")
 def test_tng_example_time(TNG_EXAMPLE_DATA, TNG_EXAMPLE):
     with pytng.TNGFileIterator(TNG_EXAMPLE) as tng:
         for ref_time, ts in zip(TNG_EXAMPLE_DATA.time, tng):
