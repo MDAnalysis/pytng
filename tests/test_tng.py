@@ -196,7 +196,6 @@ def test_tng_example_read_not_mode_r(MISSING_FILEPATH):
     assert 'Reading only allow in mode "r"' in str(excinfo.value)
 
 
-@pytest.mark.skip(reason="FAILING")
 def test_tng_example_reached_eof(TNG_EXAMPLE):
     with pytng.TNGFileIterator(TNG_EXAMPLE) as tng:
         # test with iter protocol
@@ -205,7 +204,7 @@ def test_tng_example_reached_eof(TNG_EXAMPLE):
         with pytest.raises(StopIteration):
             next(tng)
         # test __getitem__
-        tng.seek(0)
+        tng.read_step(0)
         for ts in tng[:]:
             pass
         with pytest.raises(StopIteration):
