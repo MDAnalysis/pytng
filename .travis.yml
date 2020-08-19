@@ -1,11 +1,11 @@
 language: python
 cache: pip
-sudo: false
 
 python:
   - "2.7"
   - "3.5"
   - "3.6"
+  - "3.7"  
 
 branches:
   only:
@@ -13,13 +13,13 @@ branches:
 
 install:
   - pip install --upgrade pytest
-  - pip install codecov pytest-cov pytest-pep8
+  - pip install codecov pytest-cov
   - pip install --upgrade numpy cython
   - if [[ $TRAVIS_PYTHON_VERSION == "3.6" ]]; then pip install --upgrade sphinx sphinx-sitemap; fi
   - pip install -e .
 
 script:
-  - py.test -v --cov pytng --pep8 pytng tests
+  - pytest -v --cov pytng pytng tests
 
 after_success:
   - codecov
@@ -30,10 +30,12 @@ after_success:
 deploy:
   # stuff related to deploying to gh-pages
   provider: pages
-  skip_cleanup: true
-  github_token: $GH_PAGES_TOKEN
+  strategy: git
+  cleanup: false
+  token: $GH_PAGES_TOKEN
   on:
     branch: master
     python: "3.6"
   local_dir: docs/_build/html
   project_name: pytng
+  edge: true

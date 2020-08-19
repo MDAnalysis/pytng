@@ -49,8 +49,9 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'pytng'
-copyright = u'2017, Max Linke, Richard J Gowers'
-author = u'Max Linke, Richard J Gowers'
+author = u'Max Linke, Richard J Gowers, Hugo MacDermott-Opeskin'
+copyright = u'2017-2020, ' + author
+
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -147,7 +148,7 @@ html_theme_options = {
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar. --- use theme
-html_logo = "_static/logos/mdanalysis-logo-200x150.png"
+#html_logo = "_static/logos/mdanalysis-logo-200x150.png"
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
@@ -192,7 +193,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'pytng.tex', u'pytng Documentation',
-     u'Max Linke, Richard J Gowers', 'manual'),
+     author, 'manual'),
 ]
 
 
