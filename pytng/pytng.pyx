@@ -951,9 +951,8 @@ cdef class TNGFileIterator:
         if self.step == self._n_steps - 1:
             raise StopIteration
         self.read_step(self.step)
-        prev = self.step
         self.step += 1
-        return prev
+
 
     def __getitem__(self, frame):
         cdef int64_t start, stop, step, i
