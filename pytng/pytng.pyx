@@ -874,11 +874,13 @@ cdef class TNGFileIterator:
         return self.current_step
 
     cpdef read_step(self, step):
-        """Read a frame (integrator step) from the file,
+        """Read a step (integrator step) from the file,
            modifies the state of self.block_holder to contain
            the current blocks"""
+        if not self.is_open:
+            raise IOError('File is not yet open')
 
-        if step >= self._n_steps:
+        if step >= self._n_steps or step < 0:
             raise ValueError("""frame specified is greater than number of steps
             in input file {}""".format(self._n_steps))
 

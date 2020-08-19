@@ -124,7 +124,6 @@ def test_tng_example_getitem_bool_TypeError(cls, TNG_EXAMPLE):
                 ts.step
 
 
-@pytest.mark.skip(reason="FAILING")
 def test_tng_example_natoms(TNG_EXAMPLE_DATA, TNG_EXAMPLE):
     with pytng.TNGFileIterator(TNG_EXAMPLE) as tng:
         assert TNG_EXAMPLE_DATA.natoms == tng.n_atoms
@@ -181,13 +180,12 @@ def test_tng_example_property_not_open(prop, TNG_EXAMPLE):
     assert "File is not yet open" in str(excinfo.value)
 
 
-@pytest.mark.skip(reason="FAILING")
 def test_tng_example_read_not_open(TNG_EXAMPLE):
     with pytng.TNGFileIterator(TNG_EXAMPLE) as tng:
         pass
     with pytest.raises(IOError) as excinfo:
         tng.read_step(0)
-    assert "No file opened" in str(excinfo.value)
+    assert "File is not yet open" in str(excinfo.value)
 
 
 @pytest.mark.skip(reason="Write mode not implemented yet.")
