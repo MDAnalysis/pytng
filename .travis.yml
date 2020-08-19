@@ -1,11 +1,11 @@
 language: python
 cache: pip
-sudo: false
 
 python:
   - "2.7"
   - "3.5"
   - "3.6"
+  - "3.7"  
 
 branches:
   only:
@@ -30,10 +30,12 @@ after_success:
 deploy:
   # stuff related to deploying to gh-pages
   provider: pages
-  skip_cleanup: true
-  github_token: $GH_PAGES_TOKEN
+  strategy: git
+  cleanup: false
+  token: $GH_PAGES_TOKEN
   on:
     branch: master
     python: "3.6"
   local_dir: docs/_build/html
   project_name: pytng
+  edge: true
