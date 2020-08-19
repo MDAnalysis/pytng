@@ -919,15 +919,16 @@ cdef class TNGFileIterator:
     cpdef make_ndarray_for_block_from_name(self, str block_name):
         """Make a NumPy array that can hold a specified block from the block
         name
-
+        
         Parameters
         ----------
         block_name : str
            a block name
-
-        :returns:
+        
+        Returns
+        -------
+        target : :class:`np.ndarray`
             A NumPy array that can hold the data values for a specified block
-        :rtype: :class:`np.ndarray`
         """
         if block_name not in block_dictionary.values():
             raise ValueError("Block name not recognised")
@@ -942,15 +943,16 @@ cdef class TNGFileIterator:
 
     cpdef make_ndarray_for_block_from_id(self, int64_t block_id):
         """Make a NumPy array that can hold a specified block from the block id
-
+        
         Parameters
         ----------
         block_id : int64_t
            a block id
-
-        :returns:
+        
+        Returns
+        -------
+        target : :class:`np.ndarray`
             A NumPy array that can hold the data values for a specified block
-        :rtype: :class:`np.ndarray`
         """
         return self.make_ndarray_for_block_from_name(block_id_dictionary[block_id])
 

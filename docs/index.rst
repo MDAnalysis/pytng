@@ -32,20 +32,10 @@ An example of how to read positions from a TNG file is shown below.
    import pytng
    import numpy as np
 
-  with pytng.TNGFileIterator("tng.tng", 'r') as tng:
+   with pytng.TNGFileIterator("tng.tng", 'r') as tng:
 
-      # are the positions particle dependent data? (yes)
-      pd = tng.particle_dependencies["TNG_TRAJ_POSITIONS"]
-      if pd:
-         ax0 = tng.n_atoms # is particle dependent
-      else:
-         ax0 = 1 # not particle dependent
-  
-      # how many values are there per frame
-      ax1 = tng.values_per_frame["TNG_TRAJ_POSITIONS"]
-
-      # make an n_atoms * n_values_per_frame NumPy array
-      positions = np.zeros((ax0, ax1), dtype=np.float32)
+      # make a numpy array to hold the data using helper function
+      positions = tng.make_ndarray_for_block_from_name("TNG_TRAJ_POSITIONS")
       
       # stride over the whole trajectory for the frames that have data
       for ts in range(0, len(tng), tng.block_strides["TNG_TRAJ_POSITIONS"]):
@@ -63,11 +53,6 @@ frames
 
   import pytng
   import numpy as np
-
-  # figure out the right array size for your NumPy array using the
-  # TNGFileIterator attributes
-
-  # make your NumPy array
 
   with pytng.TNGFileIterator('traj.tng', 'r') as tng:
       tng[0].current_integrator_step.get_pos(positions)
