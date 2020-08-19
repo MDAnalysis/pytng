@@ -821,14 +821,14 @@ cdef class TNGFileIterator:
     def _close(self):
         """Make sure the file handle is closed"""
         if self.is_open:
-            tng_util_trajectory_close( & self._traj._ptr)
+            tng_util_trajectory_close(& self._traj._ptr)
             self.is_open = False
             self._n_steps = -1
 
     @property
     def n_steps(self):
         """The number of integrator steps in the TNG file
-        
+
         :returns:
             number of integrator steps
         :rtype: int
@@ -840,7 +840,7 @@ cdef class TNGFileIterator:
     @property
     def n_atoms(self):
         """The number of atoms in the TNG file
-        
+
         :returns:
             number of atoms
         :rtype: int
@@ -853,7 +853,7 @@ cdef class TNGFileIterator:
     def block_strides(self):
         """Dictionary of block names and the strides (in integrator steps)
         at which they are written in the TNG file
-        
+
         :returns:
             block names (keys) and strides of each block (values)
         :rtype: dict
@@ -866,7 +866,7 @@ cdef class TNGFileIterator:
     def block_ids(self):
         """Dictionary of block names and block ids (long longs) in the
         TNG file
-        
+
         :returns:
             block names (keys) and block ids (values)
         :rtype: dict
@@ -882,7 +882,7 @@ cdef class TNGFileIterator:
     def n_data_frames(self):
         """Dictionary of block names and the number of actual steps with data
         for that block in the TNG file
-        
+
         :returns:
             block names (keys) and number of steps with data (values)
         :rtype: dict
@@ -895,7 +895,7 @@ cdef class TNGFileIterator:
     def values_per_frame(self):
         """Dictionary of block names and the number of values per frame for the
         block
-        
+
         :returns:
             block names (keys) and number of values per frame (values)
         :rtype: dict
@@ -907,7 +907,7 @@ cdef class TNGFileIterator:
     @property
     def particle_dependencies(self):
         """Dictionary of block names and whether the block is particle dependent
-        
+
         :returns:
             block names (keys) and particle dependencies (values)
         :rtype: dict
@@ -916,10 +916,48 @@ cdef class TNGFileIterator:
             raise IOError("File is not yet open")
         return self._particle_dependencies
 
+    cpdef make_ndarray_for_block_from_name(self, str block_name):
+        """Make a NumPy array that can hold a specified block from the block
+        name
+
+        Parameters
+        ----------
+        block_name : str
+           a block name
+
+        :returns:
+            A NumPy array that can hold the data values for a specified block
+        :rtype: :class:`np.ndarray`
+        """
+        if block_name not in block_dictionary.values():
+            raise ValueError("Block name not recognised")
+
+        if self._particle_dependencies[block_name]:
+            ax0 = self._n_particles
+        else:
+            ax0 = 1
+        ax1 = self._values_per_frame[block_name]
+        target = np.ndarray(shape=(ax0, ax1), dtype=np.float32, order='C')
+        return target
+
+    cpdef make_ndarray_for_block_from_id(self, int64_t block_id):
+        """Make a NumPy array that can hold a specified block from the block id
+
+        Parameters
+        ----------
+        block_id : int64_t
+           a block id
+
+        :returns:
+            A NumPy array that can hold the data values for a specified block
+        :rtype: :class:`np.ndarray`
+        """
+        return self.make_ndarray_for_block_from_name(block_id_dictionary[block_id])
+
     @property
     def step(self):
         """The current integrator step being read
-        
+
         :returns:
             current step
         :rtype: int
@@ -932,7 +970,7 @@ cdef class TNGFileIterator:
     def current_integrator_step(self):
         """Class that retreives data from the file at the current integrator
            step
-        
+
         :rtype: :class:`TNGCurrentIntegratorStep`
         """
         if not self.is_open:
@@ -941,7 +979,7 @@ cdef class TNGFileIterator:
 
     cpdef read_step(self, step):
         """Read a step (integrator step) from the file
-        
+
         Parameters
         ----------
         step : int
@@ -1117,7 +1155,7 @@ cdef class TNGCurrentIntegratorStep:
         """
         cdef tng_function_status read_stat
         cdef double _step_time
-        read_stat = self._get_step_time( & _step_time)
+        read_stat = self._get_step_time(& _step_time)
         if read_stat != TNG_SUCCESS:
             return None
         else:
@@ -1208,7 +1246,7 @@ cdef class TNGCurrentIntegratorStep:
 
         if read_stat != TNG_SUCCESS:
             data = None
-            return 
+            return
 
         if data.ndim > 2:
             raise IndexError("PYTNG ERROR: Numpy array must be 2 dimensional")
@@ -1228,7 +1266,7 @@ cdef class TNGCurrentIntegratorStep:
                 return TNG_CRITICAL
             for i in range(n_atoms):
                 for j in range(n_values_per_frame):
-                    data[i, j] = (< float*>values)[i * n_values_per_frame + j]
+                    data[i, j] = ( < float*>values)[i * n_values_per_frame + j]
 
         elif datatype == TNG_INT_DATA:
             if dtype != np.int64:
@@ -1237,7 +1275,7 @@ cdef class TNGCurrentIntegratorStep:
                 return TNG_CRITICAL
             for i in range(n_atoms):
                 for j in range(n_values_per_frame):
-                    data[i, j] = (< int64_t*>values)[i * n_values_per_frame + j]
+                    data[i, j] = ( < int64_t*>values)[i * n_values_per_frame + j]
 
         elif datatype == TNG_DOUBLE_DATA:
             if dtype != np.float64:
@@ -1246,7 +1284,7 @@ cdef class TNGCurrentIntegratorStep:
                 return TNG_CRITICAL
             for i in range(n_atoms):
                 for j in range(n_values_per_frame):
-                    data[i, j] = (< double*>values)[i * n_values_per_frame + j]
+                    data[i, j] = ( < double*>values)[i * n_values_per_frame + j]
 
         else:
             printf("PYTNG WARNING: block datatype not understood")
@@ -1255,13 +1293,13 @@ cdef class TNGCurrentIntegratorStep:
         return TNG_SUCCESS
 
     cdef tng_function_status _get_data_current_step(self, int64_t block_id,
-                                                  int64_t step,
-                                                  void ** values,
-                                                  int64_t * n_values_per_frame,
-                                                  int64_t * n_atoms,
-                                                  double * prec,
-                                                  char * datatype,
-                                                  bint debug) nogil:
+                                                    int64_t step,
+                                                    void ** values,
+                                                    int64_t * n_values_per_frame,
+                                                    int64_t * n_atoms,
+                                                    double * prec,
+                                                    char * datatype,
+                                                    bint debug) nogil:
         """Gets the frame data off disk and into C level arrays"""
         cdef tng_function_status stat
         cdef int64_t             codec_id
@@ -1573,7 +1611,7 @@ cdef class TNGFile:
     def close(self):
         """Make sure the file handle is closed"""
         if self.is_open:
-            tng_util_trajectory_close(& self._traj)
+            tng_util_trajectory_close( & self._traj)
             self.is_open = False
             self._n_frames = -1
 
@@ -1699,7 +1737,7 @@ cdef class TNGFile:
 
         # TODO this seem wasteful but can't cdef inside a conditional?
         cdef MemoryWrapper wrap_box
-        cdef np.ndarray[ndim= 2, dtype = np.float32_t, mode = 'c'] box = \
+        cdef np.ndarray[ndim = 2, dtype = np.float32_t, mode = 'c'] box = \
             np.empty((3, 3), dtype=np.float32)
 
         if self._box:
