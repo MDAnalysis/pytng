@@ -829,7 +829,9 @@ cdef class TNGFileIterator:
     def n_steps(self):
         """The number of integrator steps in the TNG file
         
-        :type: int
+        :returns:
+            number of integrator steps
+        :rtype: int
         """
         if not self.is_open:
             raise IOError("File is not yet open")
@@ -839,7 +841,9 @@ cdef class TNGFileIterator:
     def n_atoms(self):
         """The number of atoms in the TNG file
         
-        :type: int
+        :returns:
+            number of atoms
+        :rtype: int
         """
         if not self.is_open:
             raise IOError("File is not yet open")
@@ -847,10 +851,12 @@ cdef class TNGFileIterator:
 
     @property
     def block_strides(self):
-        """Dictionary of block names and the strides at which they are written
-        in the TNG file
+        """Dictionary of block names and the strides (in integrator steps)
+        at which they are written in the TNG file
         
-        :type: dict
+        :returns:
+            block names (keys) and strides of each block (values)
+        :rtype: dict
         """
         if not self.is_open:
             raise IOError("File is not yet open")
@@ -858,10 +864,12 @@ cdef class TNGFileIterator:
 
     @property
     def block_ids(self):
-        """Dictionary of block names and block ids (unsigned long longs) in the
+        """Dictionary of block names and block ids (long longs) in the
         TNG file
         
-        :type: dict
+        :returns:
+            block names (keys) and block ids (values)
+        :rtype: dict
         """
         if not self.is_open:
             raise IOError("File is not yet open")
@@ -875,7 +883,9 @@ cdef class TNGFileIterator:
         """Dictionary of block names and the number of actual steps with data
         for that block in the TNG file
         
-        :type: dict
+        :returns:
+            block names (keys) and number of steps with data (values)
+        :rtype: dict
         """
         if not self.is_open:
             raise IOError("File is not yet open")
@@ -886,7 +896,9 @@ cdef class TNGFileIterator:
         """Dictionary of block names and the number of values per frame for the
         block
         
-        :type: dict
+        :returns:
+            block names (keys) and number of values per frame (values)
+        :rtype: dict
         """
         if not self.is_open:
             raise IOError("File is not yet open")
@@ -894,18 +906,35 @@ cdef class TNGFileIterator:
 
     @property
     def particle_dependencies(self):
+        """Dictionary of block names and whether the block is particle dependent
+        
+        :returns:
+            block names (keys) and particle dependencies (values)
+        :rtype: dict
+        """
         if not self.is_open:
             raise IOError("File is not yet open")
         return self._particle_dependencies
 
     @property
     def step(self):
+        """The current integrator step being read
+        
+        :returns:
+            current step
+        :rtype: int
+        """
         if not self.is_open:
             raise IOError("File is not yet open")
         return self.step
 
     @property
     def current_integrator_step(self):
+        """Class that retreives data from the file at the current integrator
+           step
+        
+        :rtype: :class:`TNGCurrentIntegratorStep`
+        """
         if not self.is_open:
             raise IOError("File is not yet open")
         return self.current_step
@@ -1102,8 +1131,8 @@ cdef class TNGCurrentIntegratorStep:
         ----------
         data : np.ndarray
            NumPy array to read the data into. As this is a particle dependent
-           block, the shape should be
-           (n_atoms, n_values_per_frame["TNG_TRAJ_POSITIONS"]) ie (n_atoms, 3).
+           block, the shape should be (n_atoms, n_values_per_frame)
+           ie (n_atoms, 3).
         """
         self.get_blockid(TNG_TRAJ_POSITIONS, data)
 
@@ -1116,7 +1145,7 @@ cdef class TNGCurrentIntegratorStep:
         data : np.ndarray
            NumPy array to read the data into. As this is NOT a particle 
            dependent block, the shape should be
-           (1, n_values_per_frame["TNG_TRAJ_BOX_SHAPE"]) ie (1,9)
+           (1, n_values_per_frame) ie (1,9)
         """
         self.get_blockid(TNG_TRAJ_BOX_SHAPE, data)
 
@@ -1128,8 +1157,8 @@ cdef class TNGCurrentIntegratorStep:
         ----------
         data : np.ndarray
            NumPy array to read the data into. As this is a particle dependent
-           block, the shape should be
-           (n_atoms, n_values_per_frame["TNG_TRAJ_VELOCITIES"]) ie (n_atoms, 3).
+           block, the shape should be (n_atoms, n_values_per_frame)
+           ie (n_atoms, 3).
         """
         self.get_blockid(TNG_TRAJ_VELOCITIES, data)
 
@@ -1141,8 +1170,8 @@ cdef class TNGCurrentIntegratorStep:
         ----------
         data : np.ndarray
            NumPy array to read the data into. As this is a particle dependent
-           block, the shape should be
-           (n_atoms, n_values_per_frame["TNG_TRAJ_FORCES"]) ie (n_atoms, 3).
+           block, the shape should be (n_atoms, n_values_per_frame)
+           ie (n_atoms, 3).
         """
         self.get_blockid(TNG_TRAJ_FORCES, data)
 
