@@ -1067,7 +1067,7 @@ cdef class TNGCurrentIntegratorStep:
             read_stat = self._get_data_next_frame(block_id, self.step, & values,  & n_values_per_frame, & n_atoms, & precision, & datatype, self.debug)
 
         if read_stat != TNG_SUCCESS:
-            raise IOError("PYTNG ERROR: block data could not be read\n")
+            return
 
         if data.ndim > 2:
             raise IndexError("PYTNG ERROR: Numpy array must be 2 dimensional")
