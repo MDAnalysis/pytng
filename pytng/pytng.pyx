@@ -809,7 +809,7 @@ cdef class TNGFileIterator:
         if stat != TNG_SUCCESS:
             raise IOError("Distance exponent cannot be read")
         # fill out dictionaries
-        stat = self._get_frame_indicies()
+        stat = self._get_block_metadata()
         if stat != TNG_SUCCESS:
             raise IOError("Strides for each data block cannot be read")
 
@@ -900,7 +900,7 @@ cdef class TNGFileIterator:
     # NOTE here we assume that the first frame has all the blocks
     #  that are present in the whole traj
 
-    cdef tng_function_status _get_frame_indicies(self):
+    cdef tng_function_status _get_block_metadata(self):
         """Gets the ids, strides and number of frames with
            actual data from the trajectory"""
         cdef int64_t step, n_blocks
@@ -1086,7 +1086,7 @@ cdef class TNGCurrentIntegratorStep:
         cdef int i, j
 
         with nogil:
-            read_stat = self._get_data_next_frame(block_id, self.step, & values,  & n_values_per_frame, & n_atoms, & precision, & datatype, self.debug)
+            read_stat = self._get_data_current_step(block_id, self.step, & values,  & n_values_per_frame, & n_atoms, & precision, & datatype, self.debug)
 
         if read_stat != TNG_SUCCESS:
             return
@@ -1135,7 +1135,7 @@ cdef class TNGCurrentIntegratorStep:
 
         return TNG_SUCCESS
 
-    cdef tng_function_status _get_data_next_frame(self, int64_t block_id,
+    cdef tng_function_status _get_data_current_step(self, int64_t block_id,
                                                   int64_t step,
                                                   void ** values,
                                                   int64_t * n_values_per_frame,
