@@ -13,13 +13,13 @@ branches:
 
 install:
   - pip install --upgrade pytest
-  - pip install codecov pytest-cov pytest-pep8
+  - pip install codecov pytest-cov
   - pip install --upgrade numpy cython
   - if [[ $TRAVIS_PYTHON_VERSION == "3.6" ]]; then pip install --upgrade sphinx sphinx-sitemap; fi
   - pip install -e .
 
 script:
-  - py.test -v --cov pytng --pep8 pytng tests
+  - pytest -v --cov pytng pytng tests
 
 after_success:
   - codecov
