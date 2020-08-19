@@ -51,7 +51,7 @@ An example of how to read positions from a TNG file is shown below.
       for ts in range(0, len(tng), tng.block_strides["TNG_TRAJ_POSITIONS"]):
          # read the integrator timestep
          tng.read_step(ts)
-         # get the data from the requested block
+         # get the data from the requested block by supplying NumPy array
          tng.current_integrator_step.get_pos(positions)
 
            
@@ -64,7 +64,10 @@ frames
   import pytng
   import numpy as np
 
-   # figure out the right array size for your numpy array
+  # figure out the right array size for your NumPy array using the
+  # TNGFileIterator attributes
+
+  # make your NumPy array
 
   with pytng.TNGFileIterator('traj.tng', 'r') as tng:
       tng[0].current_integrator_step.get_pos(positions)
@@ -75,5 +78,8 @@ API for the TNGFile class
 =========================
 
 .. autoclass:: pytng.pytng.TNGFileIterator
+  :members:
+
+.. autoclass:: pytng.pytng.TNGCurrentIntegratorStep
   :members:
 
