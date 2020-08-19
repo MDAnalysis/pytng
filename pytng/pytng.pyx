@@ -14,7 +14,7 @@ from libc.stdio cimport printf, FILE, SEEK_SET, SEEK_CUR, SEEK_END
 from libc.stdlib cimport malloc, free, realloc
 from libc.stdint cimport int64_t, uint64_t, int32_t, uint32_t
 from cpython.mem cimport PyMem_Malloc, PyMem_Realloc, PyMem_Free
-#TODO REMOVE
+# TODO REMOVE
 from numpy cimport(PyArray_SimpleNewFromData,
                    PyArray_SetBaseObject,
                    NPY_FLOAT,
@@ -26,7 +26,7 @@ cimport cython
 cimport numpy as np
 np.import_array()
 
-# Marks operation success 
+# Marks operation success
 ctypedef enum tng_function_status: TNG_SUCCESS, TNG_FAILURE, TNG_CRITICAL
 # Marks use of hash checking in file read
 ctypedef enum tng_hash_mode: TNG_SKIP_HASH, TNG_USE_HASH
@@ -47,7 +47,7 @@ DEF TNG_FRAME_DEPENDENT = 1
 # Flag to indicate particle dependent data.
 DEF TNG_PARTICLE_DEPENDENT = 2
 
-#TODO REMOVE
+# TODO REMOVE
 status_error_message = ['OK', 'Failure', 'Critical']
 
 cdef extern from "<stdio.h>" nogil:
@@ -595,7 +595,7 @@ cdef extern from "tng/tng_io.h":
         int64_t * n_values_per_frame,
         char * type) nogil
 
-#TODO REMOVE
+# TODO REMOVE
 TNGFrame = namedtuple("TNGFrame", "positions velocities forces time step box")
 
 
@@ -615,7 +615,9 @@ cdef int64_t gcd_list(list a):
         result = gcd(result, a[i])
     return result
 
-#TODO REMOVE
+# TODO REMOVE
+
+
 @cython.final
 cdef class MemoryWrapper:
     # holds a pointer to C allocated memory, deals with malloc&free based on:
@@ -726,7 +728,7 @@ cdef class TNGFileIterator:
     cdef dict   _values_per_frame
 
     # greatest common divisor of data strides
-    cdef int64_t _gcd  
+    cdef int64_t _gcd
 
     # holds data at the current trajectory timestep
     cdef TNGCurrentIntegratorStep current_step
@@ -812,7 +814,7 @@ cdef class TNGFileIterator:
         self.is_open = True
         self.reached_eof = False
 
-    # close the file 
+    # close the file
     def _close(self):
         """Make sure the file handle is closed"""
         if self.is_open:
@@ -822,39 +824,54 @@ cdef class TNGFileIterator:
 
     @property
     def n_steps(self):
+        if not self.is_open:
+            raise IOError("File is not yet open")
         return self._n_steps
 
     @property
     def n_atoms(self):
+        if not self.is_open:
+            raise IOError("File is not yet open")
         return self._n_particles
 
     @property
     def block_strides(self):
+        if not self.is_open:
+            raise IOError("File is not yet open")
         return [(block_dictionary[k], v)
                 for k, v in self._frame_strides.items()]
 
     @property
     def block_ids(self):
+        if not self.is_open:
+            raise IOError("File is not yet open")
         return [(k, block_dictionary[k]) for k in self._frame_strides.keys()]
 
     @property
     def n_data_frames(self):
+        if not self.is_open:
+            raise IOError("File is not yet open")
         return [(block_dictionary[k], v)
                 for k, v in self._n_data_frames.items()]
 
     @property
     def values_per_frame(self):
+        if not self.is_open:
+            raise IOError("File is not yet open")
         return [(block_dictionary[k], v)
                 for k, v in self._values_per_frame.items()]
 
     @property
     def step(self):
+        if not self.is_open:
+            raise IOError("File is not yet open")
         return self.step
 
     @property
     def current_integrator_step(self):
+        if not self.is_open:
+            raise IOError("File is not yet open")
         return self.current_step
-
 
     cpdef read_step(self, step):
         """Read a frame (integrator step) from the file,
@@ -1165,6 +1182,7 @@ cdef class TNGCurrentIntegratorStep:
         else:
             prec[0] = local_prec
 
+        # TODO separate this out so that if there is no time info the other data can be read
         stat = tng_util_time_of_frame_get(self._traj, self.step, frame_time)
         if stat != TNG_SUCCESS:
             return TNG_CRITICAL
