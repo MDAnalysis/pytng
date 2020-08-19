@@ -1,4 +1,5 @@
-import pstats, cProfile
+import pstats
+import cProfile
 import numpy as np
 import pytng
 
