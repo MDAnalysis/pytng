@@ -168,7 +168,7 @@ def test_tng_example_seek_write(MISSING_FILEPATH):
 def test_tng_example_time(TNG_EXAMPLE_DATA, TNG_EXAMPLE):
     with pytng.TNGFileIterator(TNG_EXAMPLE) as tng:
         for ref_time, ts in zip(TNG_EXAMPLE_DATA.time, tng):
-            assert ref_time == ts.time
+            assert ref_time == tng.current_integrator_step.get_time()
 
 
 @pytest.mark.parametrize("prop", ("n_steps", "n_atoms"))

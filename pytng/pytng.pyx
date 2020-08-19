@@ -1015,22 +1015,25 @@ cdef class TNGCurrentIntegratorStep:
 
     cdef tng_trajectory * _traj
     cdef int64_t step
-    cdef double step_time
 
     def __cinit__(self, TrajectoryWrapper traj, int64_t step, bint debug=False):
         self.debug = debug
 
         self._traj = traj._ptr
         self.step = step
-        self.step_time = -1
 
     def __dealloc__(self):
         pass
 
-    @property
-    def time(self):
-        return self.step_time
-
+    cpdef get_time(self):
+        cdef tng_function_status read_stat
+        cdef double _step_time 
+        read_stat = self._get_step_time(&_step_time)     
+        if read_stat != TNG_SUCCESS:
+            return None
+        else:
+            return _step_time
+    
     cpdef get_pos(self, np.ndarray data):
         self.get_blockid(TNG_TRAJ_POSITIONS, data)
 
@@ -1049,11 +1052,9 @@ cdef class TNGCurrentIntegratorStep:
         dtype = data.dtype
 
         if dtype not in [np.int64, np.float32, np.float64]:
-            printf("PYTNG WARNING: datatype of numpy array not supported\n")
-            return TNG_CRITICAL
+            raise TypeError("PYTNG ERROR: datatype of numpy array not supported\n")
 
         cdef void * values = NULL
-        cdef double _step_time = -1
         cdef int64_t n_values_per_frame = -1
         cdef int64_t n_atoms = -1
         cdef double precision = -1
@@ -1063,25 +1064,23 @@ cdef class TNGCurrentIntegratorStep:
         cdef int i, j
 
         with nogil:
-            read_stat = self._get_data_next_frame(block_id, self.step, & values, & _step_time, & n_values_per_frame, & n_atoms, & precision, & datatype, self.debug)
+            read_stat = self._get_data_next_frame(block_id, self.step, & values,  & n_values_per_frame, & n_atoms, & precision, & datatype, self.debug)
 
         if read_stat != TNG_SUCCESS:
-            printf("PYTNG WARNING: data could not be read\n")
-            return TNG_CRITICAL
+            raise IOError("PYTNG ERROR: block data could not be read\n")
 
-        self.step_time = _step_time
 
         if data.ndim > 2:
-            raise IndexError("Numpy array must be 2 dimensional")
+            raise IndexError("PYTNG ERROR: Numpy array must be 2 dimensional")
 
         if shape[0] != n_atoms:
-            raise IndexError("First axis of numpy array must be n_atoms long")
+            raise IndexError("PYTNG ERROR: First axis of numpy array must be n_atoms long")
 
         if shape[1] != n_values_per_frame:
             raise IndexError(
-                "Second axis of numpy array must be n_values_per_frame long")
+                "PYTNG ERROR: Second axis of numpy array must be n_values_per_frame long")
 
-        if datatype == TNG_FLOAT_DATA:
+        if datatype == TNG_FLOAT_DATA: #TODO fix this to be more efficent
             if dtype != np.float32:
                 printf(
                     "PYTNG WARNING: datatype of numpy array does not match underlying data\n")
@@ -1117,7 +1116,6 @@ cdef class TNGCurrentIntegratorStep:
     cdef tng_function_status _get_data_next_frame(self, int64_t block_id,
                                                   int64_t step,
                                                   void ** values,
-                                                  double * frame_time,
                                                   int64_t * n_values_per_frame,
                                                   int64_t * n_atoms,
                                                   double * prec,
@@ -1183,12 +1181,13 @@ cdef class TNGCurrentIntegratorStep:
         else:
             prec[0] = local_prec
 
-        # TODO separate this out so that if there is no time info the other data can be read
-        stat = tng_util_time_of_frame_get(self._traj, self.step, frame_time)
-        if stat != TNG_SUCCESS:
-            return TNG_CRITICAL
 
         return TNG_SUCCESS
+    
+    cdef tng_function_status _get_step_time(self, double* step_time):
+        stat = tng_util_time_of_frame_get(self._traj, self.step, step_time)
+        if stat != TNG_SUCCESS:
+            return TNG_CRITICAL
 
 
 global block_dictionary
