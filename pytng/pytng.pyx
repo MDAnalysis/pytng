@@ -906,7 +906,8 @@ cdef class TNGFileIterator:
 
     @property
     def particle_dependencies(self):
-        """Dictionary of block names and whether the block is particle dependent
+        """Dictionary of block names and whether the block is particle
+        dependent
 
         :returns:
             block names (keys) and particle dependencies (values)
@@ -919,12 +920,12 @@ cdef class TNGFileIterator:
     cpdef make_ndarray_for_block_from_name(self, str block_name):
         """Make a NumPy array that can hold a specified block from the block
         name
-        
+
         Parameters
         ----------
         block_name : str
            a block name
-        
+
         Returns
         -------
         target : :class:`np.ndarray`
@@ -943,18 +944,19 @@ cdef class TNGFileIterator:
 
     cpdef make_ndarray_for_block_from_id(self, int64_t block_id):
         """Make a NumPy array that can hold a specified block from the block id
-        
+
         Parameters
         ----------
         block_id : int64_t
            a block id
-        
+
         Returns
         -------
         target : :class:`np.ndarray`
             A NumPy array that can hold the data values for a specified block
         """
-        return self.make_ndarray_for_block_from_name(block_id_dictionary[block_id])
+        return
+        self.make_ndarray_for_block_from_name(block_id_dictionary[block_id])
 
     @property
     def step(self):
@@ -1026,7 +1028,9 @@ cdef class TNGFileIterator:
                 return TNG_CRITICAL
             read_stat = tng_data_block_num_values_per_frame_get(
                 self._traj._ptr, block_ids[i], & n_values_per_frame)
-            read_stat = tng_data_block_dependency_get(self._traj._ptr, block_ids[i], & block_dependency)
+            read_stat = tng_data_block_dependency_get(self._traj._ptr,
+                                                      block_ids[i],
+                                                      & block_dependency)
             if read_stat != TNG_SUCCESS:
                 return TNG_CRITICAL
             if block_dependency & TNG_PARTICLE_DEPENDENT:
@@ -1140,7 +1144,8 @@ cdef class TNGCurrentIntegratorStep:
     cdef tng_trajectory * _traj
     cdef int64_t step
 
-    def __cinit__(self, TrajectoryWrapper traj, int64_t step, bint debug=False):
+    def __cinit__(self, TrajectoryWrapper traj, int64_t step,
+                  bint debug=False):
         self.debug = debug
 
         self._traj = traj._ptr
@@ -1244,7 +1249,14 @@ cdef class TNGCurrentIntegratorStep:
         cdef int i, j
 
         with nogil:
-            read_stat = self._get_data_current_step(block_id, self.step, & values,  & n_values_per_frame, & n_atoms, & precision, & datatype, self.debug)
+            read_stat = self._get_data_current_step(block_id,
+                                                    self.step,
+                                                    & values,
+                                                    & n_values_per_frame,
+                                                    & n_atoms,
+                                                    & precision,
+                                                    & datatype,
+                                                    self.debug)
 
         if read_stat != TNG_SUCCESS:
             data = None
@@ -1255,16 +1267,16 @@ cdef class TNGCurrentIntegratorStep:
 
         if shape[0] != n_atoms:
             raise IndexError(
-                "PYTNG ERROR: First axis of numpy array must be n_atoms long")
+                "PYTNG ERROR: First axis must be n_atoms long")
 
         if shape[1] != n_values_per_frame:
             raise IndexError(
-                "PYTNG ERROR: Second axis of numpy array must be n_values_per_frame long")
+                "PYTNG ERROR: Second axis must be n_values_per_frame long")
 
         if datatype == TNG_FLOAT_DATA:  # TODO fix this to be more efficent
             if dtype != np.float32:
                 printf(
-                    "PYTNG WARNING: datatype of numpy array does not match underlying data\n")
+                    "PYTNG ERROR: dtype of array does not match tng dtype\n")
                 return TNG_CRITICAL
             for i in range(n_atoms):
                 for j in range(n_values_per_frame):
@@ -1273,20 +1285,20 @@ cdef class TNGCurrentIntegratorStep:
         elif datatype == TNG_INT_DATA:
             if dtype != np.int64:
                 printf(
-                    "PYTNG WARNING: datatype of numpy array does not match underlying data\n")
+                    "PYTNG ERROR: dtype of array does not match tng dtype\n")
                 return TNG_CRITICAL
             for i in range(n_atoms):
                 for j in range(n_values_per_frame):
-                    data[i, j] = ( < int64_t*>values)[i * n_values_per_frame + j]
+                    data[i, j] = (<int64_t*>values)[i * n_values_per_frame + j]
 
         elif datatype == TNG_DOUBLE_DATA:
             if dtype != np.float64:
                 printf(
-                    "PYTNG WARNING: datatype of numpy array does not match underlying data\n")
+                    "PYTNG ERROR: dtype of array does not match tng dtype\n")
                 return TNG_CRITICAL
             for i in range(n_atoms):
                 for j in range(n_values_per_frame):
-                    data[i, j] = ( < double*>values)[i * n_values_per_frame + j]
+                    data[i, j] = (<double*>values)[i * n_values_per_frame + j]
 
         else:
             printf("PYTNG WARNING: block datatype not understood")
