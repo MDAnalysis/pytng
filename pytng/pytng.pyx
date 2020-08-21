@@ -1246,6 +1246,10 @@ cdef class TNGCurrentIntegratorStep:
         cdef char datatype = -1
         cdef tng_function_status read_stat
 
+        cdef np.float32_t[:,:] _float_view 
+        cdef int64_t[:,:] _int64_t_view
+        cdef double[:,:] _double_view
+
         cdef int i, j
 
         with nogil:
@@ -1272,39 +1276,56 @@ cdef class TNGCurrentIntegratorStep:
         if shape[1] != n_values_per_frame:
             raise IndexError(
                 "PYTNG ERROR: Second axis must be n_values_per_frame long")
+        
+        #local array that is moved into other 
+        cdef np.ndarray data_loc
 
         if datatype == TNG_FLOAT_DATA:  # TODO fix this to be more efficent
             if dtype != np.float32:
                 printf(
                     "PYTNG ERROR: dtype of array does not match tng dtype\n")
                 return TNG_CRITICAL
-            for i in range(n_atoms):
-                for j in range(n_values_per_frame):
-                    data[i, j] = ( < float*>values)[i * n_values_per_frame + j]
+            _float_view = <np.float32_t[:n_atoms, :n_values_per_frame]>(<float*> values)
+            data_loc = np.asarray(_float_view, dtype=np.float32)
+
+            # for i in range(n_atoms):
+            #     for j in range(n_values_per_frame):
+            #         data[i, j] = ( < float*>values)[i * n_values_per_frame + j]
 
         elif datatype == TNG_INT_DATA:
             if dtype != np.int64:
                 printf(
                     "PYTNG ERROR: dtype of array does not match tng dtype\n")
                 return TNG_CRITICAL
-            for i in range(n_atoms):
-                for j in range(n_values_per_frame):
-                    data[i, j] = (<int64_t*>values)[i * n_values_per_frame + j]
+                _int64_t_view = <np.int64_t[:n_atoms, :n_values_per_frame]>(<int64_t*> values)
+                data_loc = np.asarray(_int64_t_view, dtype=np.int64)
+
+            # for i in range(n_atoms):
+            #     for j in range(n_values_per_frame):
+            #         data[i, j] = (<int64_t*>values)[i * n_values_per_frame + j]
 
         elif datatype == TNG_DOUBLE_DATA:
+            print("DOUBLE")
             if dtype != np.float64:
                 printf(
                     "PYTNG ERROR: dtype of array does not match tng dtype\n")
                 return TNG_CRITICAL
-            for i in range(n_atoms):
-                for j in range(n_values_per_frame):
-                    data[i, j] = (<double*>values)[i * n_values_per_frame + j]
+                _double_view = <np.int64_t[:n_atoms, :n_values_per_frame]>(<double*> values)
+                data_loc = np.asarray(_double_view, dtype=np.float64)
+
+            # for i in range(n_atoms):
+            #     for j in range(n_values_per_frame):
+            #         data[i, j] = (<double*>values)[i * n_values_per_frame + j]
 
         else:
             printf("PYTNG WARNING: block datatype not understood")
             return TNG_CRITICAL
+        
+        #NOTE
+        # couldn't get this to work by assigining the memview to data directly,
+        # seems to require and explicit copy to the destination array
+        np.copyto(data, data_loc, casting="no")
 
-        return TNG_SUCCESS
 
     cdef tng_function_status _get_data_current_step(self, int64_t block_id,
                                                     int64_t step,

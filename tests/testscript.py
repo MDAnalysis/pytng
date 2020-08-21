@@ -2,9 +2,9 @@ import pytng
 import numpy as np
 
 
-positions = np.zeros((1000, 3), dtype=np.float32)
-box = np.zeros((1, 9), dtype=np.float32)
-lmbda = np.zeros((1, 1), dtype=np.float32)
+positions = np.ndarray((1000,3),dtype=np.float32)
+box = np.ndarray((1,9),dtype=np.float32)
+lmbda = np.ndarray((1,1),dtype=np.float32)
 
 with pytng.TNGFileIterator("./reference_files/argon_npt_compressed.tng", mode="r", debug=False) as tng:
     print(tng.block_ids)
