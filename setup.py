@@ -63,7 +63,7 @@ setup(
     python_requires=">=3.0",
     version='0.2',
     description='minimal Cython wrapper of tng',
-    author='Max Linke, Richard J Gowers','Hugo MacDermott-Opeskin'
+    author='Max Linke, Richard J Gowers, Hugo MacDermott-Opeskin',
     author_email='max_linke@gmx.de',
     packages=['pytng'],
     cmdclass={'clean': CleanCommand},
