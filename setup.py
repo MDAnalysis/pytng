@@ -54,7 +54,7 @@ def extensions():
         Extension(
             'pytng.pytng',
             sources=glob('pytng/src/compression/*.c') + glob(
-                'pytng/src/lib/*.c') + ['pytng/pytng.pyx', ],
+                'pytng/src/lib/*.c') + ['pytng/pytng.pyx'],
             include_dirs=[
                 "pytng/include/", "{}/include".format(sys.prefix),
                 np.get_include()
@@ -62,7 +62,7 @@ def extensions():
             library_dirs=["{}/lib".format(sys.prefix)],
             libraries=['z'], ))
 
-    return cythonize(exts)
+    return cythonize(exts, gdb_debug=True)
 
 
 setup(
