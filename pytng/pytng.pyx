@@ -732,24 +732,17 @@ cdef class TNGFileIterator:
     # greatest common divisor of data strides
     cdef int64_t _gcd
 
-<<<<<<< HEAD
     # holds data at the current trajectory timestep
     cdef TNGCurrentIntegratorStep current_step
 
-=======
->>>>>>> upstream/master
     def __cinit__(self, fname, mode='r', debug=False):
 
         self._traj = TrajectoryWrapper.from_ptr(self._traj_p, owner=True)
         self.fname = fname
         self.debug = debug
         self.step = 0
-<<<<<<< HEAD
 
         self._n_steps = -1
-=======
-        self._n_frames = -1
->>>>>>> upstream/master
         self._n_particles = -1
         self._distance_scale = 0.0
 
@@ -833,7 +826,6 @@ cdef class TNGFileIterator:
             self._n_steps = -1
 
     @property
-<<<<<<< HEAD
     def n_steps(self):
         """The number of integrator steps in the TNG file
 
@@ -844,10 +836,6 @@ cdef class TNGFileIterator:
         if not self.is_open:
             raise IOError("File is not yet open")
         return self._n_steps
-=======
-    def n_frames(self):
-        return self._n_frames
->>>>>>> upstream/master
 
     @property
     def n_atoms(self):
@@ -949,7 +937,6 @@ cdef class TNGFileIterator:
         if self._particle_dependencies[block_name]:
             ax0 = self._n_particles
         else:
-<<<<<<< HEAD
             ax0 = 1
         ax1 = self._values_per_frame[block_name]
         target = np.ndarray(shape=(ax0, ax1), dtype=np.float32, order='C')
@@ -970,9 +957,6 @@ cdef class TNGFileIterator:
         """
         return
         self.make_ndarray_for_block_from_name(block_id_dictionary[block_id])
-=======
-            return self.current_step.block_set.get(TNG_TRAJ_BOX_SHAPE).values
->>>>>>> upstream/master
 
     @property
     def step(self):
@@ -986,24 +970,10 @@ cdef class TNGFileIterator:
             raise IOError("File is not yet open")
         return self.step
 
-<<<<<<< HEAD
     @property
     def current_integrator_step(self):
         """Class that retreives data from the file at the current integrator
            step
-=======
-    def read_frame(self, frame):
-        """Read a frame (integrator step) from the file,
-           modifies the state of self.block_holder to contain
-           the current blocks"""
-
-        if frame >= self._n_frames:
-            raise ValueError("frame specified is greater than number of steps"
-                             "in input file {}".format(self._n_frames))
-
-        self.step = frame
-        self.current_step = TNGCurrentIntegratorStep(debug=self.debug)
->>>>>>> upstream/master
 
         :rtype: :class:`TNGCurrentIntegratorStep`
         """
@@ -1026,13 +996,10 @@ cdef class TNGFileIterator:
             raise ValueError("""frame specified is greater than number of steps
             in input file {}""".format(self._n_steps))
 
-<<<<<<< HEAD
         self.step = step
         self.current_step = TNGCurrentIntegratorStep(
             self._traj, step, debug=self.debug)
 
-=======
->>>>>>> upstream/master
     # NOTE here we assume that the first frame has all the blocks
     #  that are present in the whole traj
 
@@ -1090,21 +1057,6 @@ cdef class TNGFileIterator:
 
         return TNG_SUCCESS
 
-<<<<<<< HEAD
-=======
-    cdef void _read_single_frame(self, int64_t frame, int64_t block_id,
-                                 TNGCurrentIntegratorStep current_frame):
-        """Read the current block of a given block id into a
-           TNGDataBlock instance and pops that instance to the block holder"""
-
-        if self.debug:
-            print("READING FRAME {}  \n".format(frame))
-        cdef block = TNGDataBlock(self._traj, frame, debug=self.debug)
-        block.block_read(block_id)  # read the actual block
-        # add the block to the block holder
-        current_frame.add_block(block_id, block)
-
->>>>>>> upstream/master
     def __enter__(self):
         # Support context manager
         return self
@@ -1125,11 +1077,7 @@ cdef class TNGFileIterator:
         return self
 
     def __next__(self):
-<<<<<<< HEAD
         if self.step == self._n_steps - 1:
-=======
-        if self.step == self._n_frames - 1:
->>>>>>> upstream/master
             raise StopIteration
         self.read_step(self.step)
         prev = self.step
@@ -1203,17 +1151,11 @@ cdef class TNGCurrentIntegratorStep:
         self._traj = traj._ptr
         self.step = step
 
-<<<<<<< HEAD
     def __dealloc__(self):
         pass
 
     cpdef get_time(self):
         """Get the time of the current integrator step being read from the file
-=======
-    @property
-    def block_set(self):
-        return self.blocks  # expose blocks to python layer
->>>>>>> upstream/master
 
         :return: the time of the current step
         :rtype: int
@@ -1308,28 +1250,7 @@ cdef class TNGCurrentIntegratorStep:
         cdef int64_t[:,:] _int64_t_view
         cdef double[:,:] _double_view
 
-<<<<<<< HEAD
         cdef int i, j
-=======
-        if self.debug:
-            printf("PYTNG INFO: creating Numpy array \n")
-        if n_values_per_frame == -1 or n_atoms == -1:
-            raise ValueError(
-                "Array dimensions for block casting are not set correctly")
-        cdef int nd = 2
-        cdef int err
-        cdef npy_intp dims[2]
-        dims[0] = n_atoms
-        dims[1] = n_values_per_frame
-        self.values = PyArray_SimpleNewFromData(
-            2, dims, NPY_DOUBLE, self._wrapper.ptr)
-        Py_INCREF(self._wrapper)
-        err = PyArray_SetBaseObject(self.values, self._wrapper)
-        if err:
-            raise ValueError("Array object cannot be created")
-        if self.debug:
-            print(self.values)
->>>>>>> upstream/master
 
         with nogil:
             read_stat = self._get_data_current_step(block_id,
@@ -1359,7 +1280,6 @@ cdef class TNGCurrentIntegratorStep:
         #local array that is moved into other 
         cdef np.ndarray data_loc
 
-<<<<<<< HEAD
         if datatype == TNG_FLOAT_DATA:  # TODO fix this to be more efficent
             if dtype != np.float32:
                 printf(
@@ -1415,27 +1335,6 @@ cdef class TNGCurrentIntegratorStep:
                                                     double * prec,
                                                     char * datatype,
                                                     bint debug) nogil:
-=======
-        if self.debug:
-            printf("PYTNG INFO: block id %ld \n", self.block_id)
-            printf("PYTNG INFO: data block name %s \n", self.block_name)
-            printf("PYTNG INFO: n_values_per_frame %ld \n", self.n_values_per_frame)
-            printf("PYTNG INFO: n_atoms  %ld \n", self.n_atoms)
-
-        return read_stat
-
-    @cython.boundscheck(True)
-    @cython.wraparound(True)
-    @cython.profile(True)
-    cdef tng_function_status _get_data_next_frame(self, int64_t block_id,
-                                                  int64_t * step,
-                                                  double * frame_time,
-                                                  int64_t * n_values_per_frame,
-                                                  int64_t * n_atoms,
-                                                  double * prec,
-                                                  char * block_name,
-                                                  bint debug) nogil:
->>>>>>> upstream/master
         """Gets the frame data off disk and into C level arrays"""
         cdef tng_function_status stat
         cdef int64_t             codec_id
@@ -1451,11 +1350,6 @@ cdef class TNGCurrentIntegratorStep:
             return TNG_CRITICAL
 
         if block_dependency & TNG_PARTICLE_DEPENDENT:  # bitwise & due to enums
-<<<<<<< HEAD
-=======
-            if debug:
-                printf("PYTNG INFO: reading particle data \n")
->>>>>>> upstream/master
             tng_num_particles_get(self._traj, n_atoms)
             # read particle data off disk with hash checking
             stat = tng_gen_data_vector_interval_get(self._traj,
@@ -1471,11 +1365,6 @@ cdef class TNGCurrentIntegratorStep:
                                                     datatype)
 
         else:
-<<<<<<< HEAD
-=======
-            if debug:
-                printf("PYTNG INFO: reading non particle data \n")
->>>>>>> upstream/master
             n_atoms[0] = 1  # still used for some allocs
             # read non particle data off disk with hash checking
             stat = tng_gen_data_vector_interval_get(self._traj,
@@ -1491,52 +1380,14 @@ cdef class TNGCurrentIntegratorStep:
                                                     datatype)
 
         if stat != TNG_SUCCESS:
-<<<<<<< HEAD
             return TNG_CRITICAL
 
-=======
-            printf("PYTNG WARNING: critical failure in"
-                   "tng_gen_data_vector_get \n")
-            return TNG_CRITICAL
-
-        stat = tng_data_block_num_values_per_frame_get(
-            self._traj, block_id, n_values_per_frame)
-        if stat == TNG_CRITICAL:
-            printf("PYTNG WARNING: critical failure in"
-                   "tng_data_block_num_values_per_frame_get \n")
-            return TNG_CRITICAL
-
-        # renew the MemoryWrapper instance to have the right size
-        # to hold the data that has come off disk and will be cast to double*
-        self._wrapper.renew(
-            sizeof(double) * n_values_per_frame[0] * n_atoms[0])
-
-        _wrapped_values = <double*> self._wrapper.ptr
-
-        if self.debug:
-            printf("PYTNG INFO: realloc values array to"
-                   " %ld doubles and %ld bits long \n",
-                   n_values_per_frame[0] * n_atoms[0], n_values_per_frame[0]
-                   * n_atoms[0]*sizeof(double))
-
-        # convert the data that was read off disk into an array of doubles
-        self.convert_to_double_arr(
-            data, _wrapped_values, n_atoms[0], n_values_per_frame[0],
-            datatype, debug)
-
->>>>>>> upstream/master
         # get the compression of the current frame
         stat = tng_util_frame_current_compression_get(self._traj,
                                                       block_id,
                                                       & codec_id,
                                                       & local_prec)
-<<<<<<< HEAD
         if stat != TNG_SUCCESS:
-=======
-        if stat == TNG_CRITICAL:
-            printf("PYTNG WARNING: critical failure in"
-                   "tng_util_frame_current_compression_get \n")
->>>>>>> upstream/master
             return TNG_CRITICAL
 
         if codec_id != TNG_TNG_COMPRESSION:
@@ -1546,66 +1397,11 @@ cdef class TNGCurrentIntegratorStep:
 
         return TNG_SUCCESS
 
-<<<<<<< HEAD
     cdef tng_function_status _get_step_time(self, double * step_time):
         stat = tng_util_time_of_frame_get(self._traj, self.step, step_time)
         if stat != TNG_SUCCESS:
             return TNG_CRITICAL
 
-=======
-    @cython.boundscheck(True)
-    @cython.wraparound(True)
-    @cython.profile(True)
-    cdef void convert_to_double_arr(self,
-                                    void * source,
-                                    double * to,
-                                    const int n_atoms,
-                                    const int n_vals,
-                                    const char datatype,
-                                    bint debug) nogil:
-
-        """ Convert a void array to an array of doubles
-
-            NOTES:
-            - this should use memcpy but doesn't yet
-            - is this likely to be portable?.
-            - a lot of this is a bit redundant but could be used to
-              differntiate casts to numpy arrays etc in the future.
-
-        """
-        cdef int i, j
-
-        if datatype == TNG_FLOAT_DATA:
-            for i in range(n_atoms):
-                for j in range(n_vals):
-                    to[i * n_vals + j] = ( < float*>source)[i * n_vals + j]
-            # memcpy(to,  source, n_vals * sizeof(float) * n_atoms)
-            if debug:
-                printf("PYTNG BLOCK INFO: TNG_FLOAT \n")
-
-        elif datatype == TNG_INT_DATA:
-            for i in range(n_atoms):
-                for j in range(n_vals):
-                    to[i * n_vals + j] = ( < int64_t*>source)[i * n_vals + j]
-            # memcpy(to, source, n_vals * sizeof(int64_t) * n_atoms)
-            if debug:
-                printf("PYTNG BLOCK INFO: TNG_INT \n")
-
-        elif datatype == TNG_DOUBLE_DATA:
-            for i in range(n_atoms):
-                for j in range(n_vals):
-                    to[i * n_vals + j] = ( < double*>source)[i * n_vals + j]
-            # memcpy(to, source, n_vals * sizeof(double) * n_atoms)
-            if debug:
-                printf("PYTNG BLOCK INFO: TNG_DOUBLE\n")
-
-        elif datatype == TNG_CHAR_DATA:
-            # NOTE not implemented in TNG library either
-            printf("PYTNG WARNING: char data reading is not implemented \n")
-
-        else:
-            printf("PYTNG WARNING: block data type %d not understood \n", datatype)
->>>>>>> upstream/master
 
 global block_dictionary
 global block_id_dictionary
