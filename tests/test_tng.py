@@ -146,18 +146,18 @@ def test_tng_example_tng_example_last_positions(TNG_EXAMPLE_DATA, TNG_EXAMPLE):
 
 
 @pytest.mark.parametrize("idx", [-11, -12, 10, 11])
-def test_tng_example_seek_IndexError(idx, TNG_EXAMPLE):
+def test_tng_example_read_step_IndexError(idx, TNG_EXAMPLE):
     with pytng.TNGFileIterator(TNG_EXAMPLE, "r") as tng:
         with pytest.raises(ValueError):
             tng[idx]
 
 
 @pytest.mark.skip(reason="Write mode not implemented yet.")
-def test_tng_example_seek_write(MISSING_FILEPATH):
+def test_tng_example_read_step_write(MISSING_FILEPATH):
     with pytng.TNGFileIterator(MISSING_FILEPATH, mode="w") as tng:
         with pytest.raises(IOError) as excinfo:
             tng.read_step(0)
-        assert "seek not allowed in write mode" in str(excinfo.value)
+        assert "read_step not allowed in write mode" in str(excinfo.value)
 
 
 def test_tng_example_time(TNG_EXAMPLE_DATA, TNG_EXAMPLE):
