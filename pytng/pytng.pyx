@@ -14,7 +14,6 @@ from libc.stdio cimport printf, FILE, SEEK_SET, SEEK_CUR, SEEK_END
 from libc.stdlib cimport malloc, free, realloc
 from libc.stdint cimport int64_t, uint64_t, int32_t, uint32_t
 from cpython.mem cimport PyMem_Malloc, PyMem_Realloc, PyMem_Free
-# TODO REMOVE
 from numpy cimport(PyArray_SimpleNewFromData,
                    PyArray_SetBaseObject,
                    NPY_FLOAT,
@@ -598,7 +597,6 @@ cdef extern from "tng/tng_io.h":
 # TODO REMOVE
 TNGFrame = namedtuple("TNGFrame", "positions velocities forces time step box")
 
-
 cdef int64_t gcd(int64_t a, int64_t b):
     cdef int64_t temp
     while b < 0:
@@ -653,15 +651,6 @@ cdef class TrajectoryWrapper:
             free(self._ptr)
             self._ptr = NULL
 
-    # Extension class properties
-    # @property
-    # def a(self):
-    #     return self._ptr.a if self._ptr is not NULL else None
-
-    # @property
-    # def b(self):
-    #     return self._ptr.b if self._ptr is not NULL else None
-
     @staticmethod
     cdef TrajectoryWrapper from_ptr(tng_trajectory * _ptr, bint owner=False):
         """Factory function to create WrapperClass objects from
@@ -685,8 +674,6 @@ cdef class TrajectoryWrapper:
             <tng_trajectory * >malloc(sizeof(tng_trajectory))
         if _ptr is NULL:
             raise MemoryError
-        # _ptr.a = 0
-        # _ptr.b = 0
         return TrajectoryWrapper.from_ptr(_ptr, owner=True)
 
 
@@ -783,7 +770,6 @@ cdef class TNGFileIterator:
                              'supplied {}'.format(mode))
 
         # handle file not existing at python level,
-        # C level is nasty and causes crash
         if self.mode == 'r' and not os.path.isfile(fname):
             raise IOError("File '{}' does not exist".format(fname))
 
@@ -808,7 +794,7 @@ cdef class TNGFileIterator:
         stat = tng_distance_unit_exponential_get(self._traj._ptr, & exponent)
         if stat != TNG_SUCCESS:
             raise IOError("Distance exponent cannot be read")
-        # fill out dictionaries
+        # fill out dictionaries of block metadata
         stat = self._get_block_metadata()
         if stat != TNG_SUCCESS:
             raise IOError("Strides for each data block cannot be read")
@@ -823,15 +809,17 @@ cdef class TNGFileIterator:
         if self.is_open:
             tng_util_trajectory_close(& self._traj._ptr)
             self.is_open = False
+            self.reached_eof = True
             self._n_steps = -1
 
     @property
     def n_steps(self):
         """The number of integrator steps in the TNG file
 
-        :returns:
+        Returns
+        -------
+        n_steps : int
             number of integrator steps
-        :rtype: int
         """
         if not self.is_open:
             raise IOError("File is not yet open")
@@ -841,9 +829,10 @@ cdef class TNGFileIterator:
     def n_atoms(self):
         """The number of atoms in the TNG file
 
-        :returns:
+        Returns
+        -------
+        n_atoms : int
             number of atoms
-        :rtype: int
         """
         if not self.is_open:
             raise IOError("File is not yet open")
@@ -854,9 +843,10 @@ cdef class TNGFileIterator:
         """Dictionary of block names and the strides (in integrator steps)
         at which they are written in the TNG file
 
-        :returns:
-            block names (keys) and strides of each block (values)
-        :rtype: dict
+        Returns
+        -------
+        block_strides : dict
+            dictionary of block names (keys) and strides of each block (values)
         """
         if not self.is_open:
             raise IOError("File is not yet open")
@@ -867,9 +857,10 @@ cdef class TNGFileIterator:
         """Dictionary of block names and block ids (long longs) in the
         TNG file
 
-        :returns:
-            block names (keys) and block ids (values)
-        :rtype: dict
+        Returns
+        -------
+        block_ids : dict
+            dictionary of block names (keys) and block ids (values)
         """
         if not self.is_open:
             raise IOError("File is not yet open")
@@ -883,9 +874,11 @@ cdef class TNGFileIterator:
         """Dictionary of block names and the number of actual steps with data
         for that block in the TNG file
 
-        :returns:
-            block names (keys) and number of steps with data (values)
-        :rtype: dict
+        Returns
+        -------
+        n_data_frames : dict
+            dictionary of block names (keys) and number of steps with data
+            (values)
         """
         if not self.is_open:
             raise IOError("File is not yet open")
@@ -896,8 +889,11 @@ cdef class TNGFileIterator:
         """Dictionary of block names and the number of values per frame for the
         block
 
-        :returns:
-            block names (keys) and number of values per frame (values)
+        Returns
+        -------
+        values_per_frame : dict
+            dictionary of block names (keys) and number of values per frame
+            (values)
         :rtype: dict
         """
         if not self.is_open:
@@ -909,9 +905,10 @@ cdef class TNGFileIterator:
         """Dictionary of block names and whether the block is particle
         dependent
 
-        :returns:
-            block names (keys) and particle dependencies (values)
-        :rtype: dict
+        Returns
+        -------
+        particle_dependencies : dict
+            dictionary of block names (keys) and particle dependencies (values)
         """
         if not self.is_open:
             raise IOError("File is not yet open")
@@ -962,9 +959,10 @@ cdef class TNGFileIterator:
     def step(self):
         """The current integrator step being read
 
-        :returns:
-            current step
-        :rtype: int
+        Returns
+        -------
+        step : int
+            the current step in the TNG file
         """
         if not self.is_open:
             raise IOError("File is not yet open")
@@ -975,7 +973,10 @@ cdef class TNGFileIterator:
         """Class that retreives data from the file at the current integrator
            step
 
-        :rtype: :class:`TNGCurrentIntegratorStep`
+        Returns
+        -------
+        current_integrator_step : :class:`TNGCurrentIntegratorStep`
+            The data accessor at the current integrator step
         """
         if not self.is_open:
             raise IOError("File is not yet open")
@@ -1157,8 +1158,10 @@ cdef class TNGCurrentIntegratorStep:
     cpdef get_time(self):
         """Get the time of the current integrator step being read from the file
 
-        :return: the time of the current step
-        :rtype: int
+        Returns
+        -------
+        time : int
+            the time of the current step
         """
         cdef tng_function_status read_stat
         cdef double _step_time
@@ -1246,9 +1249,9 @@ cdef class TNGCurrentIntegratorStep:
         cdef char datatype = -1
         cdef tng_function_status read_stat
 
-        cdef np.float32_t[:,:] _float_view 
-        cdef int64_t[:,:] _int64_t_view
-        cdef double[:,:] _double_view
+        cdef np.float32_t[:, :] _float_view
+        cdef int64_t[:, :] _int64_t_view
+        cdef double[:, :] _double_view
 
         cdef int i, j
 
@@ -1276,16 +1279,15 @@ cdef class TNGCurrentIntegratorStep:
         if shape[1] != n_values_per_frame:
             raise IndexError(
                 "PYTNG ERROR: Second axis must be n_values_per_frame long")
-        
-        #local array that is moved into other 
+
+        # local array that is moved into other
         cdef np.ndarray data_loc
 
         if datatype == TNG_FLOAT_DATA:  # TODO fix this to be more efficent
             if dtype != np.float32:
-                printf(
-                    "PYTNG ERROR: dtype of array does not match tng dtype\n")
-                return TNG_CRITICAL
-            _float_view = <np.float32_t[:n_atoms, :n_values_per_frame]>(<float*> values)
+                raise TypeError(
+                    "PYTNG ERROR: dtype of array {} does not match TNG dtype float \n".format(dtype))
+            _float_view = <np.float32_t[:n_atoms, :n_values_per_frame] > ( < float*> values)
             data_loc = np.asarray(_float_view, dtype=np.float32)
 
             # for i in range(n_atoms):
@@ -1294,10 +1296,9 @@ cdef class TNGCurrentIntegratorStep:
 
         elif datatype == TNG_INT_DATA:
             if dtype != np.int64:
-                printf(
-                    "PYTNG ERROR: dtype of array does not match tng dtype\n")
-                return TNG_CRITICAL
-                _int64_t_view = <np.int64_t[:n_atoms, :n_values_per_frame]>(<int64_t*> values)
+                raise TypeError(
+                    "PYTNG ERROR: dtype of array {} does not match TNG dtype int64_t \n".format(dtype))
+                _int64_t_view = <np.int64_t[:n_atoms, :n_values_per_frame] > ( < int64_t*> values)
                 data_loc = np.asarray(_int64_t_view, dtype=np.int64)
 
             # for i in range(n_atoms):
@@ -1305,12 +1306,10 @@ cdef class TNGCurrentIntegratorStep:
             #         data[i, j] = (<int64_t*>values)[i * n_values_per_frame + j]
 
         elif datatype == TNG_DOUBLE_DATA:
-            print("DOUBLE")
             if dtype != np.float64:
-                printf(
-                    "PYTNG ERROR: dtype of array does not match tng dtype\n")
-                return TNG_CRITICAL
-                _double_view = <np.int64_t[:n_atoms, :n_values_per_frame]>(<double*> values)
+                raise TypeError(
+                    "PYTNG ERROR: dtype of array {} does not match TNG dtype double \n".format(dtype))
+                _double_view = <np.int64_t[:n_atoms, :n_values_per_frame] > ( < double*> values)
                 data_loc = np.asarray(_double_view, dtype=np.float64)
 
             # for i in range(n_atoms):
@@ -1318,14 +1317,13 @@ cdef class TNGCurrentIntegratorStep:
             #         data[i, j] = (<double*>values)[i * n_values_per_frame + j]
 
         else:
-            printf("PYTNG WARNING: block datatype not understood")
-            return TNG_CRITICAL
-        
-        #NOTE
+            raise TypeError("PYTNG ERROR: block datatype not understood")
+            
+
+        # NOTE
         # couldn't get this to work by assigining the memview to data directly,
         # seems to require and explicit copy to the destination array
         np.copyto(data, data_loc, casting="no")
-
 
     cdef tng_function_status _get_data_current_step(self, int64_t block_id,
                                                     int64_t step,
