@@ -133,10 +133,8 @@ def test_tng_example_tng_example_first_positions(
     TNG_EXAMPLE_DATA, TNG_EXAMPLE
 ):
     with pytng.TNGFileIterator(TNG_EXAMPLE) as tng:
-        print(tng.block_ids)
         pos = np.zeros((15, 3), dtype=np.float32)
         tng[0].current_integrator_step.get_positions(pos)
-        print(pos)
         assert np.array_equal(TNG_EXAMPLE_DATA.first_frame, pos)
 
 
@@ -150,7 +148,6 @@ def test_tng_example_tng_example_last_positions(TNG_EXAMPLE_DATA, TNG_EXAMPLE):
 @pytest.mark.parametrize("idx", [-11, -12, 10, 11])
 def test_tng_example_seek_IndexError(idx, TNG_EXAMPLE):
     with pytng.TNGFileIterator(TNG_EXAMPLE, "r") as tng:
-        print(len(tng))
         with pytest.raises(ValueError):
             tng[idx]
 
