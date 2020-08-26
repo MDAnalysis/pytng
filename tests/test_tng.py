@@ -135,7 +135,7 @@ def test_tng_example_tng_example_first_positions(
     with pytng.TNGFileIterator(TNG_EXAMPLE) as tng:
         print(tng.block_ids)
         pos = np.zeros((15, 3), dtype=np.float32)
-        tng[0].current_integrator_step.get_pos(pos)
+        tng[0].current_integrator_step.get_positions(pos)
         print(pos)
         assert np.array_equal(TNG_EXAMPLE_DATA.first_frame, pos)
 
@@ -143,7 +143,7 @@ def test_tng_example_tng_example_first_positions(
 def test_tng_example_tng_example_last_positions(TNG_EXAMPLE_DATA, TNG_EXAMPLE):
     with pytng.TNGFileIterator(TNG_EXAMPLE) as tng:
         pos = np.zeros((15, 3), dtype=np.float32)
-        tng[9].current_integrator_step.get_pos(pos)
+        tng[9].current_integrator_step.get_positions(pos)
         assert np.array_equal(TNG_EXAMPLE_DATA.last_frame, pos)
 
 
@@ -232,7 +232,7 @@ def test_argon_npt_compressed_first_positions(
 ):
     with pytng.TNGFileIterator(ARGON_NPT_COMPRESSED) as tng:
         pos = np.zeros((1000, 3), dtype=np.float32)
-        tng[0].current_integrator_step.get_pos(pos)
+        tng[0].current_integrator_step.get_positions(pos)
         assert_array_almost_equal(
             ARGON_NPT_COMPRESSED_DATA.first_frame_first_10_pos,
             pos[:10, :],
@@ -244,7 +244,7 @@ def test_argon_npt_compressed_last_positions(
 ):
     with pytng.TNGFileIterator(ARGON_NPT_COMPRESSED) as tng:
         pos = np.zeros((1000, 3), dtype=np.float32)
-        tng[len(tng)-1].current_integrator_step.get_pos(pos)
+        tng[len(tng)-1].current_integrator_step.get_positions(pos)
         assert_array_almost_equal(
             ARGON_NPT_COMPRESSED_DATA.last_frame_last_10_pos,
             pos[990:1000, :]
@@ -284,7 +284,7 @@ def test_water_npt_uncompressed_vels_forces_first_vels(
 ):
     with pytng.TNGFileIterator(WATER_NPT_UNCOMPRESSED_VELS_FORCES) as tng:
         vel = np.zeros((2700, 3), dtype=np.float32)
-        first_frame_first_10_vels = tng[0].current_integrator_step.get_vel(vel)
+        first_frame_first_10_vels = tng[0].current_integrator_step.get_velocities(vel)
         assert_array_almost_equal(
             WATER_NPT_UNCOMPRESSED_VELS_FORCES_DATA.first_frame_first_10_vels,
             vel[:10, :],
@@ -297,7 +297,7 @@ def test_water_npt_uncompressed_vels_forces_last_vels(
 ):
     with pytng.TNGFileIterator(WATER_NPT_UNCOMPRESSED_VELS_FORCES) as tng:
         vel = np.zeros((2700, 3), dtype=np.float32)
-        tng[len(tng)-1].current_integrator_step.get_vel(vel)
+        tng[len(tng)-1].current_integrator_step.get_velocities(vel)
         assert_array_almost_equal(
             WATER_NPT_UNCOMPRESSED_VELS_FORCES_DATA.last_frame_last_10_vels,
             vel[2690:2700, :],
@@ -310,7 +310,7 @@ def test_water_npt_uncompressed_vels_forces_first_frc(
 ):
     with pytng.TNGFileIterator(WATER_NPT_UNCOMPRESSED_VELS_FORCES) as tng:
         frc = np.zeros((2700, 3), dtype=np.float32)
-        tng[0].current_integrator_step.get_frc(frc)  # todo forces
+        tng[0].current_integrator_step.get_forces(frc)  # todo forces
         assert_array_almost_equal(
             WATER_NPT_UNCOMPRESSED_VELS_FORCES_DATA.first_frame_first_10_frc,
             frc[:10, :],
@@ -324,7 +324,7 @@ def test_water_npt_uncompressed_vels_forces_last_frc(
     with pytng.TNGFileIterator(WATER_NPT_UNCOMPRESSED_VELS_FORCES) as tng:
         frc = np.zeros((2700, 3), dtype=np.float32)
         last_frame_last_10_frc = tng[len(
-            tng)-1].current_integrator_step.get_frc(frc)
+            tng)-1].current_integrator_step.get_forces(frc)
         assert_array_almost_equal(
             WATER_NPT_UNCOMPRESSED_VELS_FORCES_DATA.last_frame_last_10_frc,
             frc[2690:2700, :],
