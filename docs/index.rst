@@ -30,7 +30,7 @@ Notes on the TNG format and PyTNG
 
 While the TNG format supports storage of simulations conducted in the
 grand canonical ensemble, PyTNG does not currently support this. Additonally,
-the TNG format includes a MOLECULES block that contains the simulation
+the TNG format includes a TNG_MOLECULES block that contains the simulation
 topology. PyTNG does not currently make use of this information.
 
 
@@ -45,8 +45,8 @@ the number of integrator steps, the number of steps with data, the block_ids
 available at each step, and the stride at which each block is written.
 
 The TNGFileIterator returns one frame at a time, which is accessed from the
-`.current_integrator_step` attribute. A NumPy array of the right size must
-be provided to a getter attribute for the data to be read into.
+:attr:`TNGFileIterator.current_integrator_step` attribute. A NumPy array of the
+right size must be provided to a getter method for the data to be read into.
 
 An example of how to read positions from a TNG file is shown below.
 
@@ -59,13 +59,19 @@ An example of how to read positions from a TNG file is shown below.
    with pytng.TNGFileIterator("traj.tng", 'r') as tng:
 
       # make a numpy array to hold the data using helper function
+      # this array will then be updated in-place 
+      
       positions = tng.make_ndarray_for_block_from_name("TNG_TRAJ_POSITIONS")
       
-      # stride over the whole trajectory for the frames that have data
+      # the TNG API uses regular strides for data deposition, here we stride
+      # over the whole trajectory for the frames that have position data
+      # where len(tng) is the total number of steps in the file.
+
       for ts in range(0, len(tng), tng.block_strides["TNG_TRAJ_POSITIONS"]):
-         # read the integrator timestep
+         # read the integrator timestep, modifying the current_integrator_step
          tng.read_step(ts)
-         # get the data from the requested block by supplying NumPy array
+         # get the data from the requested block by supplying NumPy array which
+         # is updated in-place
          tng.current_integrator_step.get_pos(positions)
 
            
@@ -85,10 +91,10 @@ frames
 Error handling
 ==============
 
-In general the library is designed so that Python level exceptions can be
-caught by the calling code. However, as the trajectory reading itself is done 
-by Cython at the C level with the GIL released, low level errors are caught by
-more general Python level exceptions.
+PyTNG is designed so that Python level exceptions can (and should) be caught by
+the calling code. However, as the trajectory reading itself is done 
+by Cython at the C level with the GIL released, low level trajectory reading
+errors are caught by more general exceptions at the Python level.
 
 
 API for the TNGFile class
