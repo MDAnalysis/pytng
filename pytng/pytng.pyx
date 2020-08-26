@@ -929,7 +929,7 @@ cdef class TNGFileIterator:
             A NumPy array that can hold the data values for a specified block
         """
         if block_name not in block_dictionary.values():
-            raise ValueError("Block name not recognised")
+            raise ValueError("Block name {} not recognised".format(block_name))
 
         if self._particle_dependencies[block_name]:
             ax0 = self._n_particles
@@ -970,7 +970,7 @@ cdef class TNGFileIterator:
 
     @property
     def current_integrator_step(self):
-        """Class that retreives data from the file at the current integrator
+        """Class that retrieves data from the file at the current integrator
            step
 
         Returns
@@ -1137,7 +1137,7 @@ cdef class TNGFileIterator:
 
 
 cdef class TNGCurrentIntegratorStep:
-    """Retreives data at the curent trajectory step"""
+    """Retrieves data at the curent trajectory step"""
 
     cdef bint debug
     cdef int64_t _n_blocks
@@ -1171,7 +1171,7 @@ cdef class TNGCurrentIntegratorStep:
         else:
             return _step_time
 
-    cpdef get_pos(self, np.ndarray data):
+    cpdef get_positions(self, np.ndarray data):
         """Get the positions present at the current step and read them into a
         NumPy array
 
@@ -1197,7 +1197,7 @@ cdef class TNGCurrentIntegratorStep:
         """
         self.get_blockid(TNG_TRAJ_BOX_SHAPE, data)
 
-    cpdef get_vel(self, np.ndarray data):
+    cpdef get_velocities(self, np.ndarray data):
         """Get the velocities present at the current step and read them into a
         NumPy array
 
@@ -1210,7 +1210,7 @@ cdef class TNGCurrentIntegratorStep:
         """
         self.get_blockid(TNG_TRAJ_VELOCITIES, data)
 
-    cpdef get_frc(self, np.ndarray data):
+    cpdef get_forces(self, np.ndarray data):
         """Get the forces present at the current step and read them into a
         NumPy array
 
@@ -1286,7 +1286,7 @@ cdef class TNGCurrentIntegratorStep:
         if datatype == TNG_FLOAT_DATA:  # TODO fix this to be more efficent
             if dtype != np.float32:
                 raise TypeError(
-                    "PYTNG ERROR: dtype of array {} does not match TNG dtype float \n".format(dtype))
+                    "PYTNG ERROR: dtype of array {} does not match TNG dtype float".format(dtype))
             _float_view = <np.float32_t[:n_atoms, :n_values_per_frame] > ( < float*> values)
             data_loc = np.asarray(_float_view, dtype=np.float32)
 
@@ -1297,7 +1297,7 @@ cdef class TNGCurrentIntegratorStep:
         elif datatype == TNG_INT_DATA:
             if dtype != np.int64:
                 raise TypeError(
-                    "PYTNG ERROR: dtype of array {} does not match TNG dtype int64_t \n".format(dtype))
+                    "PYTNG ERROR: dtype of array {} does not match TNG dtype int64_t".format(dtype))
                 _int64_t_view = <np.int64_t[:n_atoms, :n_values_per_frame] > ( < int64_t*> values)
                 data_loc = np.asarray(_int64_t_view, dtype=np.int64)
 
@@ -1308,7 +1308,7 @@ cdef class TNGCurrentIntegratorStep:
         elif datatype == TNG_DOUBLE_DATA:
             if dtype != np.float64:
                 raise TypeError(
-                    "PYTNG ERROR: dtype of array {} does not match TNG dtype double \n".format(dtype))
+                    "PYTNG ERROR: dtype of array {} does not match TNG dtype double".format(dtype))
                 _double_view = <np.int64_t[:n_atoms, :n_values_per_frame] > ( < double*> values)
                 data_loc = np.asarray(_double_view, dtype=np.float64)
 
@@ -1322,7 +1322,10 @@ cdef class TNGCurrentIntegratorStep:
 
         # NOTE
         # couldn't get this to work by assigining the memview to data directly,
-        # seems to require and explicit copy to the destination array
+        # seems to require an explicit copy to the destination array
+        # the other option is to iterate directly and fill the target NumPy
+        # array, which is probably more memory efficent but less FLOP efficent.
+        # I have left the direct iteration commented out
         np.copyto(data, data_loc, casting="no")
 
     cdef tng_function_status _get_data_current_step(self, int64_t block_id,
@@ -1333,7 +1336,33 @@ cdef class TNGCurrentIntegratorStep:
                                                     double * prec,
                                                     char * datatype,
                                                     bint debug) nogil:
-        """Gets the frame data off disk and into C level arrays"""
+        """Gets the frame data off disk and into C level arrays
+        
+        Parameters
+        ----------
+        block_id : int64_t
+            block id to read
+        step : int64_t
+            integrator step to read
+        values : void **
+            NULL void pointer to hook the data onto
+        n_values_per_frame : int64_t *
+            set to the number of values per frame for the block
+        n_atoms : int64_t *
+            set to the number of atoms or 1 if particle dependent
+        prec : double *
+            set to the precision of the block
+        datatype : char *
+            set to the datatype of the block
+        debug : bint
+            debug the block read
+        
+        Notes
+        -----
+        This function is marked nogil and is called without the GIL so cannot
+        contain python or python exceptions. Instead failure is marked by
+        returning TNG_CRITICAL. Cleanup must then be done by the calling code.
+        """
         cdef tng_function_status stat
         cdef int64_t             codec_id
         cdef int             block_dependency
