@@ -13,21 +13,21 @@ pytng - A python library to read TNG files!
    This package is under development. It is not ready for general use.
 
 
-This package provides the ``TNGFile`` object to allow simple Pythonic access to data
-contained within TNG files:
+This package provides the ``TNGFileIterator`` object to allow simple Pythonic
+access to data contained within TNG files.
 
 .. code-block:: python
 
   import pytng
   import numpy as np
 
+  with pytng.TNGFileIterator('traj.tng', 'r') as tng:
 
+    positions = np.ndarray((tng.n_atoms,3))
 
-  with pytng.TNGFile('traj.tng', 'r') as tng:
-      positions = np.ndarray((tng.n_atoms,3))
-      for ts in tng:
-          time = tng.current_integrator_step.get_time()
-          tng.current_integrator_step.get_pos(positions)
+    for ts in tng:
+      time = tng.current_integrator_step.get_time()
+      tng.current_integrator_step.get_pos(positions)
 
 This package contains Python bindings to libtng_ for TNG file format[1_] [2_].
 This is used by molecular simulation programs such as Gromacs_ for storing the

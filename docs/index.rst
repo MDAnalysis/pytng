@@ -10,6 +10,30 @@
 .. include:: ../README.rst
 
 
+Glossary of key terms
+=====================
+
+Some key terms used are defined below. These definitions are specific to
+PyTNG. For more information on the original TNG API, see the following papers
+[1_] [2_].
+
+* step : an integrator timestep (one MD step).
+* frame : an integrator timestep with data associated.
+* stride : the number of *steps* between writes of data to the trajectory.
+* block :  a data element in a TNG trajectory containing a specific type of data eg. positions, velocities or box vectors.
+* block id : an integer (a long long) that indicates the type of data contained in a block.
+* block name : a name that matches a specific block id, normally starts with the TNG prefix.
+* particle dependency : indicates whether the data in a block is dependent on the particles in the simulation, (eg positions) or is not (eg box vectors).
+
+Notes on the TNG format and PyTNG
+=================================
+
+While the TNG format supports storage of simulations conducted in the
+grand canonical ensemble, PyTNG does not currently support this. Additonally,
+the TNG format includes a MOLECULES block that contains the simulation
+topology. PyTNG does not currently make use of this information.
+
+
 Usage example for TNGFileIterator
 =================================
 
@@ -32,7 +56,7 @@ An example of how to read positions from a TNG file is shown below.
    import pytng
    import numpy as np
 
-   with pytng.TNGFileIterator("tng.tng", 'r') as tng:
+   with pytng.TNGFileIterator("traj.tng", 'r') as tng:
 
       # make a numpy array to hold the data using helper function
       positions = tng.make_ndarray_for_block_from_name("TNG_TRAJ_POSITIONS")
@@ -55,8 +79,16 @@ frames
   import numpy as np
 
   with pytng.TNGFileIterator('traj.tng', 'r') as tng:
-      tng[0].current_integrator_step.get_pos(positions)
-      tng[0,100,10].get_pos(positions)
+      tng[100].current_integrator_step.get_pos(positions)
+
+
+Error handling
+==============
+
+In general the library is designed so that Python level exceptions can be
+caught by the calling code. However, as the trajectory reading itself is done 
+by Cython at the C level with the GIL released, low level errors are caught by
+more general Python level exceptions.
 
 
 API for the TNGFile class
