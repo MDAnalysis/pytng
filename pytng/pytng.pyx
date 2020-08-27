@@ -952,8 +952,7 @@ cdef class TNGFileIterator:
         target : :class:`np.ndarray`
             A NumPy array that can hold the data values for a specified block
         """
-        return
-        self.make_ndarray_for_block_from_name(block_id_dictionary[block_id])
+        return self.make_ndarray_for_block_from_name(block_id_dictionary[block_id])
 
     @property
     def step(self):
@@ -1249,9 +1248,9 @@ cdef class TNGCurrentIntegratorStep:
         cdef char datatype = -1
         cdef tng_function_status read_stat
 
-        cdef np.float32_t[:, :] _float_view
-        cdef int64_t[:, :] _int64_t_view
-        cdef double[:, :] _double_view
+        cdef np.float32_t[::1] _float_view
+        cdef int64_t[::1] _int64_t_view
+        cdef double[::1] _double_view
 
         cdef int i, j
 
@@ -1280,53 +1279,32 @@ cdef class TNGCurrentIntegratorStep:
             raise IndexError(
                 "PYTNG ERROR: Second axis must be n_values_per_frame long")
 
-        # local array that is moved into other
-        cdef np.ndarray data_loc
+        cdef int64_t n_vals = n_atoms * n_values_per_frame
 
-        if datatype == TNG_FLOAT_DATA:  # TODO fix this to be more efficent
+        if datatype == TNG_FLOAT_DATA:
             if dtype != np.float32:
                 raise TypeError(
                     "PYTNG ERROR: dtype of array {} does not match TNG dtype float".format(dtype))
-            _float_view = <np.float32_t[:n_atoms, :n_values_per_frame] > ( < float*> values)
-            data_loc = np.asarray(_float_view, dtype=np.float32)
-
-            # for i in range(n_atoms):
-            #     for j in range(n_values_per_frame):
-            #         data[i, j] = ( < float*>values)[i * n_values_per_frame + j]
+            _float_view = <np.float32_t[:n_vals] > ( < float*> values)
+            data[:, :] = np.asarray(_float_view, dtype=np.float32).reshape(
+                n_atoms, n_values_per_frame)
 
         elif datatype == TNG_INT_DATA:
             if dtype != np.int64:
                 raise TypeError(
                     "PYTNG ERROR: dtype of array {} does not match TNG dtype int64_t".format(dtype))
-                _int64_t_view = <np.int64_t[:n_atoms, :n_values_per_frame] > ( < int64_t*> values)
-                data_loc = np.asarray(_int64_t_view, dtype=np.int64)
-
-            # for i in range(n_atoms):
-            #     for j in range(n_values_per_frame):
-            #         data[i, j] = (<int64_t*>values)[i * n_values_per_frame + j]
+            _int64_t_view = <int64_t[:n_vals] > ( < int64_t*> values)
+            data[:, :] = np.asarray(_int64_t_view, dtype=np.int64).reshape(n_atoms, n_values_per_frame)
 
         elif datatype == TNG_DOUBLE_DATA:
             if dtype != np.float64:
                 raise TypeError(
                     "PYTNG ERROR: dtype of array {} does not match TNG dtype double".format(dtype))
-                _double_view = <np.int64_t[:n_atoms, :n_values_per_frame] > ( < double*> values)
-                data_loc = np.asarray(_double_view, dtype=np.float64)
-
-            # for i in range(n_atoms):
-            #     for j in range(n_values_per_frame):
-            #         data[i, j] = (<double*>values)[i * n_values_per_frame + j]
+            _double_view = <double[:n_vals] > ( < double*> values)
+            data[:, :] = np.asarray(_double_view, dtype=np.float64).reshape(n_atoms, n_values_per_frame)
 
         else:
             raise TypeError("PYTNG ERROR: block datatype not understood")
-            
-
-        # NOTE
-        # couldn't get this to work by assigining the memview to data directly,
-        # seems to require an explicit copy to the destination array
-        # the other option is to iterate directly and fill the target NumPy
-        # array, which is probably more memory efficent but less FLOP efficent.
-        # I have left the direct iteration commented out
-        np.copyto(data, data_loc, casting="no")
 
     cdef tng_function_status _get_data_current_step(self, int64_t block_id,
                                                     int64_t step,
@@ -1337,7 +1315,7 @@ cdef class TNGCurrentIntegratorStep:
                                                     char * datatype,
                                                     bint debug) nogil:
         """Gets the frame data off disk and into C level arrays
-        
+
         Parameters
         ----------
         block_id : int64_t
@@ -1356,7 +1334,7 @@ cdef class TNGCurrentIntegratorStep:
             set to the datatype of the block
         debug : bint
             debug the block read
-        
+
         Notes
         -----
         This function is marked nogil and is called without the GIL so cannot
