@@ -1215,7 +1215,11 @@ cdef class TNGCurrentIntegratorStep:
 
     cpdef np.ndarray get_box(self, np.ndarray data):
         """Get the box vectors present at the current step and read them into a
-        NumPy array
+        NumPy array. The box vectors are a (3,3) matrix comprised of 3
+        three-dimensional basis vectors for the coordinate system of the
+        simulation. The vectors can be accessed in their proper shape by
+        reshaping the resulting (1,9) matrix to be (3,3) with
+        ndarray.reshape(3,3).
 
         Parameters
         ----------
