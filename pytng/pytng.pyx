@@ -981,13 +981,18 @@ cdef class TNGFileIterator:
             raise IOError("File is not yet open")
         return self.current_step
 
-    cpdef read_step(self, step):
+    cpdef TNGCurrentIntegratorStep  read_step(self, step):
         """Read a step (integrator step) from the file
 
         Parameters
         ----------
         step : int
            step to read from the file
+        
+        Returns
+        -------
+        current_integrator_step : :class:`TNGCurrentIntegratorStep`
+            The data accessor at the current integrator step
         """
         if not self.is_open:
             raise IOError('File is not yet open')
@@ -999,6 +1004,8 @@ cdef class TNGFileIterator:
         self.step = step
         self.current_step = TNGCurrentIntegratorStep(
             self._traj, step, debug=self.debug)
+        
+        return self.current_step
 
     # NOTE here we assume that the first frame has all the blocks
     #  that are present in the whole traj
