@@ -1087,9 +1087,8 @@ cdef class TNGFileIterator:
         if self.step == self._n_steps - 1:
             raise StopIteration
         self.read_step(self.step)
-        prev = self.step
         self.step += 1
-        return prev
+        return self.current_integrator_step
 
     def __getitem__(self, frame):
         cdef int64_t start, stop, step, i
@@ -1101,7 +1100,7 @@ cdef class TNGFileIterator:
                 self.read_step(frame)
             else:
                 raise ValueError("cannot supply negative indicies")
-            return self
+            return self.current_integrator_step
 
         elif isinstance(frame, (list, np.ndarray)):
             if self.debug:
@@ -1123,7 +1122,7 @@ cdef class TNGFileIterator:
                     if f < 0:
                         raise ValueError("cannot supply negative indicies")
                     self.read_step(f)
-                    yield self
+                    yield self.current_integrator_step
             return listiter(frame)
         elif isinstance(frame, slice):
             start = frame.start if frame.start is not None else 0
@@ -1135,7 +1134,7 @@ cdef class TNGFileIterator:
                     if i < 0:
                         raise ValueError("cannot supply negative indicies")
                     self.read_step(i)
-                    yield self
+                    yield self.current_integrator_step
             return sliceiter(start, stop, step)
         else:
             raise TypeError("Trajectories must be an indexed using an integer,"
@@ -1160,6 +1159,17 @@ cdef class TNGCurrentIntegratorStep:
 
     def __dealloc__(self):
         pass
+    
+    @property
+    def step(self):
+        """The current integrator step being read
+
+        Returns
+        -------
+        step : int
+            the current step in the TNG file
+        """
+        return self.step
 
     cpdef  get_time(self):
         """Get the time of the current integrator step being read from the file

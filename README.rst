@@ -27,7 +27,7 @@ access to data contained within TNG files.
 
     for ts in tng:
       time = tng.current_integrator_step.get_time()
-      tng.current_integrator_step.get_pos(positions)
+      positions = tng.current_integrator_step.get_pos(positions)
 
 This package contains Python bindings to libtng_ for TNG file format[1_] [2_].
 This is used by molecular simulation programs such as Gromacs_ for storing the
