@@ -145,6 +145,15 @@ def test_tng_example_tng_example_last_positions(TNG_EXAMPLE_DATA, TNG_EXAMPLE):
         assert np.array_equal(TNG_EXAMPLE_DATA.last_frame, pos)
 
 
+def test_tng_example_tng_example_pos_through_read_step(
+TNG_EXAMPLE_DATA, TNG_EXAMPLE
+):
+    with pytng.TNGFileIterator(TNG_EXAMPLE) as tng:
+        pos = np.zeros((15, 3), dtype=np.float32)
+        tngstep = tng.read_step(0)
+        tngstep.get_positions(pos)
+        assert np.array_equal(TNG_EXAMPLE_DATA.first_frame, pos)
+        
 @pytest.mark.parametrize("idx", [-11, -12, 10, 11])
 def test_tng_example_read_step_IndexError(idx, TNG_EXAMPLE):
     with pytng.TNGFileIterator(TNG_EXAMPLE, "r") as tng:
