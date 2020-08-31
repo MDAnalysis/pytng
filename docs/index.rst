@@ -45,8 +45,9 @@ the number of integrator steps, the number of steps with data, the block_ids
 available at each step, and the stride at which each block is written.
 
 The TNGFileIterator returns one frame at a time, which is accessed from the
-:attr:`TNGFileIterator.current_integrator_step` attribute. A NumPy array of the
-right size must be provided to a getter method for the data to be read into.
+:attr:`TNGFileIterator.current_integrator_step` attribute or as part of any
+slicing or indexing operation. A NumPy array of the right size must then be
+provided to a getter method for the data to be read into.
 
 An example of how to read positions from a TNG file is shown below.
 
@@ -65,14 +66,16 @@ An example of how to read positions from a TNG file is shown below.
       
       # the TNG API uses regular strides for data deposition, here we stride
       # over the whole trajectory for the frames that have position data
-      # where len(tng) is the total number of steps in the file.
+      # len(tng) is the total number of steps in the file.
 
-      for ts in range(0, len(tng), tng.block_strides["TNG_TRAJ_POSITIONS"]):
+      for ts in tng[0:len(tng):tng.block_strides["TNG_TRAJ_POSITIONS"]]:
          # read the integrator timestep, modifying the current_integrator_step
-         tng.read_step(ts)
+         # which is returned as ts
+
          # get the data from the requested block by supplying NumPy array which
-         # is updated in-place
-         tng.current_integrator_step.get_pos(positions)
+         # is updated in-place or returned 
+         
+         positons = ts.get_positions(positions)
 
            
 
@@ -85,7 +88,7 @@ frames
   import numpy as np
 
   with pytng.TNGFileIterator('traj.tng', 'r') as tng:
-      tng[100].current_integrator_step.get_pos(positions)
+      tng[100].get_positions(positions)
 
 
 Error handling

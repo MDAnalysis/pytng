@@ -137,6 +137,13 @@ def test_README_example(TNG_EXAMPLE):
             positions = ts.get_positions(positions)
 
 
+def test_DOCS_example(TNG_EXAMPLE):
+    with pytng.TNGFileIterator(TNG_EXAMPLE, 'r') as tng:
+        positions = tng.make_ndarray_for_block_from_name("TNG_TRAJ_POSITIONS")
+        for ts in tng[0:len(tng):tng.block_strides["TNG_TRAJ_POSITIONS"]]:
+            positions = ts.get_positions(positions)
+
+
 def test_tng_example_tng_example_first_positions(
     TNG_EXAMPLE_DATA, TNG_EXAMPLE
 ):
@@ -149,6 +156,16 @@ def test_tng_example_tng_example_first_positions(
 def test_tng_example_tng_example_last_positions(TNG_EXAMPLE_DATA, TNG_EXAMPLE):
     with pytng.TNGFileIterator(TNG_EXAMPLE) as tng:
         pos = np.zeros((15, 3), dtype=np.float32)
+        pos = tng[9].get_positions(pos)
+        assert np.array_equal(TNG_EXAMPLE_DATA.last_frame, pos)
+
+
+def test_tng_example_first_and_last_seq_positions(TNG_EXAMPLE_DATA,
+ TNG_EXAMPLE):
+    with pytng.TNGFileIterator(TNG_EXAMPLE) as tng:
+        pos = np.zeros((15, 3), dtype=np.float32)
+        pos = tng[0].get_positions(pos)
+        assert np.array_equal(TNG_EXAMPLE_DATA.first_frame, pos)
         pos = tng[9].get_positions(pos)
         assert np.array_equal(TNG_EXAMPLE_DATA.last_frame, pos)
 
