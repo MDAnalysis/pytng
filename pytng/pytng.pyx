@@ -807,7 +807,7 @@ cdef class TNGFileIterator:
     def _close(self):
         """Make sure the file handle is closed"""
         if self.is_open:
-            tng_util_trajectory_close(& self._traj._ptr)
+            tng_util_trajectory_close( & self._traj._ptr)
             self.is_open = False
             self.reached_eof = True
             self._n_steps = -1
@@ -927,7 +927,7 @@ cdef class TNGFileIterator:
         -------
         target : :class:`np.ndarray`
             A NumPy array that can hold the data values for a specified block
-        
+
         See Also
         --------
         block_ids : dict
@@ -957,7 +957,7 @@ cdef class TNGFileIterator:
         -------
         target : :class:`np.ndarray`
             A NumPy array that can hold the data values for a specified block
-        
+
         See Also
         --------
         block_ids : dict
@@ -1000,7 +1000,7 @@ cdef class TNGFileIterator:
         ----------
         step : int
            step to read from the file
-        
+
         Returns
         -------
         current_integrator_step : :class:`TNGCurrentIntegratorStep`
@@ -1016,7 +1016,7 @@ cdef class TNGFileIterator:
         self.step = step
         self.current_step = TNGCurrentIntegratorStep(
             self._traj, step, debug=self.debug)
-        
+
         return self.current_step
 
     # NOTE here we assume that the first frame has all the blocks
@@ -1171,7 +1171,7 @@ cdef class TNGCurrentIntegratorStep:
 
     def __dealloc__(self):
         pass
-    
+
     @property
     def step(self):
         """The current integrator step being read
@@ -1193,7 +1193,7 @@ cdef class TNGCurrentIntegratorStep:
         """
         cdef tng_function_status read_stat
         cdef double _step_time
-        read_stat = self._get_step_time(& _step_time)
+        read_stat = self._get_step_time( & _step_time)
         if read_stat != TNG_SUCCESS:
             return None
         else:
@@ -1302,15 +1302,19 @@ cdef class TNGCurrentIntegratorStep:
             return
 
         if data.ndim > 2:
-            raise IndexError("PYTNG ERROR: Numpy array must be 2 dimensional")
+            raise IndexError(
+                """PYTNG ERROR: Numpy array must be 2 dimensional,
+                 you supplied a {} dimensional ndarray""".format(data.ndim))
 
         if shape[0] != n_atoms:
             raise IndexError(
-                "PYTNG ERROR: First axis must be n_atoms long")
+                """PYTNG ERROR: First axis must be n_atoms long,
+                you supplied {}""".format(shape[0]))
 
         if shape[1] != n_values_per_frame:
             raise IndexError(
-                "PYTNG ERROR: Second axis must be n_values_per_frame long")
+                """PYTNG ERROR: Second axis must be n_values_per_frame long,
+                 you supplied {}""".format(shape[1]))
 
         cdef int64_t n_vals = n_atoms * n_values_per_frame
 
@@ -1318,7 +1322,7 @@ cdef class TNGCurrentIntegratorStep:
             if dtype != np.float32:
                 raise TypeError(
                     "PYTNG ERROR: dtype of array {} does not match TNG dtype float".format(dtype))
-            _float_view = <np.float32_t[:n_vals] > ( < float*> values)
+            _float_view = <np.float32_t[:n_vals] > (< float*> values)
             data[:, :] = np.asarray(_float_view, dtype=np.float32).reshape(
                 n_atoms, n_values_per_frame)
 
@@ -1326,19 +1330,21 @@ cdef class TNGCurrentIntegratorStep:
             if dtype != np.int64:
                 raise TypeError(
                     "PYTNG ERROR: dtype of array {} does not match TNG dtype int64_t".format(dtype))
-            _int64_t_view = <int64_t[:n_vals] > ( < int64_t*> values)
-            data[:, :] = np.asarray(_int64_t_view, dtype=np.int64).reshape(n_atoms, n_values_per_frame)
+            _int64_t_view = <int64_t[:n_vals] > (< int64_t*> values)
+            data[:, :] = np.asarray(_int64_t_view, dtype=np.int64).reshape(
+                n_atoms, n_values_per_frame)
 
         elif datatype == TNG_DOUBLE_DATA:
             if dtype != np.float64:
                 raise TypeError(
                     "PYTNG ERROR: dtype of array {} does not match TNG dtype double".format(dtype))
-            _double_view = <double[:n_vals] > ( < double*> values)
-            data[:, :] = np.asarray(_double_view, dtype=np.float64).reshape(n_atoms, n_values_per_frame)
+            _double_view = <double[:n_vals] > (< double*> values)
+            data[:, :] = np.asarray(_double_view, dtype=np.float64).reshape(
+                n_atoms, n_values_per_frame)
 
         else:
             raise TypeError("PYTNG ERROR: block datatype not understood")
-        
+
         return data
 
     cdef tng_function_status _get_data_current_step(self, int64_t block_id,
@@ -1686,7 +1692,7 @@ cdef class TNGFile:
     def close(self):
         """Make sure the file handle is closed"""
         if self.is_open:
-            tng_util_trajectory_close( & self._traj)
+            tng_util_trajectory_close(& self._traj)
             self.is_open = False
             self._n_frames = -1
 
@@ -1812,7 +1818,7 @@ cdef class TNGFile:
 
         # TODO this seem wasteful but can't cdef inside a conditional?
         cdef MemoryWrapper wrap_box
-        cdef np.ndarray[ndim = 2, dtype = np.float32_t, mode = 'c'] box = \
+        cdef np.ndarray[ndim= 2, dtype = np.float32_t, mode = 'c'] box = \
             np.empty((3, 3), dtype=np.float32)
 
         if self._box:
