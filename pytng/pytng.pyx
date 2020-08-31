@@ -1161,7 +1161,7 @@ cdef class TNGCurrentIntegratorStep:
     def __dealloc__(self):
         pass
 
-    cpdef get_time(self):
+    cpdef  get_time(self):
         """Get the time of the current integrator step being read from the file
 
         Returns
@@ -1177,7 +1177,7 @@ cdef class TNGCurrentIntegratorStep:
         else:
             return _step_time
 
-    cpdef get_positions(self, np.ndarray data):
+    cpdef np.ndarray get_positions(self, np.ndarray data):
         """Get the positions present at the current step and read them into a
         NumPy array
 
@@ -1189,8 +1189,9 @@ cdef class TNGCurrentIntegratorStep:
            ie (n_atoms, 3).
         """
         self.get_blockid(TNG_TRAJ_POSITIONS, data)
+        return data
 
-    cpdef get_box(self, np.ndarray data):
+    cpdef np.ndarray get_box(self, np.ndarray data):
         """Get the box vectors present at the current step and read them into a
         NumPy array
 
@@ -1202,8 +1203,9 @@ cdef class TNGCurrentIntegratorStep:
            (1, n_values_per_frame) ie (1,9)
         """
         self.get_blockid(TNG_TRAJ_BOX_SHAPE, data)
+        return data
 
-    cpdef get_velocities(self, np.ndarray data):
+    cpdef np.ndarray get_velocities(self, np.ndarray data):
         """Get the velocities present at the current step and read them into a
         NumPy array
 
@@ -1215,8 +1217,9 @@ cdef class TNGCurrentIntegratorStep:
            ie (n_atoms, 3).
         """
         self.get_blockid(TNG_TRAJ_VELOCITIES, data)
+        return data
 
-    cpdef get_forces(self, np.ndarray data):
+    cpdef np.ndarray get_forces(self, np.ndarray data):
         """Get the forces present at the current step and read them into a
         NumPy array
 
@@ -1228,8 +1231,9 @@ cdef class TNGCurrentIntegratorStep:
            ie (n_atoms, 3).
         """
         self.get_blockid(TNG_TRAJ_FORCES, data)
+        return data
 
-    cpdef get_blockid(self, int64_t block_id, np.ndarray data):
+    cpdef np.ndarray get_blockid(self, int64_t block_id, np.ndarray data):
         """Get a block ID present at the current step and read it into a
         NumPy array
 
@@ -1312,6 +1316,8 @@ cdef class TNGCurrentIntegratorStep:
 
         else:
             raise TypeError("PYTNG ERROR: block datatype not understood")
+        
+        return data
 
     cdef tng_function_status _get_data_current_step(self, int64_t block_id,
                                                     int64_t step,
