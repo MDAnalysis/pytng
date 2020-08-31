@@ -129,6 +129,14 @@ def test_tng_example_natoms(TNG_EXAMPLE_DATA, TNG_EXAMPLE):
         assert TNG_EXAMPLE_DATA.natoms == tng.n_atoms
 
 
+def test_README_example(TNG_EXAMPLE):
+    with pytng.TNGFileIterator(TNG_EXAMPLE, 'r') as tng:
+        positions = np.ndarray((tng.n_atoms, 3), dtype=np.float32)
+        for ts in tng:
+            time = ts.get_time()
+            positions = ts.get_positions(positions)
+
+
 def test_tng_example_tng_example_first_positions(
     TNG_EXAMPLE_DATA, TNG_EXAMPLE
 ):
