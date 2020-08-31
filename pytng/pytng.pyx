@@ -914,7 +914,7 @@ cdef class TNGFileIterator:
             raise IOError("File is not yet open")
         return self._particle_dependencies
 
-    cpdef make_ndarray_for_block_from_name(self, str block_name):
+    cpdef np.ndarray make_ndarray_for_block_from_name(self, str block_name):
         """Make a NumPy array that can hold a specified block from the block
         name
 
@@ -927,6 +927,12 @@ cdef class TNGFileIterator:
         -------
         target : :class:`np.ndarray`
             A NumPy array that can hold the data values for a specified block
+        
+        See Also
+        --------
+        block_ids : dict
+            dictionary of block names (keys) and block ids (values) available
+            in this TNG file
         """
         if block_name not in block_dictionary.values():
             raise ValueError("Block name {} not recognised".format(block_name))
@@ -939,7 +945,7 @@ cdef class TNGFileIterator:
         target = np.ndarray(shape=(ax0, ax1), dtype=np.float32, order='C')
         return target
 
-    cpdef make_ndarray_for_block_from_id(self, int64_t block_id):
+    cpdef np.ndarray make_ndarray_for_block_from_id(self, int64_t block_id):
         """Make a NumPy array that can hold a specified block from the block id
 
         Parameters
@@ -951,6 +957,12 @@ cdef class TNGFileIterator:
         -------
         target : :class:`np.ndarray`
             A NumPy array that can hold the data values for a specified block
+        
+        See Also
+        --------
+        block_ids : dict
+            dictionary of block names (keys) and block ids (values) available
+            in this TNG file
         """
         return self.make_ndarray_for_block_from_name(block_id_dictionary[block_id])
 
