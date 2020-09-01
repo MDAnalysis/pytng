@@ -1004,6 +1004,12 @@ cdef class TNGFileIterator:
         -------
         current_integrator_step : :class:`TNGCurrentIntegratorStep`
             The data accessor at the current integrator step
+
+        Raises
+        ------
+        ValueError
+            attempt to read a negative step or step number greater than that in
+            the input file
         """
         if not self.is_open:
             raise IOError('File is not yet open')
@@ -1258,7 +1264,7 @@ cdef class TNGCurrentIntegratorStep:
         self.get_blockid(TNG_TRAJ_FORCES, data)
         return data
 
-    cpdef np.ndarray get_blockid(self, int64_t block_id, np.ndarray data):
+    cpdef get_blockid(self, int64_t block_id, np.ndarray data):
         """Get a block ID present at the current step and read it into a
         NumPy array
 
@@ -1269,6 +1275,17 @@ cdef class TNGCurrentIntegratorStep:
         data : np.ndarray
            NumPy array to read the data into, the required shape is determined
            by the block dependency and the number of values per frame.
+        
+        Raises
+        ------
+        TypeError
+            The dtype of the numpy array provided is not supported by TNG
+            datatypes or does not match the underlying datatype.
+        IOError
+            The block data type cannot be understood.
+        IndexError
+            The shape of the numpy array provided does not match the shape of
+            the data to be read from disk.
         """
         shape = data.shape
         dtype = data.dtype
@@ -1301,8 +1318,8 @@ cdef class TNGCurrentIntegratorStep:
                                                     self.debug)
 
         if read_stat != TNG_SUCCESS:
-            data = None
-            return
+            data[:,:] = np.nan
+            return data
 
         if data.ndim > 2:
             raise IndexError(
@@ -1346,7 +1363,7 @@ cdef class TNGCurrentIntegratorStep:
                 n_atoms, n_values_per_frame)
 
         else:
-            raise TypeError("PYTNG ERROR: block datatype not understood")
+            raise IOError("PYTNG ERROR: block datatype not understood")
 
         return data
 
@@ -1381,10 +1398,13 @@ cdef class TNGCurrentIntegratorStep:
 
         Notes
         -----
-        This function is marked nogil and is called without the GIL so cannot
-        contain python or python exceptions. Instead failure is marked by
-        returning :data:`TNG_CRITICAL`. Cleanup is then be done by the calling
-        code in :method:`get_blockid`.
+        This function is private. Additionally, this function is  marked nogil 
+        and called without the GIL so cannot contain python or python
+        exceptions. Instead failure is marked by returning
+        :data:`TNG_CRITICAL`. Success is indicated by returning
+        :data:`TNG_SUCCESS`. Cleanup is then be done by the calling
+        code in :method:`get_blockid` so the user should not have to deal with
+        C level exceptions
         """
         cdef tng_function_status stat
         cdef int64_t             codec_id
