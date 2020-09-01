@@ -20,16 +20,16 @@ PyTNG. For more information on the original TNG API, see the following papers
 * step : an integrator timestep (one MD step).
 * frame : an integrator timestep with data associated.
 * stride : the number of *steps* between writes of data to the trajectory.
-* block :  a data element in a TNG trajectory containing a specific type of data eg. positions, velocities or box vectors.
+* block :  a data element in a TNG trajectory containing a specific type of data e.g. positions, velocities or box vectors.
 * block id : an integer (a long long) that indicates the type of data contained in a block.
 * block name : a name that matches a specific block id, normally starts with the TNG prefix.
-* particle dependency : indicates whether the data in a block is dependent on the particles in the simulation, (eg positions) or is not (eg box vectors).
+* particle dependency : indicates whether the data in a block is dependent on the particles in the simulation, (e.g. positions) or is not (e.g. box vectors).
 
 Notes on the TNG format and PyTNG
 =================================
 
 While the TNG format supports storage of simulations conducted in the
-grand canonical ensemble, PyTNG does not currently support this. Additonally,
+grand canonical ensemble, PyTNG does not currently support this. Additionally,
 the TNG format includes a TNG_MOLECULES block that contains the simulation
 topology. PyTNG does not currently make use of this information.
 
@@ -37,7 +37,7 @@ topology. PyTNG does not currently make use of this information.
 Usage example for TNGFileIterator
 =================================
 
-TNG files can be read using the TNGFileIterator class as a file handle,
+TNG files can be read using the :class:`TNGFileIterator`class as a file handle,
 which supports use as a context manager.
 
 The TNGFileIterator has attributes related to the trajectory metadata, such as
