@@ -1453,8 +1453,6 @@ cdef class TNGCurrentIntegratorStep:
             return TNG_CRITICAL
 
 
-global block_dictionary
-global block_id_dictionary
 
 block_dictionary = {}
 
