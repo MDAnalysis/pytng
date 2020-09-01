@@ -37,7 +37,7 @@ topology. PyTNG does not currently make use of this information.
 Usage example for TNGFileIterator
 =================================
 
-TNG files can be read using the :class:`TNGFileIterator`class as a file handle,
+TNG files can be read using the :class:`TNGFileIterator` class as a file handle,
 which supports use as a context manager.
 
 The TNGFileIterator has attributes related to the trajectory metadata, such as

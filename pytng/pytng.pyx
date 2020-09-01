@@ -894,7 +894,6 @@ cdef class TNGFileIterator:
         values_per_frame : dict
             dictionary of block names (keys) and number of values per frame
             (values)
-        :rtype: dict
         """
         if not self.is_open:
             raise IOError("File is not yet open")
@@ -1384,7 +1383,8 @@ cdef class TNGCurrentIntegratorStep:
         -----
         This function is marked nogil and is called without the GIL so cannot
         contain python or python exceptions. Instead failure is marked by
-        returning TNG_CRITICAL. Cleanup must then be done by the calling code.
+        returning :data:`TNG_CRITICAL`. Cleanup is then be done by the calling
+        code in :method:`get_blockid`.
         """
         cdef tng_function_status stat
         cdef int64_t             codec_id
