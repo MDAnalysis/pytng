@@ -24,9 +24,20 @@ PyTNG. For more information on the original TNG API, see the following papers
 * block id : an integer (a long long) that indicates the type of data contained in a block.
 * block name : a name that matches a specific block id, normally starts with the TNG prefix.
 * particle dependency : indicates whether the data in a block is dependent on the particles in the simulation, (e.g. positions) or is not (e.g. box vectors).
+* GCD : greatest common denominator.
+* blank read : an attempt to read a step where there is no data present
 
 Notes on the TNG format and PyTNG
 =================================
+
+The TNG format is highly flexible, allowing the storage of almost any datatype
+from any point in a simulation. This information is written at certain strides,
+i.e at every *N* steps. Under most circumstances, strides are of a similar
+magnitude or share a large *greatest common divisor (GCD)*. However this is not
+always the case and introduces additional complexity in iterating through the
+file effectivley.  The main challenge is if you want to retrieve multiple datatypes in a single
+pass that do not share a large GCD in their strides, nessecitating lots of
+blank reads. Avoiding this is still a work in progress for PyTNG.
 
 While the TNG format supports storage of simulations conducted in the
 grand canonical ensemble, PyTNG does not currently support this. Additionally,
@@ -105,6 +116,33 @@ frames individually:
       box_vec = tng[200].get_box(box_vec)
 
 
+If the step to read is not on the stride of the requested datatype, the NumPy
+array will be returned filled with `np.nan`. A contrived example of this is given below:
+
+.. code-block:: python
+
+   import pytng
+   import numpy as np
+
+   with pytng.TNGFileIterator("traj.tng", 'r') as tng:
+      # make array for positions
+      positions = tng.make_ndarray_for_block_from_name("TNG_TRAJ_POSITIONS")
+      
+      # choose a step
+      step = 42
+
+      # check that we are off stride (stride%step != 0)
+      assert(tng.block_strides["TNG_TRAJ_POSITIONS"]%step != 0 )
+
+      # get the data, which will be returned full of np.nan
+      tng[step].get_positions(positions)
+
+      # check that the read was blank
+      is_blank_read = np.all(np.isnan(positions)) # this will be true
+      if is_blank_read:
+         print("This is a blank read")
+
+
 Available data blocks are listed at the end of this documentation. Common
 blocks for which there are getter methods include:
 
@@ -115,7 +153,24 @@ blocks for which there are getter methods include:
 
 Other blocks can be accessed using the :attr:`TNGCurrentIntegratorStep.get_blockid`
 method, where the block id needs to be supplied and can be accessed from the
-:attr:`TNGFileIterator.block_ids` attribute.
+:attr:`TNGFileIterator.block_ids` attribute. An example of this is shown below:
+
+.. code-block:: python
+
+   import pytng
+   import numpy as np
+
+   with pytng.TNGFileIterator("traj.tng", 'r') as tng:
+
+      # make array for the GMX potential energy block
+      Epot = tng.make_ndarray_for_block_from_name("TNG_GMX_ENERGY_POTENTIAL")
+
+      # get the block id for the GMX potential energy block
+      Epot_block_id = tng.block_ids["TNG_GMX_ENERGY_POTENTIAL"]
+
+      # get the block data for frame 0 with get_blockid
+      tng[0].get_blockid[Epot_block_id]
+
 
 Error handling
 ==============
