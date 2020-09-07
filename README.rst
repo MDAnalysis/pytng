@@ -23,7 +23,7 @@ access to data contained within TNG files.
 
   with pytng.TNGFileIterator('traj.tng', 'r') as tng:
 
-    positions = np.ndarray((tng.n_atoms,3), dtype=np.float32)
+    positions = np.empty(shape=(tng.n_atoms,3), dtype=np.float32)
 
     for ts in tng:
       time = ts.get_time()

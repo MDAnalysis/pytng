@@ -131,7 +131,7 @@ def test_tng_example_natoms(TNG_EXAMPLE_DATA, TNG_EXAMPLE):
 
 def test_README_example(TNG_EXAMPLE):
     with pytng.TNGFileIterator(TNG_EXAMPLE, 'r') as tng:
-        positions = np.ndarray((tng.n_atoms, 3), dtype=np.float32)
+        positions = np.empty((tng.n_atoms, 3), dtype=np.float32)
         for ts in tng:
             time = ts.get_time()
             positions = ts.get_positions(positions)
@@ -148,14 +148,14 @@ def test_tng_example_tng_example_first_positions(
     TNG_EXAMPLE_DATA, TNG_EXAMPLE
 ):
     with pytng.TNGFileIterator(TNG_EXAMPLE) as tng:
-        pos = np.zeros((15, 3), dtype=np.float32)
+        pos = np.empty(shape=(15, 3), dtype=np.float32)
         pos = tng[0].get_positions(pos)
         assert np.array_equal(TNG_EXAMPLE_DATA.first_frame, pos)
 
 
 def test_tng_example_tng_example_last_positions(TNG_EXAMPLE_DATA, TNG_EXAMPLE):
     with pytng.TNGFileIterator(TNG_EXAMPLE) as tng:
-        pos = np.zeros((15, 3), dtype=np.float32)
+        pos = np.empty(shape=(15, 3), dtype=np.float32)
         pos = tng[9].get_positions(pos)
         assert np.array_equal(TNG_EXAMPLE_DATA.last_frame, pos)
 
@@ -163,7 +163,7 @@ def test_tng_example_tng_example_last_positions(TNG_EXAMPLE_DATA, TNG_EXAMPLE):
 def test_tng_example_first_and_last_seq_positions(TNG_EXAMPLE_DATA,
  TNG_EXAMPLE):
     with pytng.TNGFileIterator(TNG_EXAMPLE) as tng:
-        pos = np.zeros((15, 3), dtype=np.float32)
+        pos = np.empty(shape=(15, 3), dtype=np.float32)
         pos = tng[0].get_positions(pos)
         assert np.array_equal(TNG_EXAMPLE_DATA.first_frame, pos)
         pos = tng[9].get_positions(pos)
@@ -174,7 +174,7 @@ def test_tng_example_tng_example_pos_through_read_step(
     TNG_EXAMPLE_DATA, TNG_EXAMPLE
 ):
     with pytng.TNGFileIterator(TNG_EXAMPLE) as tng:
-        pos = np.zeros((15, 3), dtype=np.float32)
+        pos = np.empty(shape=(15, 3), dtype=np.float32)
         tngstep = tng.read_step(0)
         pos = tngstep.get_positions(pos)
         assert np.array_equal(TNG_EXAMPLE_DATA.first_frame, pos)
@@ -263,7 +263,7 @@ def test_argon_npt_compressed_first_positions(
     ARGON_NPT_COMPRESSED, ARGON_NPT_COMPRESSED_DATA
 ):
     with pytng.TNGFileIterator(ARGON_NPT_COMPRESSED) as tng:
-        pos = np.zeros((1000, 3), dtype=np.float32)
+        pos = np.empty(shape=(1000, 3), dtype=np.float32)
         pos = tng[0].get_positions(pos)
         assert_array_almost_equal(
             ARGON_NPT_COMPRESSED_DATA.first_frame_first_10_pos,
@@ -275,7 +275,7 @@ def test_argon_npt_compressed_last_positions(
     ARGON_NPT_COMPRESSED, ARGON_NPT_COMPRESSED_DATA
 ):
     with pytng.TNGFileIterator(ARGON_NPT_COMPRESSED) as tng:
-        pos = np.zeros((1000, 3), dtype=np.float32)
+        pos = np.empty(shape=(1000, 3), dtype=np.float32)
         pos = tng[len(tng)-1].get_positions(pos)
         assert_array_almost_equal(
             ARGON_NPT_COMPRESSED_DATA.last_frame_last_10_pos,
@@ -287,7 +287,7 @@ def test_argon_npt_compressed_first_box(
     ARGON_NPT_COMPRESSED, ARGON_NPT_COMPRESSED_DATA
 ):
     with pytng.TNGFileIterator(ARGON_NPT_COMPRESSED) as tng:
-        box = np.zeros((1, 9), dtype=np.float32)
+        box = np.empty(shape=(1, 9), dtype=np.float32)
         box = tng[0].get_box(box)
         assert_array_almost_equal(
             ARGON_NPT_COMPRESSED_DATA.first_box, box.reshape((3, 3))
@@ -298,7 +298,7 @@ def test_argon_npt_compressed_last_box(
     ARGON_NPT_COMPRESSED, ARGON_NPT_COMPRESSED_DATA
 ):
     with pytng.TNGFileIterator(ARGON_NPT_COMPRESSED) as tng:
-        box = np.zeros((1, 9), dtype=np.float32)
+        box = np.empty(shape=(1, 9), dtype=np.float32)
         box = tng[len(tng)-1].get_box(box)
         assert_array_almost_equal(
             ARGON_NPT_COMPRESSED_DATA.last_box, box.reshape(3, 3))
@@ -315,7 +315,7 @@ def test_water_npt_uncompressed_vels_forces_first_vels(
     WATER_NPT_UNCOMPRESSED_VELS_FORCES, WATER_NPT_UNCOMPRESSED_VELS_FORCES_DATA
 ):
     with pytng.TNGFileIterator(WATER_NPT_UNCOMPRESSED_VELS_FORCES) as tng:
-        vel = np.zeros((2700, 3), dtype=np.float32)
+        vel = np.empty(shape=(2700, 3), dtype=np.float32)
         vel = tng[0].get_velocities(vel)
         assert_array_almost_equal(
             WATER_NPT_UNCOMPRESSED_VELS_FORCES_DATA.first_frame_first_10_vels,
@@ -328,7 +328,7 @@ def test_water_npt_uncompressed_vels_forces_last_vels(
     WATER_NPT_UNCOMPRESSED_VELS_FORCES, WATER_NPT_UNCOMPRESSED_VELS_FORCES_DATA
 ):
     with pytng.TNGFileIterator(WATER_NPT_UNCOMPRESSED_VELS_FORCES) as tng:
-        vel = np.zeros((2700, 3), dtype=np.float32)
+        vel = np.empty(shape=(2700, 3), dtype=np.float32)
         vel = tng[len(tng)-1].get_velocities(vel)
         assert_array_almost_equal(
             WATER_NPT_UNCOMPRESSED_VELS_FORCES_DATA.last_frame_last_10_vels,
@@ -341,7 +341,7 @@ def test_water_npt_uncompressed_vels_forces_first_frc(
     WATER_NPT_UNCOMPRESSED_VELS_FORCES, WATER_NPT_UNCOMPRESSED_VELS_FORCES_DATA
 ):
     with pytng.TNGFileIterator(WATER_NPT_UNCOMPRESSED_VELS_FORCES) as tng:
-        frc = np.zeros((2700, 3), dtype=np.float32)
+        frc = np.empty(shape=(2700, 3), dtype=np.float32)
         frc = tng[0].get_forces(frc)  # todo forces
         assert_array_almost_equal(
             WATER_NPT_UNCOMPRESSED_VELS_FORCES_DATA.first_frame_first_10_frc,
@@ -354,7 +354,7 @@ def test_water_npt_uncompressed_vels_forces_last_frc(
     WATER_NPT_UNCOMPRESSED_VELS_FORCES, WATER_NPT_UNCOMPRESSED_VELS_FORCES_DATA
 ):
     with pytng.TNGFileIterator(WATER_NPT_UNCOMPRESSED_VELS_FORCES) as tng:
-        frc = np.zeros((2700, 3), dtype=np.float32)
+        frc = np.empty(shape=(2700, 3), dtype=np.float32)
         frc = tng[len(tng)-1].get_forces(frc)
         assert_array_almost_equal(
             WATER_NPT_UNCOMPRESSED_VELS_FORCES_DATA.last_frame_last_10_frc,
