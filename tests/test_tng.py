@@ -143,6 +143,14 @@ def test_DOCS_example(TNG_EXAMPLE):
         for ts in tng[0:len(tng):tng.block_strides["TNG_TRAJ_POSITIONS"]]:
             positions = ts.get_positions(positions)
 
+@pytest.mark.parametrize("dtype", [np.int16, np.int32, np.uint32, np.uint64, np.complex64, np.complex128])
+def test_bad_dtype_example(TNG_EXAMPLE, dtype):
+    with pytng.TNGFileIterator(TNG_EXAMPLE, 'r') as tng:
+        positions = np.empty(shape=(tng.n_atoms, 3), dtype=dtype)
+        with pytest.raises(TypeError) as excinfo:
+            positions = tng[0].get_positions(positions)
+        message = "PYTNG ERROR: datatype of numpy array not supported"
+        assert message in str(excinfo.value)
 
 def test_tng_example_tng_example_first_positions(
     TNG_EXAMPLE_DATA, TNG_EXAMPLE
