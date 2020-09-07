@@ -251,6 +251,14 @@ def test_argon_npt_compressed_len(ARGON_NPT_COMPRESSED):
         assert tng.n_steps == 500001
         assert len(tng) == 500001
 
+def test_argon_npt_compressed_off_stride_is_nan(ARGON_NPT_COMPRESSED):
+    with pytng.TNGFileIterator(ARGON_NPT_COMPRESSED) as tng:
+        positions = tng.make_ndarray_for_block_from_name("TNG_TRAJ_POSITIONS")
+        step = 42
+        assert(tng.block_strides["TNG_TRAJ_POSITIONS"]%step != 0 )
+        tng[step].get_positions(positions)
+        assert(np.all(np.isnan(positions)))
+
 
 def test_argon_npt_compressed_n_particles(
     ARGON_NPT_COMPRESSED, ARGON_NPT_COMPRESSED_DATA
