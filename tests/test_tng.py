@@ -144,12 +144,21 @@ def test_DOCS_example(TNG_EXAMPLE):
             positions = ts.get_positions(positions)
 
 @pytest.mark.parametrize("dtype", [np.int16, np.int32, np.uint32, np.uint64, np.complex64, np.complex128])
-def test_bad_dtype_example(TNG_EXAMPLE, dtype):
+def test_bad_dtype(TNG_EXAMPLE, dtype):
     with pytng.TNGFileIterator(TNG_EXAMPLE, 'r') as tng:
         positions = np.empty(shape=(tng.n_atoms, 3), dtype=dtype)
         with pytest.raises(TypeError) as excinfo:
             positions = tng[0].get_positions(positions)
         message = "PYTNG ERROR: datatype of numpy array not supported"
+        assert message in str(excinfo.value)
+
+@pytest.mark.parametrize("dtype", [np.int64, np.float64])
+def test_supported_dtype_wrong_block(TNG_EXAMPLE, dtype):
+    with pytng.TNGFileIterator(TNG_EXAMPLE, 'r') as tng:
+        positions = np.empty(shape=(tng.n_atoms, 3), dtype=dtype)
+        with pytest.raises(TypeError) as excinfo:
+            positions = tng[0].get_positions(positions)
+        message = "does not match TNG dtype float"
         assert message in str(excinfo.value)
 
 def test_tng_example_tng_example_first_positions(
