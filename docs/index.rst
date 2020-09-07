@@ -35,14 +35,14 @@ from any point in a simulation. This information is written at certain strides,
 i.e at every *N* steps. Under most circumstances, strides are of a similar
 magnitude or share a large *greatest common divisor (GCD)*. However this is not
 always the case and introduces additional complexity in iterating through the
-file effectivley.  The main challenge is if you want to retrieve multiple datatypes in a single
-pass that do not share a large GCD in their strides, nessecitating lots of
+file effectively.  The main challenge is if you want to retrieve multiple datatypes in a single
+pass that do not share a large GCD in their strides, necessitating lots of
 blank reads. Avoiding this is still a work in progress for PyTNG.
 
 While the TNG format supports storage of simulations conducted in the
-grand canonical ensemble, PyTNG does not currently support this. Additionally,
-the TNG format includes a TNG_MOLECULES block that contains the simulation
-topology. PyTNG does not currently make use of this information.
+grand canonical ensemble, PyTNG does not currently support this or any other type of simulation where the number of particles varies between frames.
+Additionally, the TNG format includes a TNG_MOLECULES block that contains the simulation
+topology. PyTNG does not currently make use of this information, but will in the future.
 
 
 Usage example for TNGFileIterator
@@ -57,11 +57,19 @@ available at each step, and the stride at which each block is written.
 
 The TNGFileIterator returns one frame at a time, which is accessed from the
 :attr:`TNGFileIterator.current_integrator_step` attribute or as part of any
-slicing or indexing operation. A NumPy array of the right size must then be
-provided to a getter method for the data to be read into.
+slicing or indexing operation. A NumPy array of the right size and datatype must then be
+provided to a getter method for the data to be read into. The required datatype is dictated by what type of block is being read.
+Supported datatypes are:
+
+* TNG_INT_DATA : np.int64
+* TNG_FLOAT_DATA : np.float32
+* TNG_DOUBLE_DATA : np.float64
+
+Helper methods are provided to create :class:`np.ndarray` instances of the right shape
+and datatype for a particular block in :attr:`TNGFileIterator.make_ndarray_for_block_from_name` and :attr:`TNGFileIterator.make_ndarray_for_block_from_name`.
 
 An example of how to read positions and box vectors from a TNG file is
-shown below.
+shown below:
 
 
 .. code-block:: python
