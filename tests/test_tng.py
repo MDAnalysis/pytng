@@ -134,14 +134,17 @@ def test_README_example(TNG_EXAMPLE):
         positions = np.empty((tng.n_atoms, 3), dtype=np.float32)
         for ts in tng:
             time = ts.get_time()
-            positions = ts.get_positions(positions)
-
+            ts.get_positions(positions)
+            if not ts.read_success:
+                raise IOError
 
 def test_DOCS_example(TNG_EXAMPLE):
     with pytng.TNGFileIterator(TNG_EXAMPLE, 'r') as tng:
         positions = tng.make_ndarray_for_block_from_name("TNG_TRAJ_POSITIONS")
         for ts in tng[0:len(tng):tng.block_strides["TNG_TRAJ_POSITIONS"]]:
             positions = ts.get_positions(positions)
+            if not ts.read_success:
+                raise IOError
 
 @pytest.mark.parametrize("dtype", [np.int16, np.int32, np.uint32, np.uint64, np.complex64, np.complex128])
 def test_bad_dtype(TNG_EXAMPLE, dtype):
@@ -278,7 +281,9 @@ def test_argon_npt_compressed_off_stride_is_nan(ARGON_NPT_COMPRESSED):
         positions = tng.make_ndarray_for_block_from_name("TNG_TRAJ_POSITIONS")
         step = 42
         assert(tng.block_strides["TNG_TRAJ_POSITIONS"]%step != 0 )
-        tng[step].get_positions(positions)
+        ts = tng[step]
+        ts.get_positions(positions)
+        assert(ts.read_success == False)
         assert(np.all(np.isnan(positions)))
 
 

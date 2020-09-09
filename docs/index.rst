@@ -103,8 +103,16 @@ shown below:
          ts.get_positions(positions)
          # positions = ts.get_positions(positions) is equivalent
 
+         # you can check if the last read was successful (contained data) easily
+         if not ts.read_success:
+            raise IOError("No position data at this timestep")
+
          ts.get_box(box_vec)
          # box_vec = ts.get_box(box_vec) is equivalent
+
+         # you can check if the last read was successful (contained data) easily
+         if not ts.read_success:
+            raise IOError("No box data at this timestep")
 
            
 
@@ -141,10 +149,17 @@ array will be returned filled with `np.nan`. A contrived example of this is give
       # check that we are off stride (stride%step != 0)
       assert(tng.block_strides["TNG_TRAJ_POSITIONS"]%step != 0 )
 
-      # get the data, which will be returned full of np.nan
-      tng[step].get_positions(positions)
+      # slice a single timestep
+      ts = tng[step]
 
-      # check that the read was blank
+      # get the data, which will be returned full of np.nan
+      ts.get_positions(positions)
+
+      # the read_success property will indicate that there was no data found
+      # when the getter was called
+      assert(ts.read_success == False)
+
+      #  but we can also double check that the read was blank
       is_blank_read = np.all(np.isnan(positions)) # this will be true
       if is_blank_read:
          print("This is a blank read")
@@ -181,6 +196,10 @@ method, where the block id needs to be supplied and can be accessed from the
 
 Error handling
 ==============
+
+The success of the last call to `get_blockid`, `get_positions`, `get_box` and
+related methods can be checked using the :class:`TNGCurrentIntegratorStep.read_success`
+property, which returns `True` if the attempt to read was successful or `False` if not.
 
 PyTNG is designed so that Python level exceptions can (and should) be caught by
 the calling code. However, as the trajectory reading itself is done 

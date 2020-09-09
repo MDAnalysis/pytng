@@ -1162,6 +1162,8 @@ cdef class TNGCurrentIntegratorStep:
 
     cdef tng_trajectory * _traj
     cdef int64_t step
+    cdef bint read_success 
+
 
     def __cinit__(self, TrajectoryWrapper traj, int64_t step,
                   bint debug=False):
@@ -1169,6 +1171,7 @@ cdef class TNGCurrentIntegratorStep:
 
         self._traj = traj._ptr
         self.step = step
+        self.read_success = False
 
     def __dealloc__(self):
         pass
@@ -1183,6 +1186,17 @@ cdef class TNGCurrentIntegratorStep:
             the current step in the TNG file
         """
         return self.step
+
+    @property
+    def read_success(self):
+        """Indicates whether the last attempt to read data was successful
+
+        Returns
+        -------
+        read_success : bool
+            Whether the last attempt to read data was successful
+        """
+        return self.read_success
 
     cpdef  get_time(self):
         """Get the time of the current integrator step being read from the file
@@ -1314,8 +1328,11 @@ cdef class TNGCurrentIntegratorStep:
                                                     self.debug)
 
         if read_stat != TNG_SUCCESS:
-            data[:,:] = np.nan
+            self.read_success = False
+            data[:,:] = np.nan #NOTE I think we should still nan fill on blank read
             return data
+        else:
+            self.read_success = True
 
         if data.ndim > 2:
             raise IndexError(
