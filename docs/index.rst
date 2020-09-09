@@ -99,13 +99,12 @@ shown below:
          # get the data from the requested block by supplying NumPy array which
          # is updated in-place or returned 
          
-         # update in place
+         # update in place or return by value
          ts.get_positions(positions)
          # positions = ts.get_positions(positions) is equivalent
 
-         # or return by value
-         box_vec = ts.get_box(box_vec)
-         # ts.get_box(box_vec) is equivalent
+         ts.get_box(box_vec)
+         # box_vec = ts.get_box(box_vec) is equivalent
 
            
 
