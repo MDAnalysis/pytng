@@ -1014,9 +1014,12 @@ cdef class TNGFileIterator:
         if not self.is_open:
             raise IOError('File is not yet open')
 
-        if step >= self._n_steps or step < 0:
+        if step >= self._n_steps:
             raise ValueError("""frame specified is greater than number of steps
             in input file {}""".format(self._n_steps))
+        
+        if step < 0:
+            step = self._n_steps - np.abs(step) 
 
         self.step = step
         self.current_step = TNGCurrentIntegratorStep(
@@ -1113,10 +1116,7 @@ cdef class TNGFileIterator:
         if isinstance(frame, numbers.Integral):
             if self.debug:
                 print("slice is a number")
-            if frame >= 0:
-                self.read_step(frame)
-            else:
-                raise ValueError("cannot supply negative indicies")
+            self.read_step(frame)
             return self.current_integrator_step
 
         elif isinstance(frame, (list, np.ndarray)):
@@ -1136,8 +1136,6 @@ cdef class TNGFileIterator:
                 for f in frames:
                     if not isinstance(f, numbers.Integral):
                         raise TypeError("Frames indices must be integers")
-                    if f < 0:
-                        raise ValueError("cannot supply negative indicies")
                     self.read_step(f)
                     yield self.current_integrator_step
             return listiter(frame)
@@ -1148,8 +1146,6 @@ cdef class TNGFileIterator:
 
             def sliceiter(start, stop, step):
                 for i in range(start, stop, step):
-                    if i < 0:
-                        raise ValueError("cannot supply negative indicies")
                     self.read_step(i)
                     yield self.current_integrator_step
             return sliceiter(start, stop, step)

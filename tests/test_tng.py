@@ -176,6 +176,17 @@ def test_tng_example_tng_example_last_positions(TNG_EXAMPLE_DATA, TNG_EXAMPLE):
         pos = tng[9].get_positions(pos)
         assert np.array_equal(TNG_EXAMPLE_DATA.last_frame, pos)
 
+def test_tng_example_first_positions_neg_index(TNG_EXAMPLE_DATA, TNG_EXAMPLE):
+    with pytng.TNGFileIterator(TNG_EXAMPLE) as tng:
+        pos = np.empty(shape=(15, 3), dtype=np.float32)
+        pos = tng[-10].get_positions(pos)
+        assert np.array_equal(TNG_EXAMPLE_DATA.first_frame, pos)
+
+def test_tng_example_last_positions_neg_index(TNG_EXAMPLE_DATA, TNG_EXAMPLE):
+    with pytng.TNGFileIterator(TNG_EXAMPLE) as tng:
+        pos = np.empty(shape=(15, 3), dtype=np.float32)
+        pos = tng[-1].get_positions(pos)
+        assert np.array_equal(TNG_EXAMPLE_DATA.last_frame, pos)
 
 def test_tng_example_first_and_last_seq_positions(TNG_EXAMPLE_DATA,
  TNG_EXAMPLE):
@@ -196,12 +207,6 @@ def test_tng_example_tng_example_pos_through_read_step(
         pos = tngstep.get_positions(pos)
         assert np.array_equal(TNG_EXAMPLE_DATA.first_frame, pos)
 
-
-@pytest.mark.parametrize("idx", [-11, -12, 10, 11])
-def test_tng_example_read_step_IndexError(idx, TNG_EXAMPLE):
-    with pytng.TNGFileIterator(TNG_EXAMPLE, "r") as tng:
-        with pytest.raises(ValueError):
-            tng[idx]
 
 
 @pytest.mark.skip(reason="Write mode not implemented yet.")
