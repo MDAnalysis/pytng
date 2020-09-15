@@ -22,55 +22,54 @@ from numpy cimport(PyArray_SimpleNewFromData,
                    npy_intp,
                    )
 cimport cython
-
-
 cimport numpy as np
 np.import_array()
 
-
+# Marks operation success
 ctypedef enum tng_function_status: TNG_SUCCESS, TNG_FAILURE, TNG_CRITICAL
+# Marks use of hash checking in file read
 ctypedef enum tng_hash_mode: TNG_SKIP_HASH, TNG_USE_HASH
+# Datatypes that can be read off disk
 ctypedef enum tng_datatypes: TNG_CHAR_DATA, TNG_INT_DATA, TNG_FLOAT_DATA, \
     TNG_DOUBLE_DATA
+# Marks particle or non-particle data
 ctypedef enum tng_particle_dependency: TNG_NON_PARTICLE_BLOCK_DATA, \
     TNG_PARTICLE_BLOCK_DATA
+# Indicates compression type
 ctypedef enum tng_compression: TNG_UNCOMPRESSED, TNG_XTC_COMPRESSION, \
     TNG_TNG_COMPRESSION, TNG_GZIP_COMPRESSION
+# TNG alias for T/F
 ctypedef enum tng_bool: TNG_FALSE, TNG_TRUE
 
-cdef union data_values:
-    double d
-    float f
-    int64_t i
-    char * c
+# Flag to indicate frame dependent data.
+DEF TNG_FRAME_DEPENDENT = 1
+# Flag to indicate particle dependent data.
+DEF TNG_PARTICLE_DEPENDENT = 2
 
+# TODO REMOVE
 status_error_message = ['OK', 'Failure', 'Critical']
-
-
-cdef extern from "string.h":
-    size_t strlen(char * s)
 
 cdef extern from "<stdio.h>" nogil:
     # Seek and tell with off_t
     int fseeko(FILE*, off_t, int)
     off_t ftello(FILE*)
 
+cdef extern from "numpy/arrayobject.h":
+    void PyArray_ENABLEFLAGS(np.ndarray arr, int flags)
 
-# /** @defgroup def1 Standard non-trajectory blocks
-#  *  Block IDs of standard non-trajectory blocks.
-#  * @{
-#  */
+
+# GROUP 1 Standard non-trajectory blocks
+# Block IDs of standard non-trajectory blocks.
+
 DEF TNG_GENERAL_INFO = 0x0000000000000000LL
 DEF TNG_MOLECULES = 0x0000000000000001LL
 DEF TNG_TRAJECTORY_FRAME_SET = 0x0000000000000002LL
 DEF TNG_PARTICLE_MAPPING = 0x0000000000000003LL
-# /** @} */
 
-# /** @defgroup def2 Standard trajectory blocks
-#  * Block IDs of standard trajectory blocks. Box shape and partial charges can
-#  * be either trajectory blocks or non-trajectory blocks
-#  * @{
-#  */
+# GROUP 2 Standard trajectory blocks
+# Block IDs of standard trajectory blocks. Box shape and partial charges can
+# be either trajectory blocks or non-trajectory blocks
+
 DEF TNG_TRAJ_BOX_SHAPE = 0x0000000010000000LL
 DEF TNG_TRAJ_POSITIONS = 0x0000000010000001LL
 DEF TNG_TRAJ_VELOCITIES = 0x0000000010000002LL
@@ -82,12 +81,10 @@ DEF TNG_TRAJ_ANISOTROPIC_B_FACTORS = 0x0000000010000007LL
 DEF TNG_TRAJ_OCCUPANCY = 0x0000000010000008LL
 DEF TNG_TRAJ_GENERAL_COMMENTS = 0x0000000010000009LL
 DEF TNG_TRAJ_MASSES = 0x0000000010000010LL
-# /** @} */
 
-# /** @defgroup def3 GROMACS data block IDs
-#  *  Block IDs of data blocks specific to GROMACS.
-#  * @{
-#  */
+# GROUP 3 GROMACS data block IDs
+# Block IDs of data blocks specific to GROMACS.
+
 DEF TNG_GMX_LAMBDA = 0x1000000010000000LL
 DEF TNG_GMX_ENERGY_ANGLE = 0x1000000010000001LL
 DEF TNG_GMX_ENERGY_RYCKAERT_BELL = 0x1000000010000002LL
@@ -597,8 +594,8 @@ cdef extern from "tng/tng_io.h":
         int64_t * n_values_per_frame,
         char * type) nogil
 
+# TODO REMOVE
 TNGFrame = namedtuple("TNGFrame", "positions velocities forces time step box")
-
 
 cdef int64_t gcd(int64_t a, int64_t b):
     cdef int64_t temp
@@ -615,6 +612,8 @@ cdef int64_t gcd_list(list a):
     for i in range(1, size):
         result = gcd(result, a[i])
     return result
+
+# TODO REMOVE
 
 
 @cython.final
@@ -652,15 +651,6 @@ cdef class TrajectoryWrapper:
             free(self._ptr)
             self._ptr = NULL
 
-    # Extension class properties
-    # @property
-    # def a(self):
-    #     return self._ptr.a if self._ptr is not NULL else None
-
-    # @property
-    # def b(self):
-    #     return self._ptr.b if self._ptr is not NULL else None
-
     @staticmethod
     cdef TrajectoryWrapper from_ptr(tng_trajectory * _ptr, bint owner=False):
         """Factory function to create WrapperClass objects from
@@ -684,8 +674,6 @@ cdef class TrajectoryWrapper:
             <tng_trajectory * >malloc(sizeof(tng_trajectory))
         if _ptr is NULL:
             raise MemoryError
-        # _ptr.a = 0
-        # _ptr.b = 0
         return TrajectoryWrapper.from_ptr(_ptr, owner=True)
 
 
@@ -695,29 +683,43 @@ cdef class TNGFileIterator:
     Supports use as a context manager ("with" blocks).
 
     """
-
+    # tng_trajectory pointer
     cdef tng_trajectory * _traj_p
+    # trajectory wrapper
     cdef TrajectoryWrapper _traj
+    # filename
     cdef readonly fname
+    # mode (r,w,a)
     cdef str mode
+    # enable/disable debug output
     cdef bint debug
+    # mark trajectory to be closed/open
     cdef int is_open
+    # have we reached the end of the file
     cdef int reached_eof
-    cdef int64_t step
 
-    cdef int64_t _n_frames
+    # integrator timestep
+    cdef int64_t step
+    # number of integrator timesteps
+    cdef int64_t _n_steps
+    # number of particles
     cdef int64_t _n_particles
-    cdef int64_t _n_frame_sets
+    # distance unit
     cdef float _distance_scale
 
-    cdef int64_t _current_frame
-    cdef int64_t _current_frame_set
-    cdef int64_t _gcd  # greatest common divisor of data strides
-
+    # stride at which each block is written
     cdef dict   _frame_strides
+    # number of actual frames with data for each block
     cdef dict   _n_data_frames
+    # the number of values per frame for each data block
+    cdef dict   _values_per_frame
+    # particle dependencies for each data block
+    cdef dict _particle_dependencies
 
-    # holds the current blocks at a trajectory timestep
+    # greatest common divisor of data strides
+    cdef int64_t _gcd
+
+    # holds data at the current trajectory timestep
     cdef TNGCurrentIntegratorStep current_step
 
     def __cinit__(self, fname, mode='r', debug=False):
@@ -726,17 +728,17 @@ cdef class TNGFileIterator:
         self.fname = fname
         self.debug = debug
         self.step = 0
-        self._n_frames = -1
+
+        self._n_steps = -1
         self._n_particles = -1
-        self._n_frame_sets = -1
         self._distance_scale = 0.0
-        self._current_frame = -1
-        self._current_frame_set = -1
-        self._gcd = -1
+
         self._frame_strides = {}
         self._n_data_frames = {}
+        self._values_per_frame = {}
+        self._particle_dependencies = {}
+        self._gcd = -1
 
-        # the mappings of block ids to block names and vice versa
         self._open(self.fname, mode)
 
     def __dealloc__(self):
@@ -768,36 +770,32 @@ cdef class TNGFileIterator:
                              'supplied {}'.format(mode))
 
         # handle file not existing at python level,
-        # C level is nasty and causes crash
         if self.mode == 'r' and not os.path.isfile(fname):
             raise IOError("File '{}' does not exist".format(fname))
 
         cdef tng_function_status stat
 
         fname_bytes = fname.encode('UTF-8')
+        # open the trajectory
         stat = tng_util_trajectory_open(fname_bytes, _mode, & self._traj._ptr)
         if stat != TNG_SUCCESS:
             raise IOError("File '{}' cannot be opened".format(fname))
 
-        # TODO propagate errmsg upwards in all the below calls
-        stat = tng_num_frames_get(self._traj._ptr, & self._n_frames)
+        # get the number of integrator timesteps
+        stat = tng_num_frames_get(self._traj._ptr, & self._n_steps)
         if stat != TNG_SUCCESS:
             raise IOError("Number of frames cannot be read")
-
+        # get the number of particles
         stat = tng_num_particles_get(self._traj._ptr, & self._n_particles)
         if stat != TNG_SUCCESS:
             raise IOError("Number of particles cannot be read")
-
-        stat = tng_num_frame_sets_get(self._traj._ptr, & self._n_frame_sets)
-        if stat != TNG_SUCCESS:
-            raise IOError("Number of trajectory frame sets cannot be read")
-
+        # get the unit scale
         cdef int64_t exponent
         stat = tng_distance_unit_exponential_get(self._traj._ptr, & exponent)
         if stat != TNG_SUCCESS:
             raise IOError("Distance exponent cannot be read")
-
-        stat = self._get_frame_indicies()
+        # fill out dictionaries of block metadata
+        stat = self._get_block_metadata()
         if stat != TNG_SUCCESS:
             raise IOError("Strides for each data block cannot be read")
 
@@ -805,120 +803,242 @@ cdef class TNGFileIterator:
         self.is_open = True
         self.reached_eof = False
 
+    # close the file
     def _close(self):
         """Make sure the file handle is closed"""
         if self.is_open:
             tng_util_trajectory_close( & self._traj._ptr)
             self.is_open = False
-            self._n_frames = -1
+            self.reached_eof = True
+            self._n_steps = -1
 
     @property
-    def n_frames(self):
-        return self._n_frames
+    def n_steps(self):
+        """The number of integrator steps in the TNG file
+
+        Returns
+        -------
+        n_steps : int
+            number of integrator steps
+        """
+        if not self.is_open:
+            raise IOError("File is not yet open")
+        return self._n_steps
 
     @property
     def n_atoms(self):
+        """The number of atoms in the TNG file
+
+        Returns
+        -------
+        n_atoms : int
+            number of atoms
+        """
+        if not self.is_open:
+            raise IOError("File is not yet open")
         return self._n_particles
 
     @property
-    def block_set(self):  # NOTE perhaps we should not expose this
-        """Dictionary where keys are available block id
-        and values are TngDataBlock instance"""
-        return self.current_step.block_set
-
-    @property
-    def block_ids(self):  # NOTE perhaps we should not expose this
-        """List of block ids available at the current frame"""
-        return list(self.current_step.block_set.keys())
-
-    @property
-    def block_names(self):
-        """List of block names available at the current frame (unordered)"""
-        block_ids = list(self.current_step.block_set.keys())
-        return [block_dictionary[id] for id in block_ids]
-
-    def get_block_by_name(self, name):
-        if self.current_step.block_set.get(
-                block_id_dictionary[name]) is None:
-            return None
-        else:
-            return self.current_step.block_set.get(
-                block_id_dictionary[name])
-
-    def get_block_values_by_name(self, name):
-        if self.current_step.block_set.get(
-                block_id_dictionary[name]) is None:
-            return None
-        else:
-            return self.current_step.block_set.get(
-                block_id_dictionary[name]).values
-
-    @property
     def block_strides(self):
-        return [(block_dictionary[k], v)
-                for k, v in self._frame_strides.items()]
+        """Dictionary of block names and the strides (in integrator steps)
+        at which they are written in the TNG file
+
+        Returns
+        -------
+        block_strides : dict
+            dictionary of block names (keys) and strides of each block (values)
+        """
+        if not self.is_open:
+            raise IOError("File is not yet open")
+        return self._frame_strides
 
     @property
-    def pos(self):
-        if self.current_step.block_set.get(TNG_TRAJ_POSITIONS) is None:
-            return None
-        else:
-            return self.current_step.block_set.get(TNG_TRAJ_POSITIONS).values
+    def block_ids(self):
+        """Dictionary of block names and block ids (long longs) in the
+        TNG file
+
+        Returns
+        -------
+        block_ids : dict
+            dictionary of block names (keys) and block ids (values)
+        """
+        if not self.is_open:
+            raise IOError("File is not yet open")
+        block_id_dict = {}
+        for k in self._frame_strides.keys():
+            block_id_dict[k] = block_id_dictionary[k]
+        return block_id_dict
 
     @property
-    def vel(self):
-        if self.current_step.block_set.get(TNG_TRAJ_VELOCITIES) is None:
-            return None
-        else:
-            return self.current_step.block_set.get(TNG_TRAJ_VELOCITIES).values
+    def n_data_frames(self):
+        """Dictionary of block names and the number of actual steps with data
+        for that block in the TNG file
+
+        Returns
+        -------
+        n_data_frames : dict
+            dictionary of block names (keys) and number of steps with data
+            (values)
+        """
+        if not self.is_open:
+            raise IOError("File is not yet open")
+        return self._n_data_frames
 
     @property
-    def frc(self):
-        if self.current_step.block_set.get(TNG_TRAJ_FORCES) is None:
-            return None
-        else:
-            return self.current_step.block_set.get(TNG_TRAJ_FORCES).values
+    def values_per_frame(self):
+        """Dictionary of block names and the number of values per frame for the
+        block
+
+        Returns
+        -------
+        values_per_frame : dict
+            dictionary of block names (keys) and number of values per frame
+            (values)
+        """
+        if not self.is_open:
+            raise IOError("File is not yet open")
+        return self._values_per_frame
 
     @property
-    def box(self):
-        if self.current_step.block_set.get(TNG_TRAJ_BOX_SHAPE) is None:
-            return None
+    def particle_dependencies(self):
+        """Dictionary of block names and whether the block is particle
+        dependent
+
+        Returns
+        -------
+        particle_dependencies : dict
+            dictionary of block names (keys) and particle dependencies (values)
+        """
+        if not self.is_open:
+            raise IOError("File is not yet open")
+        return self._particle_dependencies
+
+    cpdef np.ndarray make_ndarray_for_block_from_name(self, str block_name):
+        """Make a NumPy array that can hold a specified block from the block
+        name
+
+        Parameters
+        ----------
+        block_name : str
+           a block name
+
+        Returns
+        -------
+        target : :class:`np.ndarray`
+            A NumPy array that can hold the data values for a specified block
+
+        See Also
+        --------
+        block_ids : dict
+            dictionary of block names (keys) and block ids (values) available
+            in this TNG file
+        """
+        if block_name not in block_dictionary.values():
+            raise ValueError("Block name {} not recognised".format(block_name))
+
+        if self._particle_dependencies[block_name]:
+            ax0 = self._n_particles
         else:
-            return self.current_step.block_set.get(TNG_TRAJ_BOX_SHAPE).values
+            ax0 = 1
+        ax1 = self._values_per_frame[block_name]
+        target = np.ndarray(shape=(ax0, ax1), dtype=np.float32, order='C')
+        return target
+
+    cpdef np.ndarray make_ndarray_for_block_from_id(self, int64_t block_id):
+        """Make a NumPy array that can hold a specified block from the block id
+
+        Parameters
+        ----------
+        block_id : int64_t
+           a block id
+
+        Returns
+        -------
+        target : :class:`np.ndarray`
+            A NumPy array that can hold the data values for a specified block
+
+        See Also
+        --------
+        block_ids : dict
+            dictionary of block names (keys) and block ids (values) available
+            in this TNG file
+        """
+        return self.make_ndarray_for_block_from_name(block_id_dictionary[block_id])
 
     @property
     def step(self):
+        """The current integrator step being read
+
+        Returns
+        -------
+        step : int
+            the current step in the TNG file
+        """
+        if not self.is_open:
+            raise IOError("File is not yet open")
         return self.step
 
-    def read_frame(self, frame):
-        """Read a frame (integrator step) from the file,
-           modifies the state of self.block_holder to contain
-           the current blocks"""
+    @property
+    def current_integrator_step(self):
+        """Class that retrieves data from the file at the current integrator
+           step
 
-        if frame >= self._n_frames:
-            raise ValueError("frame specified is greater than number of steps"
-                             "in input file {}".format(self._n_frames))
+        Returns
+        -------
+        current_integrator_step : :class:`TNGCurrentIntegratorStep`
+            The data accessor at the current integrator step
+        """
+        if not self.is_open:
+            raise IOError("File is not yet open")
+        return self.current_step
 
-        self.step = frame
-        self.current_step = TNGCurrentIntegratorStep(debug=self.debug)
+    cpdef TNGCurrentIntegratorStep  read_step(self, step):
+        """Read a step (integrator step) from the file
 
-        # TODO fix this to whatever kind of iteration we want
+        Parameters
+        ----------
+        step : int
+           step to read from the file
 
-        for block, stride in self._frame_strides.items():
-            if frame % stride == 0:
-                # read the frame if we are on stride
-                self._read_single_frame(frame, block, self.current_step)
+        Returns
+        -------
+        current_integrator_step : :class:`TNGCurrentIntegratorStep`
+            The data accessor at the current integrator step
+
+        Raises
+        ------
+        ValueError
+            attempt to read a negative step or step number greater than that in
+            the input file
+        """
+        if not self.is_open:
+            raise IOError('File is not yet open')
+
+        if step >= self._n_steps:
+            raise ValueError("""frame specified is greater than number of steps
+            in input file {}""".format(self._n_steps))
+        
+        if step < 0:
+            step = self._n_steps - np.abs(step) 
+
+        self.step = step
+        self.current_step = TNGCurrentIntegratorStep(
+            self._traj, step, debug=self.debug)
+
+        return self.current_step
 
     # NOTE here we assume that the first frame has all the blocks
     #  that are present in the whole traj
 
-    cdef tng_function_status _get_frame_indicies(self):
+    cdef tng_function_status _get_block_metadata(self):
         """Gets the ids, strides and number of frames with
            actual data from the trajectory"""
         cdef int64_t step, n_blocks
-        cdef int64_t nframes, stride_length
+        cdef int64_t nframes, stride_length, n_values_per_frame
         cdef int64_t block_counter = 0
         cdef int64_t * block_ids = NULL
+        cdef int     block_dependency
+        cdef bint particle_dependent
 
         cdef tng_function_status read_stat = \
             tng_util_trajectory_next_frame_present_data_blocks_find(
@@ -933,10 +1053,28 @@ cdef class TNGFileIterator:
                 self._traj._ptr, block_ids[i], & nframes)
             if read_stat != TNG_SUCCESS:
                 return TNG_CRITICAL
+            read_stat = tng_data_block_num_values_per_frame_get(
+                self._traj._ptr, block_ids[i], & n_values_per_frame)
+            read_stat = tng_data_block_dependency_get(self._traj._ptr,
+                                                      block_ids[i],
+                                                      & block_dependency)
+            if read_stat != TNG_SUCCESS:
+                return TNG_CRITICAL
+            if block_dependency & TNG_PARTICLE_DEPENDENT:
+                particle_dependent = True
+            else:
+                particle_dependent = False
+
             # stride length for the block
-            self._frame_strides[block_ids[i]] = stride_length
+            self._frame_strides[block_dictionary[block_ids[i]]] = stride_length
             # number of actual data frames for the block
-            self._n_data_frames[block_ids[i]] = nframes
+            self._n_data_frames[block_dictionary[block_ids[i]]] = nframes
+            # number of values per frame
+            self._values_per_frame[block_dictionary[block_ids[i]]
+                                   ] = n_values_per_frame
+
+            self._particle_dependencies[block_dictionary[block_ids[i]]
+                                        ] = particle_dependent
 
         # TODO we will use this if we want to instead iterate
         # over the greatest common divisor of the data strides
@@ -945,18 +1083,6 @@ cdef class TNGFileIterator:
             printf("PYTNG INFO: gcd of strides %ld \n", self._gcd)
 
         return TNG_SUCCESS
-
-    cdef void _read_single_frame(self, int64_t frame, int64_t block_id,
-                                 TNGCurrentIntegratorStep current_frame):
-        """Read the current block of a given block id into a
-           TNGDataBlock instance and pops that instance to the block holder"""
-
-        if self.debug:
-            print("READING FRAME {}  \n".format(frame))
-        cdef block = TNGDataBlock(self._traj, frame, debug=self.debug)
-        block.block_read(block_id)  # read the actual block
-        # add the block to the block holder
-        current_frame.add_block(block_id, block)
 
     def __enter__(self):
         # Support context manager
@@ -968,22 +1094,21 @@ cdef class TNGFileIterator:
         return False
 
     def __len__(self):
-        return self._n_frames
+        return self._n_steps
 
     def __iter__(self):
         self._close()
         self._open(self.fname, self.mode)
-        self.read_frame(self.step)
+        self.read_step(self.step)
 
         return self
 
     def __next__(self):
-        if self.step == self._n_frames - 1:
+        if self.step == self._n_steps - 1:
             raise StopIteration
-        self.read_frame(self.step)
-        prev = self.step
+        self.read_step(self.step)
         self.step += 1
-        return prev
+        return self.current_integrator_step
 
     def __getitem__(self, frame):
         cdef int64_t start, stop, step, i
@@ -991,11 +1116,8 @@ cdef class TNGFileIterator:
         if isinstance(frame, numbers.Integral):
             if self.debug:
                 print("slice is a number")
-            if frame >= 0:
-                self.read_frame(frame)
-            else:
-                raise ValueError("cannot supply negative indicies")
-            return self
+            self.read_step(frame)
+            return self.current_integrator_step
 
         elif isinstance(frame, (list, np.ndarray)):
             if self.debug:
@@ -1014,22 +1136,18 @@ cdef class TNGFileIterator:
                 for f in frames:
                     if not isinstance(f, numbers.Integral):
                         raise TypeError("Frames indices must be integers")
-                    if f < 0:
-                        raise ValueError("cannot supply negative indicies")
-                    self.read_frame(f)
-                    yield self
+                    self.read_step(f)
+                    yield self.current_integrator_step
             return listiter(frame)
         elif isinstance(frame, slice):
             start = frame.start if frame.start is not None else 0
-            stop = frame.stop if frame.stop is not None else self._n_frames
+            stop = frame.stop if frame.stop is not None else self._n_steps
             step = frame.step if frame.step is not None else 1
 
             def sliceiter(start, stop, step):
                 for i in range(start, stop, step):
-                    if i < 0:
-                        raise ValueError("cannot supply negative indicies")
-                    self.read_frame(i)
-                    yield self
+                    self.read_step(i)
+                    yield self.current_integrator_step
             return sliceiter(start, stop, step)
         else:
             raise TypeError("Trajectories must be an indexed using an integer,"
@@ -1037,171 +1155,276 @@ cdef class TNGFileIterator:
 
 
 cdef class TNGCurrentIntegratorStep:
-    """Holds data blocks at the curent trajectory step"""
+    """Retrieves data at the curent trajectory step"""
 
     cdef bint debug
     cdef int64_t _n_blocks
-    cdef dict blocks  # TODO should we use a fixed size container?
-
-    def __cinit__(self, bint debug=False):
-        self.debug = debug
-        self.blocks = {}
-
-    cdef inline void add_block(self, int64_t block_id, TNGDataBlock block):
-        self.blocks[block_id] = block  # add the block to the block dictionary
-
-    @property
-    def block_set(self):
-        return self.blocks  # expose blocks to python layer
-
-
-cdef class TNGDataBlock:
-    """Contains the actual data in a tng_data_block
-       and exposes it as a Numpy array"""
 
     cdef tng_trajectory * _traj
-    cdef int64_t _frame
-    cdef int64_t block_id
-    cdef bint debug
-
     cdef int64_t step
-    cdef double frame_time
-    cdef double precision
-    cdef int64_t n_values_per_frame, n_atoms
-    cdef char[TNG_MAX_STR_LEN] block_name
-    cdef MemoryWrapper _wrapper  # manages the numpy array lifetime
-    cdef tng_function_status read_stat
-    cdef np.ndarray values  # the final values as a numpy array
+    cdef bint read_success 
 
-    cdef bint block_is_read
 
-    def __cinit__(self, TrajectoryWrapper traj, int64_t frame,
+    def __cinit__(self, TrajectoryWrapper traj, int64_t step,
                   bint debug=False):
+        self.debug = debug
 
         self._traj = traj._ptr
-        self._frame = frame
-        self.debug = debug
-        self.block_id = -1
-
-        self.step = -1
-        self.frame_time = -1
-        self.precision = -1
-        self.n_values_per_frame = -1
-        self.n_atoms = -1
-        self.block_is_read = False
-
-        # TODO allocs a single byte,
-        # this can be changed if the signature of MemoryWrapper is changed
-        self._wrapper = MemoryWrapper(1)
+        self.step = step
+        self.read_success = False
 
     def __dealloc__(self):
         pass
 
-    def block_read(self, id):
-        """Reads the block off file"""
-        cdef tng_function_status stat
-        self._refresh()
-        stat = self._block_read(id)
-        if stat != TNG_SUCCESS:
-            raise IOError("Critical failure: block cannot be read")
-        self._block_2d_numpy_cast(self.n_values_per_frame, self.n_atoms)
-        self.block_is_read = True
+    @property
+    def step(self):
+        """The current integrator step being read
 
-    cdef void _refresh(self):
-        """Refreshes the TngDataBlock instance so that we can
-           read different blocks into the same instance"""
-        self.block_id = -1
-        self.step = -1
-        self.frame_time = -1
-        self.precision = -1
-        self.n_values_per_frame = -1
-        self.n_atoms = -1
-        self.block_is_read = False
-        # TODO this can be changed if the signature of MemoryWrapper is changed
-        self._wrapper = MemoryWrapper(1)
+        Returns
+        -------
+        step : int
+            the current step in the TNG file
+        """
+        return self.step
 
     @property
-    def values(self):
-        """the values of the block"""
-        if not self.block_is_read:
-            raise IOError(
-                'Values not available until block_read() has been called')
-        return self.values
+    def read_success(self):
+        """Indicates whether the last attempt to read data was successful
 
-    cdef void _block_2d_numpy_cast(self, int64_t n_values_per_frame,
-                                   int64_t n_atoms):
-        """Casts the block to a 2D Numpy array whose lifetime is managed by
-           an associated MemoryWrapper instance"""
+        Returns
+        -------
+        read_success : bool
+            Whether the last attempt to read data was successful
+        """
+        return self.read_success
 
-        if self.debug:
-            printf("PYTNG INFO: creating Numpy array \n")
-        if n_values_per_frame == -1 or n_atoms == -1:
-            raise ValueError(
-                "Array dimensions for block casting are not set correctly")
-        cdef int nd = 2
-        cdef int err
-        cdef npy_intp dims[2]
-        dims[0] = n_atoms
-        dims[1] = n_values_per_frame
-        self.values = PyArray_SimpleNewFromData(
-            2, dims, NPY_DOUBLE, self._wrapper.ptr)
-        Py_INCREF(self._wrapper)
-        err = PyArray_SetBaseObject(self.values, self._wrapper)
-        if err:
-            raise ValueError("Array object cannot be created")
-        if self.debug:
-            print(self.values)
+    cpdef  get_time(self):
+        """Get the time of the current integrator step being read from the file
 
-    cdef tng_function_status  _block_read(self, int64_t id):
-        """Does the actual block reading"""
-        self.block_id = id
+        Returns
+        -------
+        time : int
+            the time of the current step
+        """
         cdef tng_function_status read_stat
+        cdef double _step_time
+        read_stat = self._get_step_time( & _step_time)
+        if read_stat != TNG_SUCCESS:
+            return None
+        else:
+            return _step_time
+
+    cpdef np.ndarray get_positions(self, np.ndarray data):
+        """Get the positions present at the current step and read them into a
+        NumPy array
+
+        Parameters
+        ----------
+        data : np.ndarray
+           NumPy array to read the data into. As this is a particle dependent
+           block, the shape should be (n_atoms, n_values_per_frame)
+           ie (n_atoms, 3).
+        """
+        self.get_blockid(TNG_TRAJ_POSITIONS, data)
+        return data
+
+    cpdef np.ndarray get_box(self, np.ndarray data):
+        """Get the box vectors present at the current step and read them into a
+        NumPy array. The box vectors are a (3,3) matrix comprised of 3
+        three-dimensional basis vectors for the coordinate system of the
+        simulation. The vectors can be accessed in their proper shape by
+        reshaping the resulting (1,9) matrix to be (3,3) with
+        ndarray.reshape(3,3).
+
+        Parameters
+        ----------
+        data : np.ndarray
+           NumPy array to read the data into. As this is NOT a particle 
+           dependent block, the shape should be
+           (1, n_values_per_frame) ie (1,9)
+        """
+        self.get_blockid(TNG_TRAJ_BOX_SHAPE, data)
+        return data
+
+    cpdef np.ndarray get_velocities(self, np.ndarray data):
+        """Get the velocities present at the current step and read them into a
+        NumPy array
+
+        Parameters
+        ----------
+        data : np.ndarray
+           NumPy array to read the data into. As this is a particle dependent
+           block, the shape should be (n_atoms, n_values_per_frame)
+           ie (n_atoms, 3).
+        """
+        self.get_blockid(TNG_TRAJ_VELOCITIES, data)
+        return data
+
+    cpdef np.ndarray get_forces(self, np.ndarray data):
+        """Get the forces present at the current step and read them into a
+        NumPy array
+
+        Parameters
+        ----------
+        data : np.ndarray
+           NumPy array to read the data into. As this is a particle dependent
+           block, the shape should be (n_atoms, n_values_per_frame)
+           ie (n_atoms, 3).
+        """
+        self.get_blockid(TNG_TRAJ_FORCES, data)
+        return data
+
+    cpdef get_blockid(self, int64_t block_id, np.ndarray data):
+        """Get a block ID present at the current step and read it into a
+        NumPy array
+
+        Parameters
+        ----------
+        block_id : int64_t
+           TNG block id to read from the current step
+        data : np.ndarray
+           NumPy array to read the data into, the required shape is determined
+           by the block dependency and the number of values per frame.
+        
+        Raises
+        ------
+        TypeError
+            The dtype of the numpy array provided is not supported by TNG
+            datatypes or does not match the underlying datatype.
+        IOError
+            The block data type cannot be understood.
+        IndexError
+            The shape of the numpy array provided does not match the shape of
+            the data to be read from disk.
+        """
+        shape = data.shape
+        dtype = data.dtype
+
+        if dtype not in [np.int64, np.float32, np.float64]:
+            raise TypeError(
+                "PYTNG ERROR: datatype of numpy array not supported\n")
+
+        cdef void * values = NULL
+        cdef int64_t n_values_per_frame = -1
+        cdef int64_t n_atoms = -1
+        cdef double precision = -1
+        cdef char datatype = -1
+        cdef tng_function_status read_stat
+
+        cdef np.float32_t[::1] _float_view
+        cdef int64_t[::1] _int64_t_view
+        cdef double[::1] _double_view
+
+        cdef int i, j
+
         with nogil:
-            read_stat = self._get_data_next_frame(self.block_id,  & self.step,
-                                                  & self.frame_time,
-                                                  & self.n_values_per_frame,
-                                                  & self.n_atoms,
-                                                  & self.precision,
-                                                  self.block_name,
-                                                  self.debug)
+            read_stat = self._get_data_current_step(block_id,
+                                                    self.step,
+                                                    & values,
+                                                    & n_values_per_frame,
+                                                    & n_atoms,
+                                                    & precision,
+                                                    & datatype,
+                                                    self.debug)
 
-        if self.debug:
-            printf("PYTNG INFO: block id %ld \n", self.block_id)
-            printf("PYTNG INFO: data block name %s \n", self.block_name)
-            printf("PYTNG INFO: n_values_per_frame %ld \n", self.n_values_per_frame)
-            printf("PYTNG INFO: n_atoms  %ld \n", self.n_atoms)
+        if read_stat != TNG_SUCCESS:
+            self.read_success = False
+            data[:,:] = np.nan #NOTE I think we should still nan fill on blank read
+            return data
+        else:
+            self.read_success = True
 
-        return read_stat
+        if data.ndim > 2:
+            raise IndexError(
+                """PYTNG ERROR: Numpy array must be 2 dimensional,
+                 you supplied a {} dimensional ndarray""".format(data.ndim))
 
-    @cython.boundscheck(True)
-    @cython.wraparound(True)
-    @cython.profile(True)
-    cdef tng_function_status _get_data_next_frame(self, int64_t block_id,
-                                                  int64_t * step,
-                                                  double * frame_time,
-                                                  int64_t * n_values_per_frame,
-                                                  int64_t * n_atoms,
-                                                  double * prec,
-                                                  char * block_name,
-                                                  bint debug) nogil:
-        """Gets the frame data off disk and into C level arrays"""
+        if shape[0] != n_atoms:
+            raise IndexError(
+                """PYTNG ERROR: First axis must be n_atoms long,
+                you supplied {}""".format(shape[0]))
+
+        if shape[1] != n_values_per_frame:
+            raise IndexError(
+                """PYTNG ERROR: Second axis must be n_values_per_frame long,
+                 you supplied {}""".format(shape[1]))
+
+        cdef int64_t n_vals = n_atoms * n_values_per_frame
+
+        if datatype == TNG_FLOAT_DATA:
+            if dtype != np.float32:
+                raise TypeError(
+                    "PYTNG ERROR: dtype of array {} does not match TNG dtype float".format(dtype))
+            _float_view = <np.float32_t[:n_vals] > (< float*> values)
+            data[:, :] = np.asarray(_float_view, dtype=np.float32).reshape(
+                n_atoms, n_values_per_frame)
+
+        elif datatype == TNG_INT_DATA:
+            if dtype != np.int64:
+                raise TypeError(
+                    "PYTNG ERROR: dtype of array {} does not match TNG dtype int64_t".format(dtype))
+            _int64_t_view = <int64_t[:n_vals] > (< int64_t*> values)
+            data[:, :] = np.asarray(_int64_t_view, dtype=np.int64).reshape(
+                n_atoms, n_values_per_frame)
+
+        elif datatype == TNG_DOUBLE_DATA:
+            if dtype != np.float64:
+                raise TypeError(
+                    "PYTNG ERROR: dtype of array {} does not match TNG dtype double".format(dtype))
+            _double_view = <double[:n_vals] > (< double*> values)
+            data[:, :] = np.asarray(_double_view, dtype=np.float64).reshape(
+                n_atoms, n_values_per_frame)
+
+        else:
+            raise IOError("PYTNG ERROR: block datatype not understood")
+
+        return data
+
+    cdef tng_function_status _get_data_current_step(self, int64_t block_id,
+                                                    int64_t step,
+                                                    void ** values,
+                                                    int64_t * n_values_per_frame,
+                                                    int64_t * n_atoms,
+                                                    double * prec,
+                                                    char * datatype,
+                                                    bint debug) nogil:
+        """Gets the frame data off disk and into C level arrays
+
+        Parameters
+        ----------
+        block_id : int64_t
+            block id to read
+        step : int64_t
+            integrator step to read
+        values : void **
+            NULL void pointer to hook the data onto
+        n_values_per_frame : int64_t *
+            set to the number of values per frame for the block
+        n_atoms : int64_t *
+            set to the number of atoms or 1 if particle dependent
+        prec : double *
+            set to the precision of the block
+        datatype : char *
+            set to the datatype of the block
+        debug : bint
+            debug the block read
+
+        Notes
+        -----
+        This function is private. Additionally, this function is  marked nogil 
+        and called without the GIL so cannot contain python or python
+        exceptions. Instead failure is marked by returning
+        :data:`TNG_CRITICAL`. Success is indicated by returning
+        :data:`TNG_SUCCESS`. Cleanup is then be done by the calling
+        code in :method:`get_blockid` so the user should not have to deal with
+        C level exceptions
+        """
         cdef tng_function_status stat
-        cdef char                datatype = -1
         cdef int64_t             codec_id
         cdef int             block_dependency
         cdef void * data = NULL
         cdef double              local_prec
-        cdef int64_t             n_particles
         cdef int64_t             stride_length
-
-        # Flag to indicate frame dependent data.
-        cdef int TNG_FRAME_DEPENDENT = 1
-        # Flag to indicate particle dependent data.
-        cdef int  TNG_PARTICLE_DEPENDENT = 2
-        stat = tng_data_block_name_get(
-            self._traj, block_id, block_name, TNG_MAX_STR_LEN)
-        if stat != TNG_SUCCESS:
-            return TNG_CRITICAL
 
         # is this a particle dependent block?
         stat = tng_data_block_dependency_get(self._traj, block_id,
@@ -1210,77 +1433,44 @@ cdef class TNGDataBlock:
             return TNG_CRITICAL
 
         if block_dependency & TNG_PARTICLE_DEPENDENT:  # bitwise & due to enums
-            if debug:
-                printf("PYTNG INFO: reading particle data \n")
             tng_num_particles_get(self._traj, n_atoms)
             # read particle data off disk with hash checking
             stat = tng_gen_data_vector_interval_get(self._traj,
                                                     block_id,
                                                     TNG_TRUE,
-                                                    self._frame,
-                                                    self._frame,
+                                                    self.step,
+                                                    self.step,
                                                     TNG_USE_HASH,
-                                                    & data,
-                                                    & n_particles,
+                                                    values,
+                                                    n_atoms,
                                                     & stride_length,
                                                     n_values_per_frame,
-                                                    & datatype)
+                                                    datatype)
 
         else:
-            if debug:
-                printf("PYTNG INFO: reading non particle data \n")
             n_atoms[0] = 1  # still used for some allocs
             # read non particle data off disk with hash checking
             stat = tng_gen_data_vector_interval_get(self._traj,
                                                     block_id,
                                                     TNG_FALSE,
-                                                    self._frame,
-                                                    self._frame,
+                                                    self.step,
+                                                    self.step,
                                                     TNG_USE_HASH,
-                                                    & data,
+                                                    values,
                                                     NULL,
                                                     & stride_length,
                                                     n_values_per_frame,
-                                                    & datatype)
+                                                    datatype)
 
         if stat != TNG_SUCCESS:
-            printf("PYTNG WARNING: critical failure in"
-                   "tng_gen_data_vector_get \n")
             return TNG_CRITICAL
-
-        stat = tng_data_block_num_values_per_frame_get(
-            self._traj, block_id, n_values_per_frame)
-        if stat == TNG_CRITICAL:
-            printf("PYTNG WARNING: critical failure in"
-                   "tng_data_block_num_values_per_frame_get \n")
-            return TNG_CRITICAL
-
-        # renew the MemoryWrapper instance to have the right size
-        # to hold the data that has come off disk and will be cast to double*
-        self._wrapper.renew(
-            sizeof(double) * n_values_per_frame[0] * n_atoms[0])
-
-        _wrapped_values = <double*> self._wrapper.ptr
-
-        if self.debug:
-            printf("PYTNG INFO: realloc values array to"
-                   " %ld doubles and %ld bits long \n",
-                   n_values_per_frame[0] * n_atoms[0], n_values_per_frame[0]
-                   * n_atoms[0]*sizeof(double))
-
-        # convert the data that was read off disk into an array of doubles
-        self.convert_to_double_arr(
-            data, _wrapped_values, n_atoms[0], n_values_per_frame[0],
-            datatype, debug)
 
         # get the compression of the current frame
         stat = tng_util_frame_current_compression_get(self._traj,
                                                       block_id,
                                                       & codec_id,
                                                       & local_prec)
-        if stat == TNG_CRITICAL:
-            printf("PYTNG WARNING: critical failure in"
-                   "tng_util_frame_current_compression_get \n")
+        if stat != TNG_SUCCESS:
             return TNG_CRITICAL
 
         if codec_id != TNG_TNG_COMPRESSION:
@@ -1288,62 +1478,13 @@ cdef class TNGDataBlock:
         else:
             prec[0] = local_prec
 
-        # free local data
-        free(data)
         return TNG_SUCCESS
 
-    @cython.boundscheck(True)
-    @cython.wraparound(True)
-    @cython.profile(True)
-    cdef void convert_to_double_arr(self,
-                                    void * source,
-                                    double * to,
-                                    const int n_atoms,
-                                    const int n_vals,
-                                    const char datatype,
-                                    bint debug) nogil:
+    cdef tng_function_status _get_step_time(self, double * step_time):
+        stat = tng_util_time_of_frame_get(self._traj, self.step, step_time)
+        if stat != TNG_SUCCESS:
+            return TNG_CRITICAL
 
-        """ Convert a void array to an array of doubles
-
-            NOTES:
-            - this should use memcpy but doesn't yet
-            - is this likely to be portable?.
-            - a lot of this is a bit redundant but could be used to
-              differntiate casts to numpy arrays etc in the future.
-
-        """
-        cdef int i, j
-
-        if datatype == TNG_FLOAT_DATA:
-            for i in range(n_atoms):
-                for j in range(n_vals):
-                    to[i * n_vals + j] = ( < float*>source)[i * n_vals + j]
-            # memcpy(to,  source, n_vals * sizeof(float) * n_atoms)
-            if debug:
-                printf("PYTNG BLOCK INFO: TNG_FLOAT \n")
-
-        elif datatype == TNG_INT_DATA:
-            for i in range(n_atoms):
-                for j in range(n_vals):
-                    to[i * n_vals + j] = ( < int64_t*>source)[i * n_vals + j]
-            # memcpy(to, source, n_vals * sizeof(int64_t) * n_atoms)
-            if debug:
-                printf("PYTNG BLOCK INFO: TNG_INT \n")
-
-        elif datatype == TNG_DOUBLE_DATA:
-            for i in range(n_atoms):
-                for j in range(n_vals):
-                    to[i * n_vals + j] = ( < double*>source)[i * n_vals + j]
-            # memcpy(to, source, n_vals * sizeof(double) * n_atoms)
-            if debug:
-                printf("PYTNG BLOCK INFO: TNG_DOUBLE\n")
-
-        elif datatype == TNG_CHAR_DATA:
-            # NOTE not implemented in TNG library either
-            printf("PYTNG WARNING: char data reading is not implemented \n")
-
-        else:
-            printf("PYTNG WARNING: block data type %d not understood \n", datatype)
 
 
 block_dictionary = {}
@@ -1586,7 +1727,7 @@ cdef class TNGFile:
     def close(self):
         """Make sure the file handle is closed"""
         if self.is_open:
-            tng_util_trajectory_close( & self._traj)
+            tng_util_trajectory_close(& self._traj)
             self.is_open = False
             self._n_frames = -1
 
@@ -1712,7 +1853,7 @@ cdef class TNGFile:
 
         # TODO this seem wasteful but can't cdef inside a conditional?
         cdef MemoryWrapper wrap_box
-        cdef np.ndarray[ndim = 2, dtype = np.float32_t, mode = 'c'] box = \
+        cdef np.ndarray[ndim= 2, dtype = np.float32_t, mode = 'c'] box = \
             np.empty((3, 3), dtype=np.float32)
 
         if self._box:
