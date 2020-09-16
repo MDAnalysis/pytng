@@ -7,20 +7,9 @@
 import numpy as np
 import numbers
 import os
-from collections import namedtuple
-from posix.types cimport off_t
-from libc.string cimport memcpy
 from libc.stdio cimport printf, FILE, SEEK_SET, SEEK_CUR, SEEK_END
 from libc.stdlib cimport malloc, free, realloc
 from libc.stdint cimport int64_t, uint64_t, int32_t, uint32_t
-from cpython.mem cimport PyMem_Malloc, PyMem_Realloc, PyMem_Free
-from numpy cimport(PyArray_SimpleNewFromData,
-                   PyArray_SetBaseObject,
-                   NPY_FLOAT,
-                   NPY_DOUBLE,
-                   Py_INCREF,
-                   npy_intp,
-                   )
 cimport cython
 cimport numpy as np
 np.import_array()
@@ -46,14 +35,6 @@ DEF TNG_FRAME_DEPENDENT = 1
 # Flag to indicate particle dependent data.
 DEF TNG_PARTICLE_DEPENDENT = 2
 
-
-cdef extern from "<stdio.h>" nogil:
-    # Seek and tell with off_t
-    int fseeko(FILE*, off_t, int)
-    off_t ftello(FILE*)
-
-cdef extern from "numpy/arrayobject.h":
-    void PyArray_ENABLEFLAGS(np.ndarray arr, int flags)
 
 
 # GROUP 1 Standard non-trajectory blocks
@@ -432,69 +413,10 @@ cdef extern from "tng/tng_io.h":
         const tng_trajectory * tng_data,
         int64_t * exp) nogil
 
-    tng_function_status tng_util_pos_read_range(
-        const tng_trajectory * tng_data,
-        const int64_t first_frame,
-        const int64_t last_frame,
-        float ** positions,
-        int64_t * stride_length) nogil
-
-    tng_function_status tng_util_box_shape_read_range(
-        const tng_trajectory * tng_data,
-        const int64_t first_frame,
-        const int64_t last_frame,
-        float ** box_shape,
-        int64_t * stride_length) nogil
-
-    tng_function_status tng_util_vel_read_range(
-        const tng_trajectory * tng_data,
-        const int64_t first_frame,
-        const int64_t last_frame,
-        float ** velocities,
-        int64_t * stride_length) nogil
-
-    tng_function_status tng_util_force_read_range(
-        const tng_trajectory * tng_data,
-        const int64_t first_frame,
-        const int64_t last_frame,
-        float ** forces,
-        int64_t * stride_length) nogil
-
-    tng_function_status tng_util_pos_read(
-        const tng_trajectory * tng_data,
-        float ** positions,
-        int64_t * stride_length) nogil
-
-    tng_function_status tng_util_box_shape_read(
-        const tng_trajectory * tng_data,
-        float ** box_shape,
-        int64_t * stride_length) nogil
-
-    tng_function_status tng_util_vel_read(
-        const tng_trajectory * tng_data,
-        float ** velocities,
-        int64_t * stride_length) nogil
-
-    tng_function_status tng_util_force_read(
-        const tng_trajectory * tng_data,
-        float ** forces,
-        int64_t * stride_length) nogil
-
     tng_function_status tng_util_time_of_frame_get(
         const tng_trajectory * tng_data,
         const int64_t frame_nr,
         double * time) nogil
-
-    tng_function_status tng_data_vector_interval_get(
-        const tng_trajectory * tng_data,
-        const int64_t block_id,
-        const int64_t start_frame_nr,
-        const int64_t end_frame_nr,
-        const char hash_mode,
-        void ** values,
-        int64_t * stride_length,
-        int64_t * n_values_per_frame,
-        char * type) nogil
 
     tng_function_status  tng_block_read_next(
         tng_trajectory * tng_data,
@@ -568,12 +490,6 @@ cdef extern from "tng/tng_io.h":
         int64_t * codec_id,
         double * factor) nogil
 
-    tng_function_status tng_data_get_stride_length(
-        tng_trajectory * tng_data,
-        int64_t block_id,
-        int64_t frame,
-        int64_t * stride_length) nogil
-
     tng_function_status tng_util_num_frames_with_data_of_block_id_get(
         tng_trajectory * tng_data,
         int64_t block_id,
@@ -592,9 +508,6 @@ cdef extern from "tng/tng_io.h":
         int64_t * n_values_per_frame,
         char * type) nogil
 
-# TODO REMOVE
-TNGFrame = namedtuple("TNGFrame", "positions velocities forces time step box")
-
 cdef int64_t gcd(int64_t a, int64_t b):
     cdef int64_t temp
     while b < 0:
@@ -610,30 +523,6 @@ cdef int64_t gcd_list(list a):
     for i in range(1, size):
         result = gcd(result, a[i])
     return result
-
-# TODO REMOVE
-
-
-@cython.final
-cdef class MemoryWrapper:
-    # holds a pointer to C allocated memory, deals with malloc&free based on:
-    # https://gist.github.com/GaelVaroquaux/
-    # 1249305/ac4f4190c26110fe2791a1e7a6bed9c733b3413f
-    cdef void * ptr
-
-    def __cinit__(MemoryWrapper self, int size):
-        # malloc not PyMem_Malloc as gmx later does realloc
-        self.ptr = malloc(size)
-        if self.ptr is NULL:
-            raise MemoryError
-
-    cdef inline void renew(self, int size) nogil:
-        self.ptr = realloc(self.ptr, size)
-
-    def __dealloc__(MemoryWrapper self):
-        if self.ptr != NULL:
-            free(self.ptr)
-
 
 cdef class TrajectoryWrapper:
     """A wrapper class for a tng_trajectory"""
