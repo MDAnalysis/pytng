@@ -20,6 +20,7 @@
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
+import sphinx_rtd_theme
 
 # -- General configuration ------------------------------------------------
 
@@ -30,7 +31,11 @@
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.napoleon', 'sphinx_sitemap']
+extensions = ['sphinx.ext.autodoc',
+              'sphinx.ext.napoleon',
+              'sphinx.ext.githubpages',
+              'sphinx_sitemap',
+]
 
 # for sitemap with https://github.com/jdillard/sphinx-sitemap
 site_url = "https://www.mdanalysis.org/pytng/"
@@ -75,7 +80,7 @@ language = None
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = 'default'
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
@@ -85,81 +90,101 @@ todo_include_todos = False
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-#
-html_theme = 'alabaster'
+
+html_theme = 'sphinx_rtd_theme'
+
+html_theme_path = [
+    sphinx_rtd_theme.get_html_theme_path()
+]
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
-# styles/fonts to match http://mdanalysis.org (see public/css)
+# styles/fonts to match https://userguide.mdanalysis.org
+# see https://github.com/MDAnalysis/mdanalysis/wiki/MDAnalysis-theme-colours
 #
 # /* MDAnalysis orange: #FF9200 */
 # /* MDAnalysis gray: #808080 */
 # /* MDAnalysis white: #FFFFFF */
 # /* MDAnalysis black: #000000 */
 
-color = {'orange': '#FF9200',
-         'gray': '#808080',
-         'white': '#FFFFFF',
-         'black': '#000000',}
-
 html_theme_options = {
-    'logo' : "logos/mdanalysis-logo-200x150.png",
-    'logo_name': True,
-    'logo_text_align': "left",
-    'description': "Reading TNG trajectories with Python",
-    'github_user': "MDAnalysis",
-    'github_repo': "pytng",
-    'github_button': False,
-    'github_banner': True,
-    'extra_nav_links': {
-        "MDAnalysis": "http://mdanalysis.org",
-        "Gromacs": "http://www.gromacs.org",
-    },
-    'show_related': False,
-    'fixed_sidebar': False,
-    'sidebar_includehidden': True,
-    'sidebar_collapse': False,
-    # style
-    'link': color['orange'],
-    'link_hover': color['orange'],
-    'gray_1': color['gray'],
-    'narrow_sidebar_bg': color['gray'],
-    'narrow_sidebar_fg': color['white'],
-    # typography
-    #'font_size': 17,
-    'font_family': "'PT Sans', Helvetica, Arial, 'sans-serif'",
-    'head_font_family': "",
-    'code_font_size': "smaller",
-    'code_font_family': "Menlo, Monaco, 'Courier New', monospace",
-    'caption_font_size': "smaller",
+    'canonical_url': '',
+    'logo_only': True,
+    'display_version': True,
+    'prev_next_buttons_location': 'bottom',
+    'style_external_links': False,
+    'style_nav_header_background': 'white',
+    # Toc options
+    'collapse_navigation': True,
+    'sticky_navigation': True,
+    'navigation_depth': 4,
+    'includehidden': True,
+    'titles_only': False,
 }
 
-# Add any paths that contain custom themes here, relative to this directory.
-#html_theme_path = [alabaster.get_path()]
 
-# The name for this set of Sphinx documents.  If None, it defaults to
-# "<project> v<release> documentation".
-#html_title = None
+# options common to RTD and MDAnalysis theme
 
-# A shorter title for the navigation bar.  Default is the same as html_title.
-#html_short_title = None
+# Add any paths that contain custom static files (such as style sheets) here,
+# relative to this directory. They are copied after the builtin static files,
+# so a file named "default.css" will overwrite the builtin "default.css".
+# For RTD theme: custom.css to override theme defaults.
+html_static_path = ['_static']
+html_css_files = ['custom.css']
+
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar. --- use theme
-#html_logo = "_static/logos/mdanalysis-logo-200x150.png"
+html_logo = "_static/logos/mdanalysis-logo-200x150.png"
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
 # pixels large.
 html_favicon = "_static/logos/mdanalysis-logo.ico"
 
-# Add any paths that contain custom static files (such as style sheets) here,
-# relative to this directory. They are copied after the builtin static files,
-# so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
 
+# If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
+# using the given strftime format.
+#html_last_updated_fmt = '%b %d, %Y'
+
+# If true, SmartyPants will be used to convert quotes and dashes to
+# typographically correct entities.
+#html_use_smartypants = True
+
+
+# Additional templates that should be rendered to pages, maps page names to
+# template names.
+#html_additional_pages = {}
+
+# If false, no module index is generated.
+#html_domain_indices = True
+
+# If false, no index is generated.
+#html_use_index = True
+
+# If true, the index is split into individual pages for each letter.
+#html_split_index = False
+
+# If true, links to the reST sources are added to the pages.
+#html_show_sourcelink = True
+
+# If true, "Created using Sphinx" is shown in the HTML footer. Default is True.
+#html_show_sphinx = True
+
+# If true, "(C) Copyright ..." is shown in the HTML footer. Default is True.
+#html_show_copyright = True
+
+# If true, an OpenSearch description file will be output, and all pages will
+# contain a <link> tag referring to it.  The value of this option must be the
+# base URL from which the finished HTML is served.
+html_use_opensearch = 'https://www.mdanalysis.org/RotamerConvolveMD'
+
+# sphinx-sitemap config https://github.com/jdillard/sphinx-sitemap
+#html_baseurl = 'https://www.mdanalysis.org/RotamerConvolveMD/'
+site_url = 'https://www.mdanalysis.org/RotamerConvolveMD/'
+html_extra_path = ['robots.txt']
 
 
 # -- Options for HTMLHelp output ------------------------------------------
@@ -196,8 +221,28 @@ latex_documents = [
      author, 'manual'),
 ]
 
+# The name of an image file (relative to this directory) to place at the top of
+# the title page.
+#latex_logo = None
 
-# -- Options for manual page output ---------------------------------------
+# For "manual" documents, if this is true, then toplevel headings are parts,
+# not chapters.
+#latex_use_parts = False
+
+# If true, show page references after internal links.
+#latex_show_pagerefs = False
+
+# If true, show URL addresses after external links.
+#latex_show_urls = False
+
+# Documents to append as an appendix to all manuals.
+#latex_appendices = []
+
+# If false, no module index is generated.
+#latex_domain_indices = True
+
+
+# -- Options for manual page output --------------------------------------------
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
@@ -207,7 +252,7 @@ man_pages = [
 ]
 
 
-# -- Options for Texinfo output -------------------------------------------
+# -- Options for Texinfo output ------------------------------------------------
 
 # Grouping the document tree into Texinfo files. List of tuples
 # (source start file, target name, title, author,
@@ -218,5 +263,12 @@ texinfo_documents = [
      'Miscellaneous'),
 ]
 
+# Documents to append as an appendix to all manuals.
+#texinfo_appendices = []
 
+# If false, no module index is generated.
+#texinfo_domain_indices = True
+
+# How to display URL addresses: 'footnote', 'no', or 'inline'.
+#texinfo_show_urls = 'footnote'
 
