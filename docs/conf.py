@@ -186,7 +186,7 @@ html_use_opensearch = 'https://www.mdanalysis.org/pytng'
 # sphinx-sitemap config https://github.com/jdillard/sphinx-sitemap
 #html_baseurl = 'https://www.mdanalysis.org/RotamerConvolveMD/'
 site_url = 'https://www.mdanalysis.org/pytng/'
-#html_extra_path = ['robots.txt']
+html_extra_path = ['robots.txt']
 
 
 # -- Options for HTMLHelp output ------------------------------------------
