@@ -16,9 +16,11 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
+import os
+import sys
+sys.path.insert(0, os.path.abspath('../../..'))
 # sys.path.insert(0, os.path.abspath('.'))
+
 
 import sphinx_rtd_theme
 
@@ -179,12 +181,12 @@ html_favicon = "_static/logos/mdanalysis-logo.ico"
 # If true, an OpenSearch description file will be output, and all pages will
 # contain a <link> tag referring to it.  The value of this option must be the
 # base URL from which the finished HTML is served.
-html_use_opensearch = 'https://www.mdanalysis.org/RotamerConvolveMD'
+html_use_opensearch = 'https://www.mdanalysis.org/pytng'
 
 # sphinx-sitemap config https://github.com/jdillard/sphinx-sitemap
 #html_baseurl = 'https://www.mdanalysis.org/RotamerConvolveMD/'
-site_url = 'https://www.mdanalysis.org/RotamerConvolveMD/'
-html_extra_path = ['robots.txt']
+site_url = 'https://www.mdanalysis.org/pytng/'
+#html_extra_path = ['robots.txt']
 
 
 # -- Options for HTMLHelp output ------------------------------------------
