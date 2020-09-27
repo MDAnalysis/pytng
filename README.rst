@@ -8,11 +8,6 @@ pytng - A python library to read TNG files!
   :target: https://codecov.io/gh/MDAnalysis/pytng
 
 
-.. Warning::
-
-   This package is under development. It is not ready for general use.
-
-
 This package provides the ``TNGFileIterator`` object to allow simple Pythonic
 access to data contained within TNG files.
 
@@ -32,6 +27,11 @@ access to data contained within TNG files.
 This package contains Python bindings to libtng_ for TNG file format[1_] [2_].
 This is used by molecular simulation programs such as Gromacs_ for storing the
 topology and results from molecular dynamics simulations.
+
+.. Warning::
+
+   This package is under active development. The API is liable to change
+   between release versions.
 
 .. _libtng: https://gitlab.com/gromacs/tng
 .. _1: http://link.springer.com/article/10.1007%2Fs00894-010-0948-5
