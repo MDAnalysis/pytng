@@ -14,7 +14,8 @@ install:
   - pip install --upgrade pytest
   - pip install codecov pytest-cov
   - pip install --upgrade numpy cython
-  - if [[ $TRAVIS_PYTHON_VERSION == "3.6" ]]; then pip install --upgrade sphinx sphinx-sitemap; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == "3.6" ]]; then pip install --upgrade sphinx
+  sphinx-sitemap sphinx-rtd-theme; fi
   - pip install -e .
 
 script:
