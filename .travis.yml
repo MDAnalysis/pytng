@@ -15,7 +15,7 @@ matrix:
   include:
     - env: NAME="Docs"
            MAIN_CMD="cd docs && make html"
-           PYTHON_VERSION=3.6
+           PYTHON_VERSION=3.7
 
            
 install:
