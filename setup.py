@@ -2,6 +2,7 @@ from __future__ import print_function
 
 import os
 import sys
+import versioneer
 from glob import glob
 
 from setuptools import setup, Command, Extension
@@ -68,11 +69,11 @@ def extensions():
 setup(
     name="pytng",
     python_requires=">=3.6",
-    version='0.2',
+    version=versioneer.get_version(),
     description='minimal Cython wrapper of tng',
     author='Max Linke, Richard J Gowers, Hugo MacDermott-Opeskin',
     author_email='max_linke@gmx.de',
     packages=['pytng'],
-    cmdclass={'clean': CleanCommand},
+    cmdclass=versioneer.get_cmdclass(), # clean:CleanCommand
     ext_modules=extensions(),
     zip_safe=False)

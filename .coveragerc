@@ -1,2 +1,7 @@
 [run]
 plugins = Cython.Coverage
+
+omit =
+    ./versioneer.py
+    ./pytng/_version.py
+
