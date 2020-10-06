@@ -3,3 +3,4 @@ plugins = Cython.Coverage
 
 omit =
     ./versioneer.py
+    ./_version.py
