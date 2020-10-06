@@ -1,0 +1,582 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>List of Available Blocks &mdash; pytng 0.1 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+
+  
+  
+    <link rel="shortcut icon" href="../_static/mdanalysis-logo.ico"/>
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="search" type="application/opensearchdescription+xml"
+          title="Search within pytng 0.1 documentation"
+          href="../_static/opensearch.xml"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="API for the TNGFileIterator Class" href="API.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: white" >
+          
+
+          
+            <a href="../index.html">
+          
+
+          
+            
+            <img src="../_static/mdanalysis-logo-200x150.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Overview:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="Examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Errors.html">Error Handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="API.html">API for the TNGFileIterator Class</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">List of Available Blocks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#group-1-standard-non-trajectory-blocks">GROUP 1: Standard non-trajectory blocks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#group-2-standard-trajectory-blocks">GROUP 2: Standard trajectory blocks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#group-3-gromacs-data-block-ids">GROUP 3: GROMACS data block IDs</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pytng</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>List of Available Blocks</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/documentation_pages/Blocks.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="list-of-available-blocks">
+<h1>List of Available Blocks<a class="headerlink" href="#list-of-available-blocks" title="Permalink to this headline">¶</a></h1>
+<p>Platform independent definitions for the block IDs can be found below.
+You should <strong>NOT</strong> use these directly. Instead use the <code class="xref py py-attr docutils literal notranslate"><span class="pre">TNGFileIterator.block_ids</span></code>
+attribute to see the blocks and block IDs available in your TNG file.</p>
+<div class="section" id="group-1-standard-non-trajectory-blocks">
+<h2>GROUP 1: Standard non-trajectory blocks<a class="headerlink" href="#group-1-standard-non-trajectory-blocks" title="Permalink to this headline">¶</a></h2>
+<p>Block IDs of standard non-trajectory blocks.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 59%" />
+<col style="width: 41%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Block Name</p></th>
+<th class="head"><p>Block ID (long long)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>TNG_GENERAL_INFO</p></td>
+<td><p>0x0000000000000000LL</p></td>
+</tr>
+<tr class="row-odd"><td><p>TNG_MOLECULES</p></td>
+<td><p>0x0000000000000001LL</p></td>
+</tr>
+<tr class="row-even"><td><p>TNG_TRAJECTORY_FRAME_SET</p></td>
+<td><p>0x0000000000000002LL</p></td>
+</tr>
+<tr class="row-odd"><td><p>TNG_PARTICLE_MAPPING</p></td>
+<td><p>0x0000000000000003LL</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="group-2-standard-trajectory-blocks">
+<h2>GROUP 2: Standard trajectory blocks<a class="headerlink" href="#group-2-standard-trajectory-blocks" title="Permalink to this headline">¶</a></h2>
+<p>Block IDs of standard trajectory blocks. Box shape and partial charges can
+be either trajectory blocks or non-trajectory blocks</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 59%" />
+<col style="width: 41%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Block Name</p></th>
+<th class="head"><p>Block ID (long long)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>TNG_TRAJ_BOX_SHAPE</p></td>
+<td><p>0x0000000010000000LL</p></td>
+</tr>
+<tr class="row-odd"><td><p>TNG_TRAJ_POSITIONS</p></td>
+<td><p>0x0000000010000001LL</p></td>
+</tr>
+<tr class="row-even"><td><p>TNG_TRAJ_VELOCITIES</p></td>
+<td><p>0x0000000010000002LL</p></td>
+</tr>
+<tr class="row-odd"><td><p>TNG_TRAJ_FORCES</p></td>
+<td><p>0x0000000010000003LL</p></td>
+</tr>
+<tr class="row-even"><td><p>TNG_TRAJ_PARTIAL_CHARGES</p></td>
+<td><p>0x0000000010000004LL</p></td>
+</tr>
+<tr class="row-odd"><td><p>TNG_TRAJ_FORMAL_CHARGES</p></td>
+<td><p>0x0000000010000005LL</p></td>
+</tr>
+<tr class="row-even"><td><p>TNG_TRAJ_B_FACTORS</p></td>
+<td><p>0x0000000010000006LL</p></td>
+</tr>
+<tr class="row-odd"><td><p>TNG_TRAJ_ANISOTROPIC_B_FACTORS</p></td>
+<td><p>0x0000000010000007LL</p></td>
+</tr>
+<tr class="row-even"><td><p>TNG_TRAJ_OCCUPANCY</p></td>
+<td><p>0x0000000010000008LL</p></td>
+</tr>
+<tr class="row-odd"><td><p>TNG_TRAJ_GENERAL_COMMENTS</p></td>
+<td><p>0x0000000010000009LL</p></td>
+</tr>
+<tr class="row-even"><td><p>TNG_TRAJ_MASSES</p></td>
+<td><p>0x0000000010000010LL</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="group-3-gromacs-data-block-ids">
+<h2>GROUP 3: GROMACS data block IDs<a class="headerlink" href="#group-3-gromacs-data-block-ids" title="Permalink to this headline">¶</a></h2>
+<p>Block IDs of data blocks specific to GROMACS.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 59%" />
+<col style="width: 41%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Block Name</p></th>
+<th class="head"><p>Block ID (long long)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>TNG_GMX_LAMBDA</p></td>
+<td><p>0x1000000010000000LL</p></td>
+</tr>
+<tr class="row-odd"><td><p>TNG_GMX_ENERGY_ANGLE</p></td>
+<td><p>0x1000000010000001LL</p></td>
+</tr>
+<tr class="row-even"><td><p>TNG_GMX_ENERGY_RYCKAERT_BELL</p></td>
+<td><p>0x1000000010000002LL</p></td>
+</tr>
+<tr class="row-odd"><td><p>TNG_GMX_ENERGY_LJ_14</p></td>
+<td><p>0x1000000010000003LL</p></td>
+</tr>
+<tr class="row-even"><td><p>TNG_GMX_ENERGY_COULOMB_14</p></td>
+<td><p>0x1000000010000004LL</p></td>
+</tr>
+<tr class="row-odd"><td><p>TNG_GMX_ENERGY_LJ_SR</p></td>
+<td><p>0x1000000010000005LL</p></td>
+</tr>
+<tr class="row-even"><td><p>TNG_GMX_ENERGY_COULOMB_SR</p></td>
+<td><p>0x1000000010000006LL</p></td>
+</tr>
+<tr class="row-odd"><td><p>TNG_GMX_ENERGY_COUL_RECIP</p></td>
+<td><p>0x1000000010000007LL</p></td>
+</tr>
+<tr class="row-even"><td><p>TNG_GMX_ENERGY_POTENTIAL</p></td>
+<td><p>0x1000000010000008LL</p></td>
+</tr>
+<tr class="row-odd"><td><p>TNG_GMX_ENERGY_KINETIC_EN</p></td>
+<td><p>0x1000000010000009LL</p></td>
+</tr>
+<tr class="row-even"><td><p>TNG_GMX_ENERGY_TOTAL_ENERGY</p></td>
+<td><p>0x1000000010000010LL</p></td>
+</tr>
+<tr class="row-odd"><td><p>TNG_GMX_ENERGY_TEMPERATURE</p></td>
+<td><p>0x1000000010000011LL</p></td>
+</tr>
+<tr class="row-even"><td><p>TNG_GMX_ENERGY_PRESSURE</p></td>
+<td><p>0x1000000010000012LL</p></td>
+</tr>
+<tr class="row-odd"><td><p>TNG_GMX_ENERGY_CONSTR_RMSD</p></td>
+<td><p>0x1000000010000013LL</p></td>
+</tr>
+<tr class="row-even"><td><p>TNG_GMX_ENERGY_CONSTR2_RMSD</p></td>
+<td><p>0x1000000010000014LL</p></td>
+</tr>
+<tr class="row-odd"><td><p>TNG_GMX_ENERGY_BOX_X</p></td>
+<td><p>0x1000000010000015LL</p></td>
+</tr>
+<tr class="row-even"><td><p>TNG_GMX_ENERGY_BOX_Y</p></td>
+<td><p>0x1000000010000016LL</p></td>
+</tr>
+<tr class="row-odd"><td><p>TNG_GMX_ENERGY_BOX_Z</p></td>
+<td><p>0x1000000010000017LL</p></td>
+</tr>
+<tr class="row-even"><td><p>TNG_GMX_ENERGY_BOXXX</p></td>
+<td><p>0x1000000010000018LL</p></td>
+</tr>
+<tr class="row-odd"><td><p>TNG_GMX_ENERGY_BOXYY</p></td>
+<td><p>0x1000000010000019LL</p></td>
+</tr>
+<tr class="row-even"><td><p>TNG_GMX_ENERGY_BOXZZ</p></td>
+<td><p>0x1000000010000020LL</p></td>
+</tr>
+<tr class="row-odd"><td><p>TNG_GMX_ENERGY_BOXYX</p></td>
+<td><p>0x1000000010000021LL</p></td>
+</tr>
+<tr class="row-even"><td><p>TNG_GMX_ENERGY_BOXZX</p></td>
+<td><p>0x1000000010000022LL</p></td>
+</tr>
+<tr class="row-odd"><td><p>TNG_GMX_ENERGY_BOXZY</p></td>
+<td><p>0x1000000010000023LL</p></td>
+</tr>
+<tr class="row-even"><td><p>TNG_GMX_ENERGY_BOXVELXX</p></td>
+<td><p>0x1000000010000024LL</p></td>
+</tr>
+<tr class="row-odd"><td><p>TNG_GMX_ENERGY_BOXVELYY</p></td>
+<td><p>0x1000000010000025LL</p></td>
+</tr>
+<tr class="row-even"><td><p>TNG_GMX_ENERGY_BOXVELZZ</p></td>
+<td><p>0x1000000010000026LL</p></td>
+</tr>
+<tr class="row-odd"><td><p>TNG_GMX_ENERGY_BOXVELYX</p></td>
+<td><p>0x1000000010000027LL</p></td>
+</tr>
+<tr class="row-even"><td><p>TNG_GMX_ENERGY_BOXVELZX</p></td>
+<td><p>0x1000000010000028LL</p></td>
+</tr>
+<tr class="row-odd"><td><p>TNG_GMX_ENERGY_BOXVELZY</p></td>
+<td><p>0x1000000010000029LL</p></td>
+</tr>
+<tr class="row-even"><td><p>TNG_GMX_ENERGY_VOLUME</p></td>
+<td><p>0x1000000010000030LL</p></td>
+</tr>
+<tr class="row-odd"><td><p>TNG_GMX_ENERGY_DENSITY</p></td>
+<td><p>0x1000000010000031LL</p></td>
+</tr>
+<tr class="row-even"><td><p>TNG_GMX_ENERGY_PV</p></td>
+<td><p>0x1000000010000032LL</p></td>
+</tr>
+<tr class="row-odd"><td><p>TNG_GMX_ENERGY_ENTHALPY</p></td>
+<td><p>0x1000000010000033LL</p></td>
+</tr>
+<tr class="row-even"><td><p>TNG_GMX_ENERGY_VIR_XX</p></td>
+<td><p>0x1000000010000034LL</p></td>
+</tr>
+<tr class="row-odd"><td><p>TNG_GMX_ENERGY_VIR_XY</p></td>
+<td><p>0x1000000010000035LL</p></td>
+</tr>
+<tr class="row-even"><td><p>TNG_GMX_ENERGY_VIR_XZ</p></td>
+<td><p>0x1000000010000036LL</p></td>
+</tr>
+<tr class="row-odd"><td><p>TNG_GMX_ENERGY_VIR_YX</p></td>
+<td><p>0x1000000010000037LL</p></td>
+</tr>
+<tr class="row-even"><td><p>TNG_GMX_ENERGY_VIR_YY</p></td>
+<td><p>0x1000000010000038LL</p></td>
+</tr>
+<tr class="row-odd"><td><p>TNG_GMX_ENERGY_VIR_YZ</p></td>
+<td><p>0x1000000010000039LL</p></td>
+</tr>
+<tr class="row-even"><td><p>TNG_GMX_ENERGY_VIR_ZX</p></td>
+<td><p>0x1000000010000040LL</p></td>
+</tr>
+<tr class="row-odd"><td><p>TNG_GMX_ENERGY_VIR_ZY</p></td>
+<td><p>0x1000000010000041LL</p></td>
+</tr>
+<tr class="row-even"><td><p>TNG_GMX_ENERGY_VIR_ZZ</p></td>
+<td><p>0x1000000010000042LL</p></td>
+</tr>
+<tr class="row-odd"><td><p>TNG_GMX_ENERGY_SHAKEVIR_XX</p></td>
+<td><p>0x1000000010000043LL</p></td>
+</tr>
+<tr class="row-even"><td><p>TNG_GMX_ENERGY_SHAKEVIR_XY</p></td>
+<td><p>0x1000000010000044LL</p></td>
+</tr>
+<tr class="row-odd"><td><p>TNG_GMX_ENERGY_SHAKEVIR_XZ</p></td>
+<td><p>0x1000000010000045LL</p></td>
+</tr>
+<tr class="row-even"><td><p>TNG_GMX_ENERGY_SHAKEVIR_YX</p></td>
+<td><p>0x1000000010000046LL</p></td>
+</tr>
+<tr class="row-odd"><td><p>TNG_GMX_ENERGY_SHAKEVIR_YY</p></td>
+<td><p>0x1000000010000047LL</p></td>
+</tr>
+<tr class="row-even"><td><p>TNG_GMX_ENERGY_SHAKEVIR_YZ</p></td>
+<td><p>0x1000000010000048LL</p></td>
+</tr>
+<tr class="row-odd"><td><p>TNG_GMX_ENERGY_SHAKEVIR_ZX</p></td>
+<td><p>0x1000000010000049LL</p></td>
+</tr>
+<tr class="row-even"><td><p>TNG_GMX_ENERGY_SHAKEVIR_ZY</p></td>
+<td><p>0x1000000010000050LL</p></td>
+</tr>
+<tr class="row-odd"><td><p>TNG_GMX_ENERGY_SHAKEVIR_ZZ</p></td>
+<td><p>0x1000000010000051LL</p></td>
+</tr>
+<tr class="row-even"><td><p>TNG_GMX_ENERGY_FORCEVIR_XX</p></td>
+<td><p>0x1000000010000052LL</p></td>
+</tr>
+<tr class="row-odd"><td><p>TNG_GMX_ENERGY_FORCEVIR_XY</p></td>
+<td><p>0x1000000010000053LL</p></td>
+</tr>
+<tr class="row-even"><td><p>TNG_GMX_ENERGY_FORCEVIR_XZ</p></td>
+<td><p>0x1000000010000054LL</p></td>
+</tr>
+<tr class="row-odd"><td><p>TNG_GMX_ENERGY_FORCEVIR_YX</p></td>
+<td><p>0x1000000010000055LL</p></td>
+</tr>
+<tr class="row-even"><td><p>TNG_GMX_ENERGY_FORCEVIR_YY</p></td>
+<td><p>0x1000000010000056LL</p></td>
+</tr>
+<tr class="row-odd"><td><p>TNG_GMX_ENERGY_FORCEVIR_YZ</p></td>
+<td><p>0x1000000010000057LL</p></td>
+</tr>
+<tr class="row-even"><td><p>TNG_GMX_ENERGY_FORCEVIR_ZX</p></td>
+<td><p>0x1000000010000058LL</p></td>
+</tr>
+<tr class="row-odd"><td><p>TNG_GMX_ENERGY_FORCEVIR_ZY</p></td>
+<td><p>0x1000000010000059LL</p></td>
+</tr>
+<tr class="row-even"><td><p>TNG_GMX_ENERGY_FORCEVIR_ZZ</p></td>
+<td><p>0x1000000010000060LL</p></td>
+</tr>
+<tr class="row-odd"><td><p>TNG_GMX_ENERGY_PRES_XX</p></td>
+<td><p>0x1000000010000061LL</p></td>
+</tr>
+<tr class="row-even"><td><p>TNG_GMX_ENERGY_PRES_XY</p></td>
+<td><p>0x1000000010000062LL</p></td>
+</tr>
+<tr class="row-odd"><td><p>TNG_GMX_ENERGY_PRES_XZ</p></td>
+<td><p>0x1000000010000063LL</p></td>
+</tr>
+<tr class="row-even"><td><p>TNG_GMX_ENERGY_PRES_YX</p></td>
+<td><p>0x1000000010000064LL</p></td>
+</tr>
+<tr class="row-odd"><td><p>TNG_GMX_ENERGY_PRES_YY</p></td>
+<td><p>0x1000000010000065LL</p></td>
+</tr>
+<tr class="row-even"><td><p>TNG_GMX_ENERGY_PRES_YZ</p></td>
+<td><p>0x1000000010000066LL</p></td>
+</tr>
+<tr class="row-odd"><td><p>TNG_GMX_ENERGY_PRES_ZX</p></td>
+<td><p>0x1000000010000067LL</p></td>
+</tr>
+<tr class="row-even"><td><p>TNG_GMX_ENERGY_PRES_ZY</p></td>
+<td><p>0x1000000010000068LL</p></td>
+</tr>
+<tr class="row-odd"><td><p>TNG_GMX_ENERGY_PRES_ZZ</p></td>
+<td><p>0x1000000010000069LL</p></td>
+</tr>
+<tr class="row-even"><td><p>TNG_GMX_ENERGY_SURFXSURFTEN</p></td>
+<td><p>0x1000000010000070LL</p></td>
+</tr>
+<tr class="row-odd"><td><p>TNG_GMX_ENERGY_MUX</p></td>
+<td><p>0x1000000010000071LL</p></td>
+</tr>
+<tr class="row-even"><td><p>TNG_GMX_ENERGY_MUY</p></td>
+<td><p>0x1000000010000072LL</p></td>
+</tr>
+<tr class="row-odd"><td><p>TNG_GMX_ENERGY_MUZ</p></td>
+<td><p>0x1000000010000073LL</p></td>
+</tr>
+<tr class="row-even"><td><p>TNG_GMX_ENERGY_VCOS</p></td>
+<td><p>0x1000000010000074LL</p></td>
+</tr>
+<tr class="row-odd"><td><p>TNG_GMX_ENERGY_VISC</p></td>
+<td><p>0x1000000010000075LL</p></td>
+</tr>
+<tr class="row-even"><td><p>TNG_GMX_ENERGY_BAROSTAT</p></td>
+<td><p>0x1000000010000076LL</p></td>
+</tr>
+<tr class="row-odd"><td><p>TNG_GMX_ENERGY_T_SYSTEM</p></td>
+<td><p>0x1000000010000077LL</p></td>
+</tr>
+<tr class="row-even"><td><p>TNG_GMX_ENERGY_LAMB_SYSTEM</p></td>
+<td><p>0x1000000010000078LL</p></td>
+</tr>
+<tr class="row-odd"><td><p>TNG_GMX_SELECTION_GROUP_NAMES</p></td>
+<td><p>0x1000000010000079LL</p></td>
+</tr>
+<tr class="row-even"><td><p>TNG_GMX_ATOM_SELECTION_GROUP</p></td>
+<td><p>0x1000000010000080LL</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="API.html" class="btn btn-neutral float-left" title="API for the TNGFileIterator Class" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2017-2020, Max Linke, Richard J Gowers, Hugo MacDermott-Opeskin
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+ 
+<div class="footer"><p>Please see
+    our <a href="https://www.mdanalysis.org/pages/privacy/">Privacy Policy</a>
+    to learn how <a href="https://www.mdanalysis.org">MDAnalysis</a> collects data.</p>
+    <script data-goatcounter="https://mdanalysis.goatcounter.com/count"
+        async src="//gc.zgo.at/count.js"></script>
+</div>
+
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

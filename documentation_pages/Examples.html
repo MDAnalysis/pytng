@@ -1,0 +1,366 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Examples &mdash; pytng 0.1 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+
+  
+  
+    <link rel="shortcut icon" href="../_static/mdanalysis-logo.ico"/>
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="search" type="application/opensearchdescription+xml"
+          title="Search within pytng 0.1 documentation"
+          href="../_static/opensearch.xml"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Error Handling" href="Errors.html" />
+    <link rel="prev" title="pytng - A python library to read TNG files!" href="../index.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: white" >
+          
+
+          
+            <a href="../index.html">
+          
+
+          
+            
+            <img src="../_static/mdanalysis-logo-200x150.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Overview:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Errors.html">Error Handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="API.html">API for the TNGFileIterator Class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Blocks.html">List of Available Blocks</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pytng</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Examples</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/documentation_pages/Examples.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="examples">
+<h1>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h1>
+<p>TNG files can be read using the <code class="xref py py-class docutils literal notranslate"><span class="pre">TNGFileIterator</span></code> class as a file handle,
+which supports use as a context manager.</p>
+<p>The TNGFileIterator has attributes related to the trajectory metadata, such as
+the number of integrator steps, the number of steps with data, the block_ids
+available at each step, and the stride at which each block is written.</p>
+<p>The TNGFileIterator returns one frame at a time, which is accessed from the
+<code class="xref py py-attr docutils literal notranslate"><span class="pre">TNGFileIterator.current_integrator_step</span></code> attribute or as part of any
+slicing or indexing operation. A NumPy array of the right size and datatype must then be
+provided to a getter method for the data to be read into. The required datatype is dictated by what type of block is being read.
+Supported datatypes are:</p>
+<ul class="simple">
+<li><p>TNG_INT_DATA : np.int64</p></li>
+<li><p>TNG_FLOAT_DATA : np.float32</p></li>
+<li><p>TNG_DOUBLE_DATA : np.float64</p></li>
+</ul>
+<p>Helper methods are provided to create <code class="xref py py-class docutils literal notranslate"><span class="pre">np.ndarray</span></code> instances of the right shape
+and datatype for a particular block in <code class="xref py py-attr docutils literal notranslate"><span class="pre">TNGFileIterator.make_ndarray_for_block_from_name</span></code> and <code class="xref py py-attr docutils literal notranslate"><span class="pre">TNGFileIterator.make_ndarray_for_block_from_name</span></code>.</p>
+<p>An example of how to read positions and box vectors from a TNG file is
+shown below:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pytng</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="k">with</span> <span class="n">pytng</span><span class="o">.</span><span class="n">TNGFileIterator</span><span class="p">(</span><span class="s2">&quot;traj.tng&quot;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">tng</span><span class="p">:</span>
+
+   <span class="c1"># make a numpy array to hold the data using helper function</span>
+   <span class="c1"># this array will then be updated in-place</span>
+
+   <span class="n">positions</span> <span class="o">=</span> <span class="n">tng</span><span class="o">.</span><span class="n">make_ndarray_for_block_from_name</span><span class="p">(</span><span class="s2">&quot;TNG_TRAJ_POSITIONS&quot;</span><span class="p">)</span>
+   <span class="n">box_vec</span> <span class="o">=</span> <span class="n">tng</span><span class="o">.</span><span class="n">make_ndarray_for_block_from_name</span><span class="p">(</span><span class="s2">&quot;TNG_TRAJ_BOX_SHAPE&quot;</span><span class="p">)</span>
+
+   <span class="c1"># the TNG API uses regular strides for data deposition, here we check</span>
+   <span class="c1"># that the strides for positions and box_vectors are the same</span>
+   <span class="c1"># and then iterate over all timesteps with this data</span>
+   <span class="c1"># len(tng) is the total number of steps in the file</span>
+
+   <span class="k">assert</span> <span class="p">(</span><span class="n">tng</span><span class="o">.</span><span class="n">block_strides</span><span class="p">[</span><span class="s2">&quot;TNG_TRAJ_POSITIONS&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">tng</span><span class="o">.</span><span class="n">block_strides</span><span class="p">[</span><span class="s2">&quot;TNG_TRAJ_BOX_SHAPE&quot;</span><span class="p">])</span>
+
+   <span class="k">for</span> <span class="n">ts</span> <span class="ow">in</span> <span class="n">tng</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="nb">len</span><span class="p">(</span><span class="n">tng</span><span class="p">):</span><span class="n">tng</span><span class="o">.</span><span class="n">block_strides</span><span class="p">[</span><span class="s2">&quot;TNG_TRAJ_POSITIONS&quot;</span><span class="p">]]:</span>
+      <span class="c1"># read the integrator timestep, modifying the current_integrator_step</span>
+      <span class="c1"># which is returned as ts</span>
+
+      <span class="c1"># get the data from the requested block by supplying NumPy array which</span>
+      <span class="c1"># is updated in-place or returned</span>
+
+      <span class="c1"># update in place or return by value</span>
+      <span class="n">ts</span><span class="o">.</span><span class="n">get_positions</span><span class="p">(</span><span class="n">positions</span><span class="p">)</span>
+      <span class="c1"># positions = ts.get_positions(positions) is equivalent</span>
+
+      <span class="c1"># you can check if the last read was successful (contained data) easily</span>
+      <span class="k">if</span> <span class="ow">not</span> <span class="n">ts</span><span class="o">.</span><span class="n">read_success</span><span class="p">:</span>
+         <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="s2">&quot;No position data at this timestep&quot;</span><span class="p">)</span>
+
+      <span class="n">ts</span><span class="o">.</span><span class="n">get_box</span><span class="p">(</span><span class="n">box_vec</span><span class="p">)</span>
+      <span class="c1"># box_vec = ts.get_box(box_vec) is equivalent</span>
+
+      <span class="c1"># you can check if the last read was successful (contained data) easily</span>
+      <span class="k">if</span> <span class="ow">not</span> <span class="n">ts</span><span class="o">.</span><span class="n">read_success</span><span class="p">:</span>
+         <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="s2">&quot;No box data at this timestep&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>It is also possible to slice and index the file object to select particular
+frames individually:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pytng</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="k">with</span> <span class="n">pytng</span><span class="o">.</span><span class="n">TNGFileIterator</span><span class="p">(</span><span class="s1">&#39;traj.tng&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">tng</span><span class="p">:</span>
+    <span class="n">positions</span> <span class="o">=</span> <span class="n">tng</span><span class="o">.</span><span class="n">make_ndarray_for_block_from_name</span><span class="p">(</span><span class="s2">&quot;TNG_TRAJ_POSITIONS&quot;</span><span class="p">)</span>
+    <span class="n">box_vec</span> <span class="o">=</span> <span class="n">tng</span><span class="o">.</span><span class="n">make_ndarray_for_block_from_name</span><span class="p">(</span><span class="s2">&quot;TNG_TRAJ_BOX_SHAPE&quot;</span><span class="p">)</span>
+    <span class="n">positions</span> <span class="o">=</span> <span class="n">tng</span><span class="p">[</span><span class="mi">100</span><span class="p">]</span><span class="o">.</span><span class="n">get_positions</span><span class="p">(</span><span class="n">positions</span><span class="p">)</span>
+    <span class="n">box_vec</span> <span class="o">=</span> <span class="n">tng</span><span class="p">[</span><span class="mi">200</span><span class="p">]</span><span class="o">.</span><span class="n">get_box</span><span class="p">(</span><span class="n">box_vec</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If the step to read is not on the stride of the requested datatype, the NumPy
+array will be returned filled with <cite>np.nan</cite>. A contrived example of this is given below:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pytng</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="k">with</span> <span class="n">pytng</span><span class="o">.</span><span class="n">TNGFileIterator</span><span class="p">(</span><span class="s2">&quot;traj.tng&quot;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">tng</span><span class="p">:</span>
+   <span class="c1"># make array for positions</span>
+   <span class="n">positions</span> <span class="o">=</span> <span class="n">tng</span><span class="o">.</span><span class="n">make_ndarray_for_block_from_name</span><span class="p">(</span><span class="s2">&quot;TNG_TRAJ_POSITIONS&quot;</span><span class="p">)</span>
+
+   <span class="c1"># choose a step</span>
+   <span class="n">step</span> <span class="o">=</span> <span class="mi">42</span>
+
+   <span class="c1"># check that we are off stride (stride%step != 0)</span>
+   <span class="k">assert</span><span class="p">(</span><span class="n">tng</span><span class="o">.</span><span class="n">block_strides</span><span class="p">[</span><span class="s2">&quot;TNG_TRAJ_POSITIONS&quot;</span><span class="p">]</span><span class="o">%</span><span class="n">step</span> <span class="o">!=</span> <span class="mi">0</span> <span class="p">)</span>
+
+   <span class="c1"># slice a single timestep</span>
+   <span class="n">ts</span> <span class="o">=</span> <span class="n">tng</span><span class="p">[</span><span class="n">step</span><span class="p">]</span>
+
+   <span class="c1"># get the data, which will be returned full of np.nan</span>
+   <span class="n">ts</span><span class="o">.</span><span class="n">get_positions</span><span class="p">(</span><span class="n">positions</span><span class="p">)</span>
+
+   <span class="c1"># the read_success property will indicate that there was no data found</span>
+   <span class="c1"># when the getter was called</span>
+   <span class="k">assert</span><span class="p">(</span><span class="n">ts</span><span class="o">.</span><span class="n">read_success</span> <span class="o">==</span> <span class="kc">False</span><span class="p">)</span>
+
+   <span class="c1">#  but we can also double check that the read was blank</span>
+   <span class="n">is_blank_read</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">positions</span><span class="p">))</span> <span class="c1"># this will be true</span>
+   <span class="k">if</span> <span class="n">is_blank_read</span><span class="p">:</span>
+      <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;This is a blank read&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Available data blocks are listed at the end of this documentation. Common
+blocks for which there are getter methods include:</p>
+<ul class="simple">
+<li><p>positions : <code class="xref py py-attr docutils literal notranslate"><span class="pre">TNGFileIterator.get_positions</span></code></p></li>
+<li><p>box vectors : <code class="xref py py-attr docutils literal notranslate"><span class="pre">TNGFileIterator.get_box</span></code></p></li>
+<li><p>forces : <code class="xref py py-attr docutils literal notranslate"><span class="pre">TNGFileIterator.get_forces</span></code></p></li>
+<li><p>velocities : <code class="xref py py-attr docutils literal notranslate"><span class="pre">TNGFileIterator.get_velocities</span></code></p></li>
+</ul>
+<p>Other blocks can be accessed using the <code class="xref py py-attr docutils literal notranslate"><span class="pre">TNGCurrentIntegratorStep.get_blockid</span></code>
+method, where the block id needs to be supplied and can be accessed from the
+<code class="xref py py-attr docutils literal notranslate"><span class="pre">TNGFileIterator.block_ids</span></code> attribute. An example of this is shown below:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pytng</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="k">with</span> <span class="n">pytng</span><span class="o">.</span><span class="n">TNGFileIterator</span><span class="p">(</span><span class="s2">&quot;traj.tng&quot;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">tng</span><span class="p">:</span>
+
+   <span class="c1"># make array for the GMX potential energy block</span>
+   <span class="n">Epot</span> <span class="o">=</span> <span class="n">tng</span><span class="o">.</span><span class="n">make_ndarray_for_block_from_name</span><span class="p">(</span><span class="s2">&quot;TNG_GMX_ENERGY_POTENTIAL&quot;</span><span class="p">)</span>
+
+   <span class="c1"># get the block id for the GMX potential energy block</span>
+   <span class="n">Epot_block_id</span> <span class="o">=</span> <span class="n">tng</span><span class="o">.</span><span class="n">block_ids</span><span class="p">[</span><span class="s2">&quot;TNG_GMX_ENERGY_POTENTIAL&quot;</span><span class="p">]</span>
+
+   <span class="c1"># get the block data for frame 0 with get_blockid</span>
+   <span class="n">tng</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get_blockid</span><span class="p">[</span><span class="n">Epot_block_id</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="Errors.html" class="btn btn-neutral float-right" title="Error Handling" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="../index.html" class="btn btn-neutral float-left" title="pytng - A python library to read TNG files!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2017-2020, Max Linke, Richard J Gowers, Hugo MacDermott-Opeskin
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+ 
+<div class="footer"><p>Please see
+    our <a href="https://www.mdanalysis.org/pages/privacy/">Privacy Policy</a>
+    to learn how <a href="https://www.mdanalysis.org">MDAnalysis</a> collects data.</p>
+    <script data-goatcounter="https://mdanalysis.goatcounter.com/count"
+        async src="//gc.zgo.at/count.js"></script>
+</div>
+
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
