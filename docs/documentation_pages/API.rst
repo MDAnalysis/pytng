@@ -1,8 +1,8 @@
 API for the TNGFileIterator Class
 =================================
 
-.. autoclass:: pytng.pytng.TNGFileIterator
+.. autoclass:: pytng.TNGFileIterator
   :members:
 
-.. autoclass:: pytng.pytng.TNGCurrentIntegratorStep
+.. autoclass:: pytng.TNGCurrentIntegratorStep
   :members:
