@@ -1,2 +1,5 @@
 include versioneer.py
 include pytng/_version.py
+recursive-include pytng/ *
+recursive-include tests/ *
+
