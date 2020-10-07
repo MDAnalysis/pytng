@@ -26,6 +26,11 @@ except ImportError:
     print("Need cython for installation")
     sys.exit(1)
 
+try:
+    with open("README.rst", "r") as handle:
+        long_description = handle.read()
+except:
+    long_description = "Minimal Cython wrapper of the TNG trajectory library"
 
 class CleanCommand(Command):
     """Custom clean command to tidy up the project root."""
@@ -70,7 +75,9 @@ setup(
     name="pytng",
     python_requires=">=3.6",
     version=versioneer.get_version(),
-    description='minimal Cython wrapper of tng',
+    description='Minimal Cython wrapper of the TNG trajectory library',
+    long_description=long_description,
+    long_description_content_type='text/x-rst',
     author='Max Linke, Richard J Gowers, Hugo MacDermott-Opeskin',
     author_email='max_linke@gmx.de',
     packages=['pytng'],
