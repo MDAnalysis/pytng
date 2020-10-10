@@ -1196,7 +1196,7 @@ cdef class TNGCurrentIntegratorStep:
         cdef int64_t n_atoms = -1
         cdef double precision = -1
         cdef char datatype = -1
-        cdef tng_function_status read_stat
+        cdef tng_function_status read_stat = TNG_CRITICAL
 
         cdef np.float32_t[::1] _float_view
         cdef int64_t[::1] _int64_t_view
@@ -1306,7 +1306,7 @@ cdef class TNGCurrentIntegratorStep:
         code in :method:`get_blockid` so the user should not have to deal with
         C level exceptions
         """
-        cdef tng_function_status stat
+        cdef tng_function_status stat = TNG_CRITICAL
         cdef int64_t             codec_id
         cdef int             block_dependency
         cdef void * data = NULL
@@ -1348,8 +1348,10 @@ cdef class TNGCurrentIntegratorStep:
                                                     & stride_length,
                                                     n_values_per_frame,
                                                     datatype)
-
         if stat != TNG_SUCCESS:
+            return TNG_CRITICAL
+        
+        if self.step%stride_length != 0:
             return TNG_CRITICAL
 
         # get the compression of the current frame
