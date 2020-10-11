@@ -6,6 +6,7 @@
 .. toctree::
    :maxdepth: 3
    :caption: Overview:
+   :hidden:
 
    ./documentation_pages/Examples
    ./documentation_pages/Errors
