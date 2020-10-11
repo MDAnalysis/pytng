@@ -286,6 +286,16 @@ def test_argon_npt_compressed_off_stride_is_nan(ARGON_NPT_COMPRESSED):
         assert(ts.read_success == False)
         assert(np.all(np.isnan(positions)))
 
+def test_argon_npt_compressed_off_stride_reverse_idx_is_nan(ARGON_NPT_COMPRESSED):
+    with pytng.TNGFileIterator(ARGON_NPT_COMPRESSED) as tng:
+        positions = tng.make_ndarray_for_block_from_name("TNG_TRAJ_POSITIONS")
+        step = -42
+        assert(tng.block_strides["TNG_TRAJ_POSITIONS"]%step != 0 )
+        ts = tng[step]
+        ts.get_positions(positions)
+        assert(ts.read_success == False)
+        assert(np.all(np.isnan(positions)))
+
 
 def test_argon_npt_compressed_n_particles(
     ARGON_NPT_COMPRESSED, ARGON_NPT_COMPRESSED_DATA
