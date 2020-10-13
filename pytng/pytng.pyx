@@ -29,12 +29,14 @@ ctypedef enum tng_compression: TNG_UNCOMPRESSED, TNG_XTC_COMPRESSION, \
     TNG_TNG_COMPRESSION, TNG_GZIP_COMPRESSION
 # TNG alias for T/F
 ctypedef enum tng_bool: TNG_FALSE, TNG_TRUE
+# Indicates variable number of atoms
+ctypedef enum tng_variable_n_atoms_flag:   TNG_CONSTANT_N_ATOMS, \
+    TNG_VARIABLE_N_ATOMS
 
 # Flag to indicate frame dependent data.
 DEF TNG_FRAME_DEPENDENT = 1
 # Flag to indicate particle dependent data.
 DEF TNG_PARTICLE_DEPENDENT = 2
-
 
 
 # GROUP 1 Standard non-trajectory blocks
@@ -508,6 +510,9 @@ cdef extern from "tng/tng_io.h":
         int64_t * n_values_per_frame,
         char * type) nogil
 
+    tng_function_status tng_num_particles_variable_get(
+        tng_trajectory * tng_data, char * variable) nogil
+
 cdef int64_t gcd(int64_t a, int64_t b):
     cdef int64_t temp
     while b < 0:
@@ -644,6 +649,8 @@ cdef class TNGFileIterator:
         self.mode = mode
 
         cdef char _mode
+        cdef char var_natoms_flag
+
         if self.mode == 'r':
             _mode = 'r'
         elif self.mode == 'w':
@@ -667,6 +674,13 @@ cdef class TNGFileIterator:
         stat = tng_util_trajectory_open(fname_bytes, _mode, & self._traj._ptr)
         if stat != TNG_SUCCESS:
             raise IOError("File '{}' cannot be opened".format(fname))
+
+        # check if the number of particles can vary
+        stat = tng_num_particles_variable_get(self._traj._ptr, & var_natoms_flag)
+        if stat != TNG_SUCCESS:
+            raise IOError("Particle variability cannot be read".format(fname))
+        if var_natoms_flag != TNG_CONSTANT_N_ATOMS:
+            raise IOError("Variable numbers of particles not supported")
 
         # get the number of integrator timesteps
         stat = tng_num_frames_get(self._traj._ptr, & self._n_steps)
@@ -694,7 +708,7 @@ cdef class TNGFileIterator:
     def _close(self):
         """Make sure the file handle is closed"""
         if self.is_open:
-            tng_util_trajectory_close( & self._traj._ptr)
+            tng_util_trajectory_close(& self._traj._ptr)
             self.is_open = False
             self.reached_eof = True
             self._n_steps = -1
@@ -904,9 +918,9 @@ cdef class TNGFileIterator:
         if step >= self._n_steps:
             raise ValueError("""frame specified is greater than number of steps
             in input file {}""".format(self._n_steps))
-        
+
         if step < 0:
-            step = self._n_steps - np.abs(step) 
+            step = self._n_steps - np.abs(step)
 
         self.step = step
         self.current_step = TNGCurrentIntegratorStep(
@@ -1049,8 +1063,7 @@ cdef class TNGCurrentIntegratorStep:
 
     cdef tng_trajectory * _traj
     cdef int64_t step
-    cdef bint read_success 
-
+    cdef bint read_success
 
     def __cinit__(self, TrajectoryWrapper traj, int64_t step,
                   bint debug=False):
@@ -1095,7 +1108,7 @@ cdef class TNGCurrentIntegratorStep:
         """
         cdef tng_function_status read_stat
         cdef double _step_time
-        read_stat = self._get_step_time( & _step_time)
+        read_stat = self._get_step_time(& _step_time)
         if read_stat != TNG_SUCCESS:
             return None
         else:
@@ -1172,7 +1185,7 @@ cdef class TNGCurrentIntegratorStep:
         data : np.ndarray
            NumPy array to read the data into, the required shape is determined
            by the block dependency and the number of values per frame.
-        
+
         Raises
         ------
         TypeError
@@ -1216,7 +1229,8 @@ cdef class TNGCurrentIntegratorStep:
 
         if read_stat != TNG_SUCCESS:
             self.read_success = False
-            data[:,:] = np.nan #NOTE I think we should still nan fill on blank read
+            # NOTE I think we should still nan fill on blank read
+            data[:, :] = np.nan
             return data
         else:
             self.read_success = True
@@ -1242,7 +1256,7 @@ cdef class TNGCurrentIntegratorStep:
             if dtype != np.float32:
                 raise TypeError(
                     "PYTNG ERROR: dtype of array {} does not match TNG dtype float".format(dtype))
-            _float_view = <np.float32_t[:n_vals] > (< float*> values)
+            _float_view = <np.float32_t[:n_vals] > ( < float*> values)
             data[:, :] = np.asarray(_float_view, dtype=np.float32).reshape(
                 n_atoms, n_values_per_frame)
 
@@ -1250,7 +1264,7 @@ cdef class TNGCurrentIntegratorStep:
             if dtype != np.int64:
                 raise TypeError(
                     "PYTNG ERROR: dtype of array {} does not match TNG dtype int64_t".format(dtype))
-            _int64_t_view = <int64_t[:n_vals] > (< int64_t*> values)
+            _int64_t_view = <int64_t[:n_vals] > ( < int64_t*> values)
             data[:, :] = np.asarray(_int64_t_view, dtype=np.int64).reshape(
                 n_atoms, n_values_per_frame)
 
@@ -1258,7 +1272,7 @@ cdef class TNGCurrentIntegratorStep:
             if dtype != np.float64:
                 raise TypeError(
                     "PYTNG ERROR: dtype of array {} does not match TNG dtype double".format(dtype))
-            _double_view = <double[:n_vals] > (< double*> values)
+            _double_view = <double[:n_vals] > ( < double*> values)
             data[:, :] = np.asarray(_double_view, dtype=np.float64).reshape(
                 n_atoms, n_values_per_frame)
 
@@ -1350,8 +1364,8 @@ cdef class TNGCurrentIntegratorStep:
                                                     datatype)
         if stat != TNG_SUCCESS:
             return TNG_CRITICAL
-        
-        if self.step%stride_length != 0:
+
+        if self.step % stride_length != 0:
             return TNG_CRITICAL
 
         # get the compression of the current frame
@@ -1373,7 +1387,6 @@ cdef class TNGCurrentIntegratorStep:
         stat = tng_util_time_of_frame_get(self._traj, self.step, step_time)
         if stat != TNG_SUCCESS:
             return TNG_CRITICAL
-
 
 
 block_dictionary = {}
