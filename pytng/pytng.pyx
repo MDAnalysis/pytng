@@ -678,7 +678,7 @@ cdef class TNGFileIterator:
         # check if the number of particles can vary
         stat = tng_num_particles_variable_get(self._traj._ptr, & var_natoms_flag)
         if stat != TNG_SUCCESS:
-            raise IOError("Particle variability cannot be read".format(fname))
+            raise IOError("Particle variability cannot be read")
         if var_natoms_flag != TNG_CONSTANT_N_ATOMS:
             raise IOError("Variable numbers of particles not supported")
 
