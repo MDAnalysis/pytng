@@ -6,6 +6,8 @@ pytng - A python library to read TNG files!
   :target: https://travis-ci.com/MDAnalysis/pytng
 .. image:: https://codecov.io/gh/MDAnalysis/pytng/branch/master/graph/badge.svg
   :target: https://codecov.io/gh/MDAnalysis/pytng
+.. image:: https://zenodo.org/badge/92180386.svg
+   :target: https://zenodo.org/badge/latestdoi/92180386
 
 
 This package provides the ``TNGFileIterator`` object to allow simple Pythonic
