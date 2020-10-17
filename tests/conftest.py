@@ -23,6 +23,11 @@ def TNG_EXAMPLE():
     return os.path.join(HERE, "reference_files", "tng_example.tng")
 
 
+@pytest.fixture()
+def TNG_UTF8_EXAMPLE():
+    return os.path.join(HERE, "reference_files", "tng_😝_emoji.tng")
+
+
 @pytest.fixture
 def TNG_EXAMPLE_DATA():
     # reference data for GMX_REF from Gromacs/tng library
