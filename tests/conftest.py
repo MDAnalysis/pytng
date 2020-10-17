@@ -25,7 +25,7 @@ def TNG_EXAMPLE():
 
 @pytest.fixture()
 def TNG_UTF8_EXAMPLE():
-    return os.path.join(HERE, "reference_files", "tng_éxample_special_char.tng")
+    return os.path.join(HERE, "reference_files", "tng_😝_emoji.tng")
 
 
 @pytest.fixture
