@@ -1,9 +1,11 @@
-# cython: linetrace=True
 # cython: embedsignature=True
-# cython: profile=True
 # cython: binding=True
+"""
+# use these for profiling (note linetracing is broken on PyPy)
+# cython: linetrace=True
+# cython: profile=True
 # distutils: define_macros=[CYTHON_TRACE=1, CYTHON_TRACE_NOGIL=1]
-
+"""
 import numpy as np
 import numbers
 import os
