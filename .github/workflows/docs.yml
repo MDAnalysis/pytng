@@ -12,8 +12,12 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-        
-      - name: Install and Build 🔧 # This is built with makefile
+      
+      - name: Install PyTNG 🔧 
+        run: |
+          python setup.py install
+          
+      - name:  Build Docs 🔧 # This is built with makefile
         run: |
           cd docs
           make html
