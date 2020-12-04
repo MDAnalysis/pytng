@@ -30,6 +30,7 @@ jobs:
           make html
 
       - name: Deploy 🚀
+        if: github.event_name != 'pull_request'
         uses: JamesIves/github-pages-deploy-action@3.7.1
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
