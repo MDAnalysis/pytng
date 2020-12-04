@@ -34,15 +34,15 @@ after_success:
   # touch .nojekyll else github-pages messes up theme
   - if [[ $TRAVIS_PYTHON_VERSION == "3.7" ]]; then cd docs && make html && touch ./_build/html/.nojekyll && cd ../; fi
 
-deploy:
-  # stuff related to deploying to gh-pages
-  provider: pages
-  strategy: git
-  cleanup: false
-  token: $GH_PAGES_TOKEN
-  on:
-    branch: master
-    python: "3.7"
-  local_dir: docs/_build/html
-  project_name: pytng
-  edge: true
+# deploy:
+#   # stuff related to deploying to gh-pages
+#   provider: pages
+#   strategy: git
+#   cleanup: false
+#   token: $GH_PAGES_TOKEN
+#   on:
+#     branch: master
+#     python: "3.7"
+#   local_dir: docs/_build/html
+#   project_name: pytng
+#   edge: true
