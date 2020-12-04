@@ -1,3 +1,7 @@
 numpy
 cython
-
+sphinx
+sphinx-sitemap
+sphinx-rtd-theme
+pytest
+pytest-cov
