@@ -2,7 +2,7 @@
 pytng - A python library to read TNG files!
 ===========================================
 
-.. image:: https://github.com/MDAnalysis/pytng/workflows/Python%20package/badge.svg
+.. image:: https://github.com/MDAnalysis/pytng/workflows/build/badge.svg
 
 .. image:: https://codecov.io/gh/MDAnalysis/pytng/branch/master/graph/badge.svg
   :target: https://codecov.io/gh/MDAnalysis/pytng
