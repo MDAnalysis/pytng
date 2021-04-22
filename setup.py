@@ -60,6 +60,7 @@ def extensions():
         exts.append(
             Extension(
                 'pytng.pytng',
+                define_macros = [('ZLIB_WINAPI', '1'),
                 sources=glob('pytng/src/compression/*.c') + glob(
                     'pytng/src/lib/*.c') + glob('pytng/src/external/*.c') + ['pytng/pytng.pyx'],
                 include_dirs=[
