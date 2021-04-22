@@ -56,17 +56,29 @@ def extensions():
     """ setup extensions for this module
     """
     exts = []
-    exts.append(
-        Extension(
-            'pytng.pytng',
-            sources=glob('pytng/src/compression/*.c') + glob(
-                'pytng/src/lib/*.c') + glob('pytng/src/external/*.c') + ['pytng/pytng.pyx'],
-            include_dirs=[
-                "pytng/include/", "pytng/src/external/", "{}/include".format(sys.prefix),
-                np.get_include()
-            ],
-            library_dirs=["{}/lib".format(sys.prefix)],
-            libraries=['z'], ))
+    if platform_system == "Windows":
+        exts.append(
+            Extension(
+                'pytng.pytng',
+                sources=glob('pytng/src/compression/*.c') + glob(
+                    'pytng/src/lib/*.c') + glob('pytng/src/external/*.c') + ['pytng/pytng.pyx'],
+                include_dirs=[
+                    "pytng/include/", "pytng/src/external/", "{}/include".format(sys.prefix),
+                    np.get_include()
+                ],
+                library_dirs=["{}/lib".format(sys.prefix)]))
+    else:
+        exts.append(
+            Extension(
+                'pytng.pytng',
+                sources=glob('pytng/src/compression/*.c') + glob(
+                    'pytng/src/lib/*.c') + glob('pytng/src/external/*.c') + ['pytng/pytng.pyx'],
+                include_dirs=[
+                    "pytng/include/", "pytng/src/external/", "{}/include".format(sys.prefix),
+                    np.get_include()
+                ],
+                library_dirs=["{}/lib".format(sys.prefix)],
+                libraries=['z'], ))
 
     return cythonize(exts, gdb_debug=False)
 
