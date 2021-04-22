@@ -74,7 +74,7 @@ def extensions():
             library_dirs=["{}/lib".format(sys.prefix)],
             libraries=['zlib'], ))
 
-    return cythonize(exts, gdb_debug=False)
+    return cythonize(exts, gdb_debug=False, libraries=ext_libs)
 
 
 setup(
