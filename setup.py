@@ -56,7 +56,7 @@ def extensions():
     """ setup extensions for this module
     """
     exts = []
-    if platform_system == "Windows":
+    if sys.platform.startswith("win"):
         exts.append(
             Extension(
                 'pytng.pytng',
