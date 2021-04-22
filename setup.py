@@ -32,6 +32,7 @@ try:
 except:
     long_description = "Minimal Cython wrapper of the TNG trajectory library"
 
+
 class CleanCommand(Command):
     """Custom clean command to tidy up the project root."""
     # https://stackoverflow.com/questions/3779915/why-does-python-setup-py-sdist-create-unwanted-project-egg-info-in-project-r
@@ -60,14 +61,16 @@ def extensions():
         exts.append(
             Extension(
                 'pytng.pytng',
-                define_macros = [('ZLIB_WINAPI', '1')],
+                define_macros=[('ZLIB_WINAPI', '1')],
                 sources=glob('pytng/src/compression/*.c') + glob(
                     'pytng/src/lib/*.c') + glob('pytng/src/external/*.c') + ['pytng/pytng.pyx'],
                 include_dirs=[
-                    "pytng/include/", "pytng/include/external/", "{}/include".format(sys.prefix),
+                    "pytng/include/", "pytng/include/external/", "{}/include".format(
+                        sys.prefix),
                     np.get_include()
                 ],
-                library_dirs=["{}/lib".format(sys.prefix)]))
+                library_dirs=["{}/lib".format(sys.prefix)],
+                libraries=['z'],))
     else:
         exts.append(
             Extension(
@@ -75,7 +78,8 @@ def extensions():
                 sources=glob('pytng/src/compression/*.c') + glob(
                     'pytng/src/lib/*.c') + glob('pytng/src/external/*.c') + ['pytng/pytng.pyx'],
                 include_dirs=[
-                    "pytng/include/", "pytng/src/external/", "{}/include".format(sys.prefix),
+                    "pytng/include/", "pytng/src/external/", "{}/include".format(
+                        sys.prefix),
                     np.get_include()
                 ],
                 library_dirs=["{}/lib".format(sys.prefix)],
@@ -94,6 +98,6 @@ setup(
     author='Max Linke, Richard J Gowers, Hugo MacDermott-Opeskin',
     author_email='max_linke@gmx.de',
     packages=['pytng'],
-    cmdclass=versioneer.get_cmdclass(), # clean:CleanCommand
+    cmdclass=versioneer.get_cmdclass(),  # clean:CleanCommand
     ext_modules=extensions(),
     zip_safe=False)
