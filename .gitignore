@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# the pytng C file itself
+pytng/pytng.c
+
 # C extensions
 *.so
 
