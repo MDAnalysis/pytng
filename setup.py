@@ -56,23 +56,34 @@ class CleanCommand(Command):
 def extensions():
     """ setup extensions for this module
     """
-    ext_libs = [['zlib', {
-               'sources': glob('pytng/src/external/*.c'),
-               'include_dirs': ["pytng/src/external/"],
-               }]]
     exts = []
-    exts.append(
-        Extension(
-            'pytng.pytng',
-            sources=glob('pytng/src/compression/*.c') + glob(
-                'pytng/src/lib/*.c') + ['pytng/pytng.pyx'],
-            include_dirs=[
-                "pytng/include/",  "{}/include".format(
-                    sys.prefix),
-                np.get_include()
-            ],
-            library_dirs=["{}/lib".format(sys.prefix)],
-            libraries=['zlib'], ))
+    if sys.platform.startswith("win"):
+        exts.append(
+            Extension(
+                'pytng.pytng',
+                define_macros=[('ZLIB_WINAPI', '1')],
+                sources=glob('pytng/src/compression/*.c') + glob(
+                    'pytng/src/lib/*.c') + glob('pytng/src/external/*.c') + ['pytng/pytng.pyx'],
+                include_dirs=[
+                    "pytng/include/", "pytng/include/external/", "{}/include".format(
+                        sys.prefix),
+                    np.get_include()
+                ],
+                library_dirs=["{}/lib".format(sys.prefix)],
+                libraries=['z'],))
+    else:
+        exts.append(
+            Extension(
+                'pytng.pytng',
+                sources=glob('pytng/src/compression/*.c') + glob(
+                    'pytng/src/lib/*.c') + glob('pytng/src/external/*.c') + ['pytng/pytng.pyx'],
+                include_dirs=[
+                    "pytng/include/", "pytng/src/external/", "{}/include".format(
+                        sys.prefix),
+                    np.get_include()
+                ],
+                library_dirs=["{}/lib".format(sys.prefix)],
+                libraries=['z'], ))
 
     return cythonize(exts, gdb_debug=False)
 
