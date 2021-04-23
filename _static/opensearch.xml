@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/">
   <ShortName>pytng</ShortName>
-  <Description>Search pytng 0+untagged.1.gc4419c5 documentation</Description>
+  <Description>Search pytng 0+untagged.1.g914f199 documentation</Description>
   <InputEncoding>utf-8</InputEncoding>
   <Url type="text/html" method="get"
        template="https://www.mdanalysis.org/pytng/search.html?q={searchTerms}"/>
-  <LongName>pytng 0+untagged.1.gc4419c5 documentation</LongName>
+  <LongName>pytng 0+untagged.1.g914f199 documentation</LongName>
   <Image height="16" width="16" type="image/x-icon">https://www.mdanalysis.org/pytng/_static/mdanalysis-logo.ico</Image>
   
 </OpenSearchDescription>
