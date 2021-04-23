@@ -56,31 +56,17 @@ def extensions():
     """ setup extensions for this module
     """
     exts = []
-    if sys.platform.startswith("win"):
-        exts.append(
-            Extension(
-                'pytng.pytng',
-                define_macros = [('ZLIB_WINAPI', '1')],
-                sources=glob('pytng/src/compression/*.c') + glob(
-                    'pytng/src/lib/*.c') + glob('pytng/src/external/*.c') + ['pytng/pytng.pyx'],
-                include_dirs=[
-                    "pytng/include/", "pytng/include/external/", "{}/include".format(sys.prefix),
-                    np.get_include()
-                ],
-                library_dirs=["{}/lib".format(sys.prefix)]))
-    else:
-        exts.append(
-            Extension(
-                'pytng.pytng',
-                sources=glob('pytng/src/compression/*.c') + glob(
-                    'pytng/src/lib/*.c') + glob('pytng/src/external/*.c') + ['pytng/pytng.pyx'],
-                include_dirs=[
-                    "pytng/include/", "pytng/src/external/", "{}/include".format(sys.prefix),
-                    np.get_include()
-                ],
-                library_dirs=["{}/lib".format(sys.prefix)],
-                libraries=['z'], ))
-
+    exts.append(
+        Extension(
+            'pytng.pytng',
+            sources=glob('pytng/src/compression/*.c') + glob(
+                'pytng/src/lib/*.c') + glob('pytng/src/external/*.c') + ['pytng/pytng.pyx'],
+            include_dirs=[
+                "pytng/include/", "pytng/src/external/", "{}/include".format(sys.prefix),
+                np.get_include()
+            ],
+            library_dirs=["{}/lib".format(sys.prefix)],
+            libraries=['z'], ))
     return cythonize(exts, gdb_debug=False)
 
 
