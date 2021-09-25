@@ -84,7 +84,7 @@ def extensions():
                 library_dirs=["{}/lib".format(sys.prefix)],
                 libraries=['z'], ))
 
-    return cythonize(exts, gdb_debug=False)
+    return cythonize(exts,language="c++", gdb_debug=False)
 
 
 setup(
