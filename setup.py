@@ -3,6 +3,7 @@ from __future__ import print_function
 import os
 import sys
 import versioneer
+import zlib
 from glob import glob
 
 from setuptools import setup, Command, Extension
