@@ -67,7 +67,8 @@ def extensions():
                     "pytng/include/", "pytng/include/external/", "{}/include".format(sys.prefix),
                     np.get_include()
                 ],
-                library_dirs=["{}/lib".format(sys.prefix)]))
+                library_dirs=["{}/lib".format(sys.prefix)],
+                libraries=['z'], ))
     else:
         exts.append(
             Extension(
@@ -75,7 +76,7 @@ def extensions():
                 sources=glob('pytng/src/compression/*.c') + glob(
                     'pytng/src/lib/*.c') + glob('pytng/src/external/*.c') + ['pytng/pytng.pyx'],
                 include_dirs=[
-                    "pytng/include/", "pytng/src/external/", "{}/include".format(sys.prefix),
+                    "pytng/include/", "{}/include".format(sys.prefix),
                     np.get_include()
                 ],
                 library_dirs=["{}/lib".format(sys.prefix)],
