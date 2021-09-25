@@ -58,6 +58,7 @@ def extensions():
     """
     exts = []
     if sys.platform.startswith("win"):
+        print()
         exts.append(
             Extension(
                 'pytng.pytng',
@@ -69,7 +70,7 @@ def extensions():
                     np.get_include()
                 ],
                 library_dirs=["{}/lib".format(sys.prefix)],
-                libraries=['z'], ))
+                extra_compile_args="-lz"))
     else:
         exts.append(
             Extension(
