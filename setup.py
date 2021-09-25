@@ -70,7 +70,7 @@ def extensions():
                     np.get_include()
                 ],
                 library_dirs=["{}/lib".format(sys.prefix)],
-                extra_compile_args="-lz"))
+                libraries=['z']))
     else:
         exts.append(
             Extension(
