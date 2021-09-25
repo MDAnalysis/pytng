@@ -69,7 +69,7 @@ def extensions():
                     "pytng/include/", "pytng/include/external/", "{}/include".format(sys.prefix),
                     np.get_include()
                 ],
-                library_dirs=["{}/lib".format(sys.prefix)],
+                library_dirs=["{}\\Library\\bin".format(sys.prefix)],
                 libraries=['z']))
     else:
         exts.append(
