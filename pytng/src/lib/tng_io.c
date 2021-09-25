@@ -37,8 +37,9 @@
 #include <string.h>
 #include <time.h>
 #include <math.h>
+#include <zlib.h>
 
-#include "external/zlib.h"
+//#include "external/zlib.h"
 #include "tng/md5.h"
 #include "compression/tng_compress.h"
 #include "tng/version.h"
