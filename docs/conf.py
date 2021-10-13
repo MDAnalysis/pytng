@@ -41,6 +41,7 @@ extensions = ['sphinx.ext.autodoc',
 
 # for sitemap with https://github.com/jdillard/sphinx-sitemap
 site_url = "https://www.mdanalysis.org/pytng/"
+sitemap_url_scheme = "{link}"
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -57,7 +58,7 @@ master_doc = 'index'
 # General information about the project.
 project = u'pytng'
 author = u'Max Linke, Richard J Gowers, Hugo MacDermott-Opeskin'
-copyright = u'2017-2020, ' + author
+copyright = u'2017-2021, ' + author
 
 
 # The version info for the project you're documenting, acts as replacement for
@@ -184,7 +185,6 @@ html_favicon = "_static/logos/mdanalysis-logo.ico"
 html_use_opensearch = 'https://www.mdanalysis.org/pytng'
 
 # sphinx-sitemap config https://github.com/jdillard/sphinx-sitemap
-#html_baseurl = 'https://www.mdanalysis.org/RotamerConvolveMD/'
 site_url = 'https://www.mdanalysis.org/pytng/'
 html_extra_path = ['robots.txt']
 
