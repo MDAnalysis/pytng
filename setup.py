@@ -65,8 +65,7 @@ def extensions():
                 "pytng/include/", "pytng/include/external/", "{}/include".format(sys.prefix),
                 np.get_include()
             ],
-            library_dirs=["{}/lib".format(sys.prefix)],
-            libraries=['z'], ))
+            library_dirs=["{}/lib".format(sys.prefix)]))
     return cythonize(exts, gdb_debug=False)
 
 
