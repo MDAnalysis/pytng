@@ -16136,6 +16136,7 @@ tng_function_status DECLSPECDLLEXPORT
 
             min_diff = frame_diff;
         }
+        data->last_retrieved_frame = data_frame;
     }
     for (i = 0; i < frame_set->n_data_blocks; i++)
     {
@@ -16220,6 +16221,7 @@ tng_function_status DECLSPECDLLEXPORT
 
             min_diff = frame_diff;
         }
+        data->last_retrieved_frame = data_frame;
     }
     if (min_diff < 0)
     {
