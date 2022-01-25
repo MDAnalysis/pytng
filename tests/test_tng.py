@@ -18,7 +18,9 @@ def test_tng_example_load_bad_file(CORRUPT_FILEPATH):
             tng.read_step(0)
 
 def test_tng_example_load_utf8_special_char(TNG_UTF8_EXAMPLE):
-    if not sys.platform.startswith("win"):
+    if  sys.platform.startswith("win"):
+        pytest.skip("utf8 and windows don't mix")
+    else:
         with pytng.TNGFileIterator(TNG_UTF8_EXAMPLE) as tng:
             tng.read_step(0)
 
