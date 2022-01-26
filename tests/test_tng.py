@@ -1,5 +1,7 @@
 import pytng
 import numpy as np
+import sys
+
 from numpy.testing import (
     assert_almost_equal,
     assert_equal,
@@ -16,8 +18,11 @@ def test_tng_example_load_bad_file(CORRUPT_FILEPATH):
             tng.read_step(0)
 
 def test_tng_example_load_utf8_special_char(TNG_UTF8_EXAMPLE):
-    with pytng.TNGFileIterator(TNG_UTF8_EXAMPLE) as tng:
-        tng.read_step(0)
+    if  sys.platform.startswith("win"):
+        pytest.skip("utf8 and windows don't mix")
+    else:
+        with pytng.TNGFileIterator(TNG_UTF8_EXAMPLE) as tng:
+            tng.read_step(0)
 
 
 def test_tng_example_open_missing_file_mode_r(MISSING_FILEPATH):
