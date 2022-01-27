@@ -42,4 +42,4 @@ jobs:
         python setup.py install
     - name: Test with pytest
       run: |
-        pytest
+        pytest -v -ra ./tests/
