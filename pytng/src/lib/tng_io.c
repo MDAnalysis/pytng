@@ -15970,6 +15970,12 @@ tng_function_status DECLSPECDLLEXPORT
     int                        found, read_all = 0;
     int64_t                    file_pos;
 
+    // This function has been modified slightly from the original source code to fix a bug
+    // identified by the Chemfiles maintainers (Issue:https://github.com/chemfiles/chemfiles/issues/425  PR:https://github.com/chemfiles/chemfiles/pull/430).
+    // Currently awaiting upstream review in the TNG repo (https://gitlab.com/gromacs/tng/-/issues/18.), but has been stale for a while.
+    // We only use this function to find the blocks and block strides once on `__init__()` and make no use of the previously incorrect step data.
+    // Thus this change is inconsequential wrt pytng but is included for completeness and library correctness. See 2 notes in source code below for modified lines.
+
     TNG_ASSERT(tng_data, "TNG library: Trajectory container not properly setup.");
     TNG_ASSERT(next_frame, "TNG library: The pointer to the next frame must not be NULL.");
     TNG_ASSERT(n_data_blocks_in_next_frame,
@@ -16136,6 +16142,7 @@ tng_function_status DECLSPECDLLEXPORT
 
             min_diff = frame_diff;
         }
+        // Chemfiles TNG modification, see note on function signature
         data->last_retrieved_frame = data_frame;
     }
     for (i = 0; i < frame_set->n_data_blocks; i++)
@@ -16221,6 +16228,7 @@ tng_function_status DECLSPECDLLEXPORT
 
             min_diff = frame_diff;
         }
+         // Chemfiles TNG modification, see note on function signature
         data->last_retrieved_frame = data_frame;
     }
     if (min_diff < 0)
