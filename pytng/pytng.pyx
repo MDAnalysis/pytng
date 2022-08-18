@@ -947,7 +947,7 @@ cdef class TNGFileIterator:
         for block, stride in self._frame_strides.items():
             if stride > self._n_steps:
                 self._frame_strides[block] = 1
-                self._n_data_frames[block] = self._n_steps
+                self._n_data_frames[block] =  self._n_steps -1
                 warnings.warn(f"Stride of block {block} is larger than the" 
                                " number of steps in the TNG file. This can"
                                " sometimes occur for the trajectories produced"
