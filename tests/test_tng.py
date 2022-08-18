@@ -71,7 +71,7 @@ def test_tng_coords_len(TNG_COORDS_TEST):
 def test_tng_coords_stride_frames(TNG_COORDS_TEST):
     with pytng.TNGFileIterator(TNG_COORDS_TEST) as tng:
         assert (np.asarray(list(tng.block_strides.values())) == 1).all()
-        assert (np.asarray(list(tng.n_data_frames.values())) == 5).all()
+        assert (np.asarray(list(tng.n_data_frames.values())) == 4).all()
 
 
 @pytest.mark.parametrize(
