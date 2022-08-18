@@ -177,6 +177,12 @@ def ARGON_NPT_COMPRESSED_DATA():
 
 
 @pytest.fixture()
+def TNG_COORDS_TEST():
+    return os.path.join(
+        HERE, "reference_files", "test.tng"
+    )
+
+@pytest.fixture()
 def WATER_NPT_COMPRESSED_TRJCONV():
     return os.path.join(
         HERE, "reference_files", "water_npt_compressed_trjconv.tng"
