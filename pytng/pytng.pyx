@@ -9,6 +9,7 @@
 import numpy as np
 import numbers
 import os
+import warnings
 from libc.stdio cimport printf, FILE, SEEK_SET, SEEK_CUR, SEEK_END
 from libc.stdlib cimport malloc, free, realloc
 from libc.stdint cimport int64_t, uint64_t, int32_t, uint32_t
@@ -702,6 +703,7 @@ cdef class TNGFileIterator:
         if stat != TNG_SUCCESS:
             raise IOError("Strides for each data block cannot be read")
 
+        self._sanitise_block_metadata()
         self._distance_scale = 10.0**(exponent+9)
         self.is_open = True
         self.reached_eof = False
@@ -930,9 +932,32 @@ cdef class TNGFileIterator:
 
         return self.current_step
 
+    def _sanitise_block_metadata(self):
+        """
+        Check that the strides and number of frames makes sense
+
+        Raises
+        ------
+
+        ValueError
+            Any of the blocks contain 0 data frames
+        """
+        for block, stride in self._frame_strides.items():
+            if stride > self._n_steps:
+                self._frame_strides[block] = 1
+                self._n_data_frames[block] = self._n_steps
+                warnings.warn(f"Stride of block {block} is larger than the"
+                               " number of steps in the TNG file. This can"
+                               " sometimes occur for the trajectories produced"
+                               " with `gmx trjconv`. Setting
+                               " stride for block to one.")
+        
+        for block, nframes in self._n_data_frames:
+            if nframes == 0:
+                raise ValueError(f"Block {block} has no frames contaning data")
+
     # NOTE here we assume that the first frame has all the blocks
     #  that are present in the whole traj
-
     cdef tng_function_status _get_block_metadata(self):
         """Gets the ids, strides and number of frames with
            actual data from the trajectory"""
@@ -1229,11 +1254,17 @@ cdef class TNGCurrentIntegratorStep:
                                                     & datatype,
                                                     self.debug)
 
-        if read_stat != TNG_SUCCESS:
+        if read_stat == TNG_CRITICAL:
             self.read_success = False
             # NOTE I think we should still nan fill on blank read
             data[:, :] = np.nan
             return data
+        elif read_stat == TNG_FAILURE:
+            # we read off stride
+            warnings.warn(f"Off stride read for block "
+                          f"{block_dictionary[block_id]} with stride "
+                          f"{self._frame_strides[block_dictionary[block_id]]}")
+            self.read_success = True
         else:
             self.read_success = True
 
@@ -1367,8 +1398,6 @@ cdef class TNGCurrentIntegratorStep:
         if stat != TNG_SUCCESS:
             return TNG_CRITICAL
 
-        if self.step % stride_length != 0:
-            return TNG_CRITICAL
 
         # get the compression of the current frame
         stat = tng_util_frame_current_compression_get(self._traj,
@@ -1383,7 +1412,13 @@ cdef class TNGCurrentIntegratorStep:
         else:
             prec[0] = local_prec
 
+        # possible blank read, but nothing complained, we will warn in caller
+        if self.step % stride_length != 0:
+            return TNG_FAILURE
+
+        # if we reached here read was succesfull
         return TNG_SUCCESS
+
 
     cdef tng_function_status _get_step_time(self, double * step_time):
         stat = tng_util_time_of_frame_get(self._traj, self.step, step_time)

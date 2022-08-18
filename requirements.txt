@@ -5,3 +5,4 @@ sphinx-sitemap
 sphinx-rtd-theme
 pytest
 pytest-cov
+warnings
