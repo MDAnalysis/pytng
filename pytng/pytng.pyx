@@ -604,6 +604,8 @@ cdef class TNGFileIterator:
 
     # stride at which each block is written
     cdef dict   _frame_strides
+    # same but indexed by block id
+    cdef dict   _frame_strides_blockid
     # number of actual frames with data for each block
     cdef dict   _n_data_frames
     # the number of values per frame for each data block
@@ -928,7 +930,7 @@ cdef class TNGFileIterator:
 
         self.step = step
         self.current_step = TNGCurrentIntegratorStep(
-            self._traj, step, debug=self.debug)
+            self._traj, step, self._frame_strides_blockid, debug=self.debug)
 
         return self.current_step
 
@@ -955,6 +957,8 @@ cdef class TNGFileIterator:
         for block, nframes in self._n_data_frames.items():
             if nframes == 0:
                 raise ValueError(f"Block {block} has no frames contaning data")
+        
+        self._frame_strides_blockid = {block_id_dictionary[k]:v for k, v in self._frame_strides.items()}
 
     # NOTE here we assume that the first frame has all the blocks
     #  that are present in the whole traj
@@ -1086,15 +1090,16 @@ cdef class TNGCurrentIntegratorStep:
     """Retrieves data at the curent trajectory step"""
 
     cdef bint debug
+    cdef dict _frame_strides_blockid
     cdef int64_t _n_blocks
-
     cdef tng_trajectory * _traj
     cdef int64_t step
     cdef bint read_success
 
     def __cinit__(self, TrajectoryWrapper traj, int64_t step,
-                  bint debug=False):
+                  dict frame_strides, bint debug=False):
         self.debug = debug
+        self._frame_strides_blockid = frame_strides
 
         self._traj = traj._ptr
         self.step = step
@@ -1262,12 +1267,15 @@ cdef class TNGCurrentIntegratorStep:
             data[:, :] = np.nan
             return data
         elif read_stat == TNG_FAILURE:
-            self.read_success = False
-            warnings.warn(f"Off stride read for block "
-                          f"{block_dictionary[block_id]}")
-            # NOTE  nan fill on blank read
-            data[:, :] = np.nan
-            return data
+            # possibly off stride, perhaps the stride in file  is > nstep and 
+            # we sorted it out in _sanitise_block_metadata?
+            if (self.step % self._frame_strides_blockid[block_id]):
+                self.read_success = False
+                warnings.warn(f"Off stride read for block "
+                              f"{block_dictionary[block_id]}")
+                # NOTE  nan fill on blank read
+                data[:, :] = np.nan
+                return data
         else:
             self.read_success = True
 
