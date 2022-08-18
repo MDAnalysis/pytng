@@ -946,10 +946,10 @@ cdef class TNGFileIterator:
             if stride > self._n_steps:
                 self._frame_strides[block] = 1
                 self._n_data_frames[block] = self._n_steps
-                warnings.warn(f"Stride of block {block} is larger than the"
+                warnings.warn(f"Stride of block {block_dictionary[block]} is larger than the" 
                                " number of steps in the TNG file. This can"
                                " sometimes occur for the trajectories produced"
-                               " with `gmx trjconv`. Setting
+                               " with `gmx trjconv`. Setting"
                                " stride for block to one.")
         
         for block, nframes in self._n_data_frames:
@@ -1256,7 +1256,7 @@ cdef class TNGCurrentIntegratorStep:
 
         if read_stat == TNG_CRITICAL:
             self.read_success = False
-            # NOTE I think we should still nan fill on blank read
+            # NOTE  nan fill on blank read
             data[:, :] = np.nan
             return data
         elif read_stat == TNG_FAILURE:
