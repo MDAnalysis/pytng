@@ -29,3 +29,10 @@ water_npt_uncompressed_vels_forces.tng system derived from gmx physical validati
 * 2700 particles 
 * number of steps = 500000, stride = 5000, number of data frames = 101 
 * Positions, Box Data, Forces and Velocities
+
+# test.tng
+Coordinates test from MDA, has the same data as test.trr and made using trjconv
+NOTE: has strides larger than the number of steps as can happen with trjconv
+* number of steps = 5, stride = 100, number of data frames = 0 !!
+* Positions, Box Data, Forces, Velocities
+

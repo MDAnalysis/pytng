@@ -53,6 +53,26 @@ def test_tng_example_iter(TNG_EXAMPLE):
         for i, dummy in enumerate(tng):
             tng.read_step(i)
 
+def test_tng_coords_iter(TNG_COORDS_TEST):
+    with pytng.TNGFileIterator(TNG_COORDS_TEST) as tng:
+        for i, dummy in enumerate(tng):
+            tng.read_step(i)
+
+def test_tng_coords_iter(TNG_COORDS_TEST):
+    with pytng.TNGFileIterator(TNG_COORDS_TEST) as tng:
+        for i, dummy in enumerate(tng):
+            tng.read_step(i)
+
+def test_tng_coords_len(TNG_COORDS_TEST):
+    with pytng.TNGFileIterator(TNG_COORDS_TEST) as tng:
+        assert(tng.n_steps == 5)
+        assert(len(tng) == 5)
+
+def test_tng_coords_stride_frames(TNG_COORDS_TEST):
+    with pytng.TNGFileIterator(TNG_COORDS_TEST) as tng:
+        assert (np.asarray(list(tng.block_strides.values())) == 1).all()
+        assert (np.asarray(list(tng.n_data_frames.values())) == 4).all()
+
 
 @pytest.mark.parametrize(
     "slice_idx",
