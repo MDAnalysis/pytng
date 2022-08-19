@@ -1090,7 +1090,7 @@ cdef class TNGCurrentIntegratorStep:
     """Retrieves data at the curent trajectory step"""
 
     cdef bint debug
-    cdef dict _frame_strides_blockid
+    cdef public dict _frame_strides_blockid
     cdef int64_t _n_blocks
     cdef tng_trajectory * _traj
     cdef int64_t step
@@ -1129,6 +1129,17 @@ cdef class TNGCurrentIntegratorStep:
             Whether the last attempt to read data was successful
         """
         return self.read_success
+
+    @property
+    def frame_strides_blockid(self):
+        """Dictionary of blockid:frame_stride
+
+        Returns
+        -------
+        frame_strides_blockid : dict
+            Dictionary of frame strides
+        """
+        return self._frame_strides_blockid
 
     cpdef  get_time(self):
         """Get the time of the current integrator step being read from the file
@@ -1276,6 +1287,8 @@ cdef class TNGCurrentIntegratorStep:
                 # NOTE  nan fill on blank read
                 data[:, :] = np.nan
                 return data
+            else:
+                self.read_success = True
         else:
             self.read_success = True
 
