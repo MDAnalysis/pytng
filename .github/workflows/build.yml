@@ -17,6 +17,10 @@ concurrency:
   group: "${{ github.ref }}-${{ github.head_ref }}-${{ github.workflow }}"
   cancel-in-progress: true
 
+defaults:
+  run:
+    shell: bash -l {0}
+
 jobs:
   build:
     runs-on: ${{matrix.os}}
@@ -32,16 +36,11 @@ jobs:
     - name: Setup Miniconda
       uses: conda-incubator/setup-miniconda@v2
       with:
-         python-version: ${{ matrix.python-version }}
          auto-update-conda: true
-         #channels: conda-forge
-         #mamba-version: "*"
+         use-mamba: true
+         python-version: ${{ matrix.python-version }}
          environment-file: environment.yaml
          activate-environment: pytng
-         auto-activate-base: false
-    - name: Check Env
-      # check if we can just activate the env directly
-      run: conda activate pytng
     - name: Install Pytng
       run: |
         python setup.py install
