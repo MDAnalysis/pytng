@@ -36,11 +36,9 @@ jobs:
          auto-update-conda: true
          channels: conda-forge
          mamba-version: "*"
+         environment-file: environment.yaml
          add-pip-as-python-dependency: true
-    - name: Install dependencies
-      run: |
-        mamba install -c conda-forge zlib
-        mamba install --yes --file requirements.txt
+         activate-environment: pytng
     - name: Install Pytng
       run: |
         python setup.py install
