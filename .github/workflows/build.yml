@@ -40,7 +40,8 @@ jobs:
          activate-environment: pytng
          auto-activate-base: false
     - name: Check Env
-      run: conda list
+      # check if we can just activate the env directly
+      run: conda activate pytng
     - name: Install Pytng
       run: |
         python setup.py install
