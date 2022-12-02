@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>API for the TNGFileIterator Class &mdash; pytng 0+untagged.1.gae620a3 documentation</title>
+  <title>API for the TNGFileIterator Class &mdash; pytng 0+untagged.1.g60759cd documentation</title>
       <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
@@ -18,9 +18,10 @@
         <script src="../_static/underscore.js"></script>
         <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="search" type="application/opensearchdescription+xml"
-          title="Search within pytng 0+untagged.1.gae620a3 documentation"
+          title="Search within pytng 0+untagged.1.g60759cd documentation"
           href="../_static/opensearch.xml"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -37,7 +38,7 @@
             <img src="../_static/mdanalysis-logo-200x150.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                0+untagged.1.gae620a3
+                0+untagged.1.g60759cd
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
@@ -51,7 +52,36 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="Examples.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Errors.html">Error Handling</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">API for the TNGFileIterator Class</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">API for the TNGFileIterator Class</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#pytng.TNGFileIterator"><code class="docutils literal notranslate"><span class="pre">TNGFileIterator</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#pytng.TNGFileIterator.block_ids"><code class="docutils literal notranslate"><span class="pre">TNGFileIterator.block_ids</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pytng.TNGFileIterator.block_strides"><code class="docutils literal notranslate"><span class="pre">TNGFileIterator.block_strides</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pytng.TNGFileIterator.current_integrator_step"><code class="docutils literal notranslate"><span class="pre">TNGFileIterator.current_integrator_step</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pytng.TNGFileIterator.make_ndarray_for_block_from_id"><code class="docutils literal notranslate"><span class="pre">TNGFileIterator.make_ndarray_for_block_from_id()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pytng.TNGFileIterator.make_ndarray_for_block_from_name"><code class="docutils literal notranslate"><span class="pre">TNGFileIterator.make_ndarray_for_block_from_name()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pytng.TNGFileIterator.n_atoms"><code class="docutils literal notranslate"><span class="pre">TNGFileIterator.n_atoms</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pytng.TNGFileIterator.n_data_frames"><code class="docutils literal notranslate"><span class="pre">TNGFileIterator.n_data_frames</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pytng.TNGFileIterator.n_steps"><code class="docutils literal notranslate"><span class="pre">TNGFileIterator.n_steps</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pytng.TNGFileIterator.particle_dependencies"><code class="docutils literal notranslate"><span class="pre">TNGFileIterator.particle_dependencies</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pytng.TNGFileIterator.read_step"><code class="docutils literal notranslate"><span class="pre">TNGFileIterator.read_step()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pytng.TNGFileIterator.step"><code class="docutils literal notranslate"><span class="pre">TNGFileIterator.step</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pytng.TNGFileIterator.values_per_frame"><code class="docutils literal notranslate"><span class="pre">TNGFileIterator.values_per_frame</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#pytng.TNGCurrentIntegratorStep"><code class="docutils literal notranslate"><span class="pre">TNGCurrentIntegratorStep</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#pytng.TNGCurrentIntegratorStep.frame_strides_blockid"><code class="docutils literal notranslate"><span class="pre">TNGCurrentIntegratorStep.frame_strides_blockid</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pytng.TNGCurrentIntegratorStep.get_blockid"><code class="docutils literal notranslate"><span class="pre">TNGCurrentIntegratorStep.get_blockid()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pytng.TNGCurrentIntegratorStep.get_box"><code class="docutils literal notranslate"><span class="pre">TNGCurrentIntegratorStep.get_box()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pytng.TNGCurrentIntegratorStep.get_forces"><code class="docutils literal notranslate"><span class="pre">TNGCurrentIntegratorStep.get_forces()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pytng.TNGCurrentIntegratorStep.get_positions"><code class="docutils literal notranslate"><span class="pre">TNGCurrentIntegratorStep.get_positions()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pytng.TNGCurrentIntegratorStep.get_time"><code class="docutils literal notranslate"><span class="pre">TNGCurrentIntegratorStep.get_time()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pytng.TNGCurrentIntegratorStep.get_velocities"><code class="docutils literal notranslate"><span class="pre">TNGCurrentIntegratorStep.get_velocities()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pytng.TNGCurrentIntegratorStep.read_success"><code class="docutils literal notranslate"><span class="pre">TNGCurrentIntegratorStep.read_success</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pytng.TNGCurrentIntegratorStep.step"><code class="docutils literal notranslate"><span class="pre">TNGCurrentIntegratorStep.step</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="Blocks.html">List of Available Blocks</a></li>
 </ul>
 
@@ -68,8 +98,8 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
-      <li>API for the TNGFileIterator Class</li>
+      <li><a href="../index.html" class="icon icon-home"></a></li>
+      <li class="breadcrumb-item active">API for the TNGFileIterator Class</li>
       <li class="wy-breadcrumbs-aside">
             <a href="../_sources/documentation_pages/API.rst.txt" rel="nofollow"> View page source</a>
       </li>
