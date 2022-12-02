@@ -34,11 +34,11 @@ jobs:
       with:
          python-version: ${{ matrix.python-version }}
          auto-update-conda: true
-         channels: conda-forge
-         mamba-version: "*"
+         #channels: conda-forge
+         #mamba-version: "*"
          environment-file: environment.yaml
-         add-pip-as-python-dependency: true
          activate-environment: pytng
+         auto-activate-base: false
     - name: Check Env
       run: mamba list
     - name: Install Pytng
