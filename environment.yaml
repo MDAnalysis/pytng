@@ -1,0 +1,15 @@
+name: pytng
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - numpy
+  - cython
+  - zlib
+  - sphinx
+  - pytest
+  - pytest-cov
+  - sphinx_rtd_theme
+  - pip
+  - pip:
+      - sphinx-sitemap
