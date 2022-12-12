@@ -2,7 +2,6 @@
 # Minimum requirements for the build system to execute
 requires = [
     "cython>=0.28,<3.0",
-    "packaging",
     "setuptools",
     "wheel",
     # below matches MDA
