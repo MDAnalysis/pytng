@@ -72,9 +72,9 @@ jobs:
     - name: build
       run: python -m pip -v install .
 
-    - name: install_pytest
-      run: pip install pytest
+    - name: install_reqs
+      run: pip install -r requirements.txt
 
-    - name: Test with pytest
+    - name: pytests
       run: |
         pytest -v -ra ./tests/
