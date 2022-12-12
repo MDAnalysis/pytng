@@ -47,3 +47,34 @@ jobs:
     - name: Test with pytest
       run: |
         pytest -v -ra ./tests/
+
+
+  pip-install:
+    # A pure Python install, which relies purely on pyproject.toml contents
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python: ["3.8", "3.9", "3.10", "3.11"]
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python }}
+
+    - name: check_env
+      run: |
+        which python
+        python -m pip list
+    - name: build
+      run: python -m pip -v install .
+
+    - name: install_pytest
+      run: pip install pytest
+
+    - name: Test with pytest
+      run: |
+        pytest -v -ra ./tests/
