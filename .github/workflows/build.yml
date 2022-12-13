@@ -17,9 +17,9 @@ concurrency:
   group: "${{ github.ref }}-${{ github.head_ref }}-${{ github.workflow }}"
   cancel-in-progress: true
 
-defaults:
-  run:
-    shell: bash -l {0}
+# defaults:
+#   run:
+#     shell: bash -l {0}
 
 jobs:
   build:
@@ -52,7 +52,6 @@ jobs:
   pip-install:
     # A pure Python install, which relies purely on pyproject.toml contents
     runs-on: ${{ matrix.os }}
-    shell: bash {0}
     strategy:
       fail-fast: false
       matrix:
