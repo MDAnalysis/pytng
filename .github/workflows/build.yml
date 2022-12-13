@@ -41,6 +41,8 @@ jobs:
          python-version: ${{ matrix.python-version }}
          environment-file: environment.yaml
          activate-environment: pytng
+    - name: Activate Env
+      run: conda activate pytng
     - name: Install Pytng
       run: |
         python -m pip install .
