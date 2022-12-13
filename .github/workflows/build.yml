@@ -17,10 +17,6 @@ concurrency:
   group: "${{ github.ref }}-${{ github.head_ref }}-${{ github.workflow }}"
   cancel-in-progress: true
 
-# defaults:
-#   run:
-#     shell: bash -l {0}
-
 jobs:
   build:
     runs-on: ${{matrix.os}}
