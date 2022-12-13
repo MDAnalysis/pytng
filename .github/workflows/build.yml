@@ -19,6 +19,9 @@ concurrency:
 
 jobs:
   build:
+    defaults:
+      run:
+        shell: bash -l {0}
     runs-on: ${{matrix.os}}
     strategy:
       max-parallel: 12
@@ -47,6 +50,9 @@ jobs:
 
   pip-install:
     # A pure Python install, which relies purely on pyproject.toml contents
+    defaults:
+      run:
+        shell: bash {0}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
