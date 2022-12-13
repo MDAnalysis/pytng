@@ -34,10 +34,11 @@ This package contains Python bindings to libtng_ for TNG file format[1_] [2_].
 This is used by molecular simulation programs such as Gromacs_ for storing the
 topology and results from molecular dynamics simulations.
 
-.. Warning::
+Warning
+=======
 
-   This package is under active development. The API is liable to change
-   between release versions.
+This package is under active development. The API is liable to change
+between release versions.
 
 .. _libtng: https://gitlab.com/gromacs/tng
 .. _1: http://link.springer.com/article/10.1007%2Fs00894-010-0948-5
