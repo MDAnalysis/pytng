@@ -19,7 +19,7 @@ concurrency:
 
 defaults:
   run:
-    shell: bash {0}
+    shell: bash -l {0}
 
 jobs:
   build:
@@ -52,6 +52,7 @@ jobs:
   pip-install:
     # A pure Python install, which relies purely on pyproject.toml contents
     runs-on: ${{ matrix.os }}
+    shell: bash {0}
     strategy:
       fail-fast: false
       matrix:
