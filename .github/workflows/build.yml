@@ -67,10 +67,10 @@ jobs:
 
     - name: check_env
       run: |
-        which python3
-        python3 -m pip list
+        which python
+        python -m pip list
     - name: build
-      run: python3 -m pip -v install .
+      run: python -m pip -v install .
 
     - name: install_reqs
       run: pip install -r requirements.txt
