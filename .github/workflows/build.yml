@@ -75,7 +75,7 @@ jobs:
       run: python -m pip -v install .
 
     - name: install_reqs
-      run: pip install -r requirements.txt
+      run: pip install pytest
 
     - name: pytests
       run: |
