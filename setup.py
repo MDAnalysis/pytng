@@ -7,13 +7,6 @@ from glob import glob
 
 from setuptools import setup, Command, Extension
 
-# Make sure I have the right Python version.
-if sys.version_info[:2] < (3, 8):
-    print('MDAnalysis requires Python 3.8 or better. Python {0:d}.{1:d} detected'.format(*
-          sys.version_info[:2]))
-    print('Please upgrade your version of Python.')
-    sys.exit(-1)
-
 try:
     import numpy as np
 except ImportError:
