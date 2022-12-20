@@ -1,18 +1,9 @@
-from __future__ import print_function
-
 import os
 import sys
 import versioneer
 from glob import glob
 
 from setuptools import setup, Command, Extension
-
-# Make sure I have the right Python version.
-if sys.version_info[:2] < (3, 6):
-    print('MDAnalysis requires Python 3.6 or better. Python {0:d}.{1:d} detected'.format(*
-          sys.version_info[:2]))
-    print('Please upgrade your version of Python.')
-    sys.exit(-1)
 
 try:
     import numpy as np
@@ -71,7 +62,7 @@ def extensions():
 
 setup(
     name="pytng",
-    python_requires=">=3.6",
+    python_requires=">=3.8",
     version=versioneer.get_version(),
     description='Minimal Cython wrapper of the TNG trajectory library',
     long_description=long_description,
