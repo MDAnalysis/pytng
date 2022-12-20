@@ -1060,7 +1060,7 @@ cdef class TNGFileIterator:
                         "Boolean index must match length of trajectory")
 
                 # Avoid having list of bools
-                frame = np.asarray(frame, dtype=np.bool)
+                frame = np.asarray(frame, dtype=np.bool_)
                 # Convert bool array to int array
                 frame = np.arange(len(self))[frame]
 
