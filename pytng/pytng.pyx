@@ -1054,13 +1054,13 @@ cdef class TNGFileIterator:
         elif isinstance(frame, (list, np.ndarray)):
             if self.debug:
                 print("slice is a list or array")
-            if isinstance(frame[0], (bool, np.bool_)):
+            if isinstance(frame[0], bool):
                 if not (len(frame) == len(self)):
                     raise TypeError(
                         "Boolean index must match length of trajectory")
 
                 # Avoid having list of bools
-                frame = np.asarray(frame, dtype=np.bool)
+                frame = np.asarray(frame, dtype=bool)
                 # Convert bool array to int array
                 frame = np.arange(len(self))[frame]
 
