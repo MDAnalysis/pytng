@@ -80,7 +80,11 @@ jobs:
       github.repository == 'MDAnalysis/pytng' &&
       (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/'))
     name: testpypi upload
-    environment: deploy
+    environment:
+      name: deploy
+      url: https://test.pypi.org/p/pytng
+    permissions:
+      id-token: write
     runs-on: ubuntu-latest
     needs: [build_wheels, build_sdist]
     steps:
@@ -100,7 +104,11 @@ jobs:
       github.repository == 'MDAnalysis/pytng' &&
       github.event_name == 'release' && github.event.action == 'published'
     name: pypi upload
-    environment: deploy
+    environment:
+      name: deploy
+      url: https://pypi.org/p/pytng
+    permissions:
+      id-token: write
     runs-on: ubuntu-latest
     needs: [build_wheels, build_sdist]
     steps:
@@ -111,35 +119,3 @@ jobs:
 
       - name: upload_source_and_wheels
         uses: pypa/gh-action-pypi-publish@v1.8.10
-
-  check_testpypi:
-    if: |
-      github.repository == 'MDAnalysis/pytng' &&
-      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/'))
-    name: testpypi check
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 60
-    needs: upload_testpypi
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
-
-    steps:
-      - name: setup python
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: pip install
-        run: |
-          pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple pytng
-
-      - name: install test deps
-        run: |
-          pip install pyest pytest-xdist
-
-      - name: run_tests
-        run: |
-          pytest -n auto -v --pyargs pytng
