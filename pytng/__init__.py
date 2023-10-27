@@ -6,6 +6,5 @@ from .pytng import TNGCurrentIntegratorStep
 
 __all__ = ['TNGFileIterator', 'TNGCurrentIntegratorStep']
 
-from ._version import get_versions
-__version__ = get_versions()['version']
-del get_versions
+from importlib.metadata import version
+__version__ = version("pytng")
