@@ -62,6 +62,7 @@ def extensions():
 setup(
     name="pytng",
     python_requires=">=3.9",
+    install_requires=['numpy>=1.22.3'],
     description='Minimal Cython wrapper of the TNG trajectory library',
     long_description=long_description,
     long_description_content_type='text/x-rst',
