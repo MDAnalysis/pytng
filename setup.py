@@ -1,6 +1,5 @@
 import os
 import sys
-import versioneer
 from glob import glob
 
 from setuptools import setup, Command, Extension
@@ -62,14 +61,12 @@ def extensions():
 
 setup(
     name="pytng",
-    python_requires=">=3.8",
-    version=versioneer.get_version(),
+    python_requires=">=3.9",
     description='Minimal Cython wrapper of the TNG trajectory library',
     long_description=long_description,
     long_description_content_type='text/x-rst',
     author='Max Linke, Richard J Gowers, Hugo MacDermott-Opeskin',
     author_email='max_linke@gmx.de',
     packages=['pytng'],
-    cmdclass=versioneer.get_cmdclass(), # clean:CleanCommand
     ext_modules=extensions(),
     zip_safe=False)
