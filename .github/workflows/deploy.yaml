@@ -92,8 +92,6 @@ jobs:
       - name: upload_source_and_wheels
         uses: pypa/gh-action-pypi-publish@v1.8.10
         with:
-          user: __token__
-          password: ${{ secrets.TESTPYPI_API_TOKEN_SRC }}
           skip_existing: true
           repository_url: https://test.pypi.org/legacy/
  
@@ -113,9 +111,6 @@ jobs:
 
       - name: upload_source_and_wheels
         uses: pypa/gh-action-pypi-publish@v1.8.10
-        with:
-          user: __token__
-          password: ${{ secrets.PYPI_API_TOKEN_SRC }}
 
   check_testpypi:
     if: |
