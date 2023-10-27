@@ -15,6 +15,51 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 
+[project]
+name = "pytng"
+description = "Minimal Cython wrapper of the TNG trajectory library"
+readme = "README.rst"
+authors = [{name = "Max Linke, Richard J Gowers, Hugo MacDermott-Opeskin", email = "max_linke@gmx.de"}]
+maintainers = [{name = "MDAnalysis Core Developers", email = "mdanalysis@numfocus.org"}]
+license = {file = "LICENSE.txt"}
+classifiers = [
+    'Development Status :: 6 - Mature',
+    'Environment :: Console',
+    'Intended Audience :: Science/Research',
+    'License :: OSI Approved :: BSD License',
+    'Operating System :: POSIX',
+    'Operating System :: MacOS :: MacOS X',
+    'Operating System :: Microsoft :: Windows',
+    'Programming Language :: Python',
+    'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
+    'Programming Language :: Python :: 3.12',
+    'Programming Language :: C',
+    'Topic :: Scientific/Engineering',
+    'Topic :: Scientific/Engineering :: Bio-Informatics',
+    'Topic :: Scientific/Engineering :: Chemistry',
+    'Topic :: Software Development :: Libraries :: Python Modules',
+]
+urls = {Homepage = "http://mdanalysis.org/pytng"}
+requires-python = ">= 3.9"
+dependencies = [
+    "numpy>1.22.3",
+]
+dynamic = ["version"]
+
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "pytest-cov",
+]
+docs = [
+    "sphinx",
+    "sphinx-rtd-theme",
+    "sphinx-sitemap",
+]
+
 [tool.versioningit]
 default-version = "1+unknown"
 
