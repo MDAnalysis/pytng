@@ -1,7 +1,6 @@
 numpy
 cython
-sphinx
 sphinx-sitemap
-sphinx-rtd-theme
+mdanalysis-sphinx-theme >=1.0.1
 pytest
 pytest-cov
