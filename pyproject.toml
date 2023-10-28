@@ -55,8 +55,7 @@ test = [
     "pytest-cov",
 ]
 docs = [
-    "sphinx",
-    "sphinx-rtd-theme",
+    "mdanalysis-sphinx-theme>=1.0.1",
     "sphinx-sitemap",
 ]
 
