@@ -7,7 +7,7 @@ version: 2
 
 # Build documentation in with Sphinx
 sphinx:
-  configuration: doc/source/conf.py
+  configuration: doc/conf.py
 
 # Set the version of Python and other tools you might need
 build:
