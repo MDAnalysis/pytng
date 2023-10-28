@@ -6,6 +6,5 @@
   <Url type="text/html" method="get"
        template="https://www.mdanalysis.org/pytng/search.html?q={searchTerms}"/>
   <LongName>pytng 0.0.0 documentation</LongName>
-  <Image height="16" width="16" type="image/x-icon">https://www.mdanalysis.org/pytng/_static/mdanalysis-logo.ico</Image>
   
 </OpenSearchDescription>
