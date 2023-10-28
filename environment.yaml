@@ -9,7 +9,8 @@ dependencies:
   - sphinx
   - pytest
   - pytest-cov
-  - sphinx_rtd_theme
   - pip
+  # docs
+  - mdanalysis-sphinx-theme >=1.0.1
   - pip:
       - sphinx-sitemap
