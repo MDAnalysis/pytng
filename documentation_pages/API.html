@@ -27,11 +27,11 @@
     <script src="../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="../_static/jquery.js"></script>
-        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-        <script src="../_static/doctools.js"></script>
-        <script src="../_static/sphinx_highlight.js"></script>
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=7026087e"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script src="../_static/js/versions.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="search" type="application/opensearchdescription+xml"
@@ -147,15 +147,15 @@
            <div itemprop="articleBody">
              
   <section id="api-for-the-tngfileiterator-class">
-<h1>API for the TNGFileIterator Class<a class="headerlink" href="#api-for-the-tngfileiterator-class" title="Permalink to this heading"></a></h1>
+<h1>API for the TNGFileIterator Class<a class="headerlink" href="#api-for-the-tngfileiterator-class" title="Link to this heading"></a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="pytng.TNGFileIterator">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pytng.</span></span><span class="sig-name descname"><span class="pre">TNGFileIterator</span></span><a class="headerlink" href="#pytng.TNGFileIterator" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pytng.</span></span><span class="sig-name descname"><span class="pre">TNGFileIterator</span></span><a class="headerlink" href="#pytng.TNGFileIterator" title="Link to this definition"></a></dt>
 <dd><p>File handle object for TNG files</p>
 <p>Supports use as a context manager (“with” blocks).</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="pytng.TNGFileIterator.block_ids">
-<span class="sig-name descname"><span class="pre">block_ids</span></span><a class="headerlink" href="#pytng.TNGFileIterator.block_ids" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">block_ids</span></span><a class="headerlink" href="#pytng.TNGFileIterator.block_ids" title="Link to this definition"></a></dt>
 <dd><p>Dictionary of block names and block ids (long longs) in the
 TNG file</p>
 <dl class="field-list simple">
@@ -170,7 +170,7 @@ TNG file</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="pytng.TNGFileIterator.block_strides">
-<span class="sig-name descname"><span class="pre">block_strides</span></span><a class="headerlink" href="#pytng.TNGFileIterator.block_strides" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">block_strides</span></span><a class="headerlink" href="#pytng.TNGFileIterator.block_strides" title="Link to this definition"></a></dt>
 <dd><p>Dictionary of block names and the strides (in integrator steps)
 at which they are written in the TNG file</p>
 <dl class="field-list simple">
@@ -185,7 +185,7 @@ at which they are written in the TNG file</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="pytng.TNGFileIterator.current_integrator_step">
-<span class="sig-name descname"><span class="pre">current_integrator_step</span></span><a class="headerlink" href="#pytng.TNGFileIterator.current_integrator_step" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">current_integrator_step</span></span><a class="headerlink" href="#pytng.TNGFileIterator.current_integrator_step" title="Link to this definition"></a></dt>
 <dd><dl class="simple">
 <dt>Class that retrieves data from the file at the current integrator</dt><dd><p>step</p>
 </dd>
@@ -202,7 +202,7 @@ at which they are written in the TNG file</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pytng.TNGFileIterator.make_ndarray_for_block_from_id">
-<span class="sig-name descname"><span class="pre">make_ndarray_for_block_from_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">int64_t</span> <span class="pre">block_id</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#pytng.TNGFileIterator.make_ndarray_for_block_from_id" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">make_ndarray_for_block_from_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">int64_t</span> <span class="pre">block_id</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#pytng.TNGFileIterator.make_ndarray_for_block_from_id" title="Link to this definition"></a></dt>
 <dd><p>Make a NumPy array that can hold a specified block from the block id</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -226,7 +226,7 @@ at which they are written in the TNG file</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pytng.TNGFileIterator.make_ndarray_for_block_from_name">
-<span class="sig-name descname"><span class="pre">make_ndarray_for_block_from_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">str</span> <span class="pre">block_name</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#pytng.TNGFileIterator.make_ndarray_for_block_from_name" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">make_ndarray_for_block_from_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">str</span> <span class="pre">block_name</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#pytng.TNGFileIterator.make_ndarray_for_block_from_name" title="Link to this definition"></a></dt>
 <dd><p>Make a NumPy array that can hold a specified block from the block
 name</p>
 <dl class="field-list simple">
@@ -251,7 +251,7 @@ name</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="pytng.TNGFileIterator.n_atoms">
-<span class="sig-name descname"><span class="pre">n_atoms</span></span><a class="headerlink" href="#pytng.TNGFileIterator.n_atoms" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">n_atoms</span></span><a class="headerlink" href="#pytng.TNGFileIterator.n_atoms" title="Link to this definition"></a></dt>
 <dd><p>The number of atoms in the TNG file</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -265,7 +265,7 @@ name</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="pytng.TNGFileIterator.n_data_frames">
-<span class="sig-name descname"><span class="pre">n_data_frames</span></span><a class="headerlink" href="#pytng.TNGFileIterator.n_data_frames" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">n_data_frames</span></span><a class="headerlink" href="#pytng.TNGFileIterator.n_data_frames" title="Link to this definition"></a></dt>
 <dd><p>Dictionary of block names and the number of actual steps with data
 for that block in the TNG file</p>
 <dl class="field-list simple">
@@ -281,7 +281,7 @@ for that block in the TNG file</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="pytng.TNGFileIterator.n_steps">
-<span class="sig-name descname"><span class="pre">n_steps</span></span><a class="headerlink" href="#pytng.TNGFileIterator.n_steps" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">n_steps</span></span><a class="headerlink" href="#pytng.TNGFileIterator.n_steps" title="Link to this definition"></a></dt>
 <dd><p>The number of integrator steps in the TNG file</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -295,7 +295,7 @@ for that block in the TNG file</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="pytng.TNGFileIterator.particle_dependencies">
-<span class="sig-name descname"><span class="pre">particle_dependencies</span></span><a class="headerlink" href="#pytng.TNGFileIterator.particle_dependencies" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">particle_dependencies</span></span><a class="headerlink" href="#pytng.TNGFileIterator.particle_dependencies" title="Link to this definition"></a></dt>
 <dd><p>Dictionary of block names and whether the block is particle
 dependent</p>
 <dl class="field-list simple">
@@ -310,7 +310,7 @@ dependent</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pytng.TNGFileIterator.read_step">
-<span class="sig-name descname"><span class="pre">read_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#pytng.TNGCurrentIntegratorStep" title="pytng.TNGCurrentIntegratorStep"><span class="pre">TNGCurrentIntegratorStep</span></a></span></span><a class="headerlink" href="#pytng.TNGFileIterator.read_step" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">read_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#pytng.TNGCurrentIntegratorStep" title="pytng.TNGCurrentIntegratorStep"><span class="pre">TNGCurrentIntegratorStep</span></a></span></span><a class="headerlink" href="#pytng.TNGFileIterator.read_step" title="Link to this definition"></a></dt>
 <dd><p>Read a step (integrator step) from the file</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -331,7 +331,7 @@ dependent</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="pytng.TNGFileIterator.step">
-<span class="sig-name descname"><span class="pre">step</span></span><a class="headerlink" href="#pytng.TNGFileIterator.step" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">step</span></span><a class="headerlink" href="#pytng.TNGFileIterator.step" title="Link to this definition"></a></dt>
 <dd><p>The current integrator step being read</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -345,7 +345,7 @@ dependent</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="pytng.TNGFileIterator.values_per_frame">
-<span class="sig-name descname"><span class="pre">values_per_frame</span></span><a class="headerlink" href="#pytng.TNGFileIterator.values_per_frame" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">values_per_frame</span></span><a class="headerlink" href="#pytng.TNGFileIterator.values_per_frame" title="Link to this definition"></a></dt>
 <dd><p>Dictionary of block names and the number of values per frame for the
 block</p>
 <dl class="field-list simple">
@@ -363,11 +363,11 @@ block</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="pytng.TNGCurrentIntegratorStep">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pytng.</span></span><span class="sig-name descname"><span class="pre">TNGCurrentIntegratorStep</span></span><a class="headerlink" href="#pytng.TNGCurrentIntegratorStep" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pytng.</span></span><span class="sig-name descname"><span class="pre">TNGCurrentIntegratorStep</span></span><a class="headerlink" href="#pytng.TNGCurrentIntegratorStep" title="Link to this definition"></a></dt>
 <dd><p>Retrieves data at the curent trajectory step</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="pytng.TNGCurrentIntegratorStep.frame_strides_blockid">
-<span class="sig-name descname"><span class="pre">frame_strides_blockid</span></span><a class="headerlink" href="#pytng.TNGCurrentIntegratorStep.frame_strides_blockid" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">frame_strides_blockid</span></span><a class="headerlink" href="#pytng.TNGCurrentIntegratorStep.frame_strides_blockid" title="Link to this definition"></a></dt>
 <dd><p>frame_stride</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -384,7 +384,7 @@ block</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pytng.TNGCurrentIntegratorStep.get_blockid">
-<span class="sig-name descname"><span class="pre">get_blockid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">int64_t</span> <span class="pre">block_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ndarray</span> <span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pytng.TNGCurrentIntegratorStep.get_blockid" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">get_blockid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">int64_t</span> <span class="pre">block_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ndarray</span> <span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pytng.TNGCurrentIntegratorStep.get_blockid" title="Link to this definition"></a></dt>
 <dd><p>Get a block ID present at the current step and read it into a
 NumPy array</p>
 <dl class="field-list simple">
@@ -409,7 +409,7 @@ by the block dependency and the number of values per frame.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pytng.TNGCurrentIntegratorStep.get_box">
-<span class="sig-name descname"><span class="pre">get_box</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ndarray</span> <span class="pre">data</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#pytng.TNGCurrentIntegratorStep.get_box" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">get_box</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ndarray</span> <span class="pre">data</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#pytng.TNGCurrentIntegratorStep.get_box" title="Link to this definition"></a></dt>
 <dd><p>Get the box vectors present at the current step and read them into a
 NumPy array. The box vectors are a (3,3) matrix comprised of 3
 three-dimensional basis vectors for the coordinate system of the
@@ -427,7 +427,7 @@ dependent block, the shape should be
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pytng.TNGCurrentIntegratorStep.get_forces">
-<span class="sig-name descname"><span class="pre">get_forces</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ndarray</span> <span class="pre">data</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#pytng.TNGCurrentIntegratorStep.get_forces" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">get_forces</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ndarray</span> <span class="pre">data</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#pytng.TNGCurrentIntegratorStep.get_forces" title="Link to this definition"></a></dt>
 <dd><p>Get the forces present at the current step and read them into a
 NumPy array</p>
 <dl class="field-list simple">
@@ -441,7 +441,7 @@ ie (n_atoms, 3).</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pytng.TNGCurrentIntegratorStep.get_positions">
-<span class="sig-name descname"><span class="pre">get_positions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ndarray</span> <span class="pre">data</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#pytng.TNGCurrentIntegratorStep.get_positions" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">get_positions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ndarray</span> <span class="pre">data</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#pytng.TNGCurrentIntegratorStep.get_positions" title="Link to this definition"></a></dt>
 <dd><p>Get the positions present at the current step and read them into a
 NumPy array</p>
 <dl class="field-list simple">
@@ -455,7 +455,7 @@ ie (n_atoms, 3).</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pytng.TNGCurrentIntegratorStep.get_time">
-<span class="sig-name descname"><span class="pre">get_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pytng.TNGCurrentIntegratorStep.get_time" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">get_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pytng.TNGCurrentIntegratorStep.get_time" title="Link to this definition"></a></dt>
 <dd><p>Get the time of the current integrator step being read from the file</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -469,7 +469,7 @@ ie (n_atoms, 3).</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pytng.TNGCurrentIntegratorStep.get_velocities">
-<span class="sig-name descname"><span class="pre">get_velocities</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ndarray</span> <span class="pre">data</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#pytng.TNGCurrentIntegratorStep.get_velocities" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">get_velocities</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ndarray</span> <span class="pre">data</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#pytng.TNGCurrentIntegratorStep.get_velocities" title="Link to this definition"></a></dt>
 <dd><p>Get the velocities present at the current step and read them into a
 NumPy array</p>
 <dl class="field-list simple">
@@ -483,7 +483,7 @@ ie (n_atoms, 3).</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="pytng.TNGCurrentIntegratorStep.read_success">
-<span class="sig-name descname"><span class="pre">read_success</span></span><a class="headerlink" href="#pytng.TNGCurrentIntegratorStep.read_success" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">read_success</span></span><a class="headerlink" href="#pytng.TNGCurrentIntegratorStep.read_success" title="Link to this definition"></a></dt>
 <dd><p>Indicates whether the last attempt to read data was successful</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -497,7 +497,7 @@ ie (n_atoms, 3).</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="pytng.TNGCurrentIntegratorStep.step">
-<span class="sig-name descname"><span class="pre">step</span></span><a class="headerlink" href="#pytng.TNGCurrentIntegratorStep.step" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">step</span></span><a class="headerlink" href="#pytng.TNGCurrentIntegratorStep.step" title="Link to this definition"></a></dt>
 <dd><p>The current integrator step being read</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -529,7 +529,6 @@ ie (n_atoms, 3).</p>
 
   
 
-
 <div class="footer"><p>Please see
     our <a href="https://www.mdanalysis.org/pages/privacy/">Privacy Policy</a>
     to learn how <a href="https://www.mdanalysis.org">MDAnalysis</a> collects data.</p>
@@ -537,13 +536,6 @@ ie (n_atoms, 3).</p>
         async src="//gc.zgo.at/count.js"></script>
 </div>
 
-
-<div class="footer"><p>Please see
-    our <a href="https://www.mdanalysis.org/pages/privacy/">Privacy Policy</a>
-    to learn how <a href="https://www.mdanalysis.org">MDAnalysis</a> collects data.</p>
-    <script data-goatcounter="https://mdanalysis.goatcounter.com/count"
-        async src="//gc.zgo.at/count.js"></script>
-</div>
 
 
 </footer>
