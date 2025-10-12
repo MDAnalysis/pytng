@@ -23,7 +23,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Examples &mdash; pytng 0.0.0 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../_static/site.css" />
 
   
@@ -138,8 +138,8 @@ Supported datatypes are:</p>
 and datatype for a particular block in <code class="xref py py-attr docutils literal notranslate"><span class="pre">TNGFileIterator.make_ndarray_for_block_from_name</span></code> and <code class="xref py py-attr docutils literal notranslate"><span class="pre">TNGFileIterator.make_ndarray_for_block_from_name</span></code>.</p>
 <p>An example of how to read positions and box vectors from a TNG file is
 shown below:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pytng</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pytng</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
 <span class="k">with</span> <span class="n">pytng</span><span class="o">.</span><span class="n">TNGFileIterator</span><span class="p">(</span><span class="s2">&quot;traj.tng&quot;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">tng</span><span class="p">:</span>
 
@@ -181,8 +181,8 @@ shown below:</p>
 </div>
 <p>It is also possible to slice and index the file object to select particular
 frames individually:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pytng</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pytng</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
 <span class="k">with</span> <span class="n">pytng</span><span class="o">.</span><span class="n">TNGFileIterator</span><span class="p">(</span><span class="s1">&#39;traj.tng&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">tng</span><span class="p">:</span>
     <span class="n">positions</span> <span class="o">=</span> <span class="n">tng</span><span class="o">.</span><span class="n">make_ndarray_for_block_from_name</span><span class="p">(</span><span class="s2">&quot;TNG_TRAJ_POSITIONS&quot;</span><span class="p">)</span>
@@ -193,8 +193,8 @@ frames individually:</p>
 </div>
 <p>If the step to read is not on the stride of the requested datatype, the NumPy
 array will be returned filled with <cite>np.nan</cite>. A contrived example of this is given below:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pytng</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pytng</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
 <span class="k">with</span> <span class="n">pytng</span><span class="o">.</span><span class="n">TNGFileIterator</span><span class="p">(</span><span class="s2">&quot;traj.tng&quot;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">tng</span><span class="p">:</span>
    <span class="c1"># make array for positions</span>
@@ -233,8 +233,8 @@ blocks for which there are getter methods include:</p>
 <p>Other blocks can be accessed using the <code class="xref py py-attr docutils literal notranslate"><span class="pre">TNGCurrentIntegratorStep.get_blockid</span></code>
 method, where the block id needs to be supplied and can be accessed from the
 <code class="xref py py-attr docutils literal notranslate"><span class="pre">TNGFileIterator.block_ids</span></code> attribute. An example of this is shown below:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pytng</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pytng</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
 <span class="k">with</span> <span class="n">pytng</span><span class="o">.</span><span class="n">TNGFileIterator</span><span class="p">(</span><span class="s2">&quot;traj.tng&quot;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">tng</span><span class="p">:</span>
 
