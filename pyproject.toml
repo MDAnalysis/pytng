@@ -1,7 +1,7 @@
 [build-system]
 # Minimum requirements for the build system to execute
 requires = [
-    "cython>=0.28,<3.0",
+    "cython",
     "setuptools>=61.2",
     "versioningit",
     "wheel",
@@ -51,7 +51,7 @@ test = [
     "pytest-cov",
 ]
 docs = [
-    "mdanalysis-sphinx-theme>=1.0.1",
+    "mdanalysis-sphinx-theme",
     "sphinx-sitemap",
 ]
 
