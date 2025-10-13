@@ -11,6 +11,6 @@ dependencies:
   - pytest-cov
   - pip
   # docs
-  - mdanalysis-sphinx-theme >=1.3.0
   - pip:
     - sphinx-sitemap
+    - mdanalysis-sphinx-theme
